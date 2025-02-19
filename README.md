@@ -1,16 +1,19 @@
-# flutter_provider
+# Flutter Provider 🚀
 
-A new Flutter project.
+مشروع Flutter جديد يعتمد على **Provider** لإدارة الحالة.
 
-## Getting Started
+## 📌 الميزات الرئيسية:
+- 🎯 **إدارة الحالة** باستخدام Provider.
+- 🎨 **تصميم حديث وسلس** مع Flutter.
+- ⚡ **أداء عالي وسهل التوسعة**.
+- 📱 **يدعم أنظمة التشغيل المختلفة (Android & iOS & Web)**.
 
-This project is a starting point for a Flutter application.
+## 🛠️ البدء بالمشروع
+لتشغيل المشروع على جهازك، قم بتنفيذ الأوامر التالية:
 
-A few resources to get you started if this is your first Flutter project:
+```sh
+git clone https://github.com/Deyaanoor/Graduation-project-software.git
+cd flutter_provider
+flutter pub get
+flutter run
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
