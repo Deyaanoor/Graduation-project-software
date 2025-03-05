@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');  // استيراد حزمة CORS
 
 const app = express();
-const port = 5000;
+const port = 5001;
 
 app.use(cors());  // إضافة middleware الخاص بـ CORS
 
