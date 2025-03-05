@@ -20,9 +20,9 @@ app.use(express.json());
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
 
-require("dotenv").config(); // تحميل متغيرات البيئة
+require("dotenv").config(); 
 
-const uri = process.env.MONGO_URI; // استخدام متغير البيئة بدلاً من كشف الرابط
+const uri = process.env.MONGO_URI; 
 
 const client = new MongoClient(uri, {
   serverApi: {
