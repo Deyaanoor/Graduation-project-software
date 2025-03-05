@@ -43,8 +43,8 @@ async function insertUser() {
     const usersCollection = database.collection("users");
 
     const newUser = {
-      name: "John Doe",
-      age: 30,
+      name: "Deyaa",
+      age: 20,
       email: "johndoe@example.com",
     };
 
