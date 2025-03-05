@@ -7,16 +7,9 @@ const port = 5000;
 
 app.use(cors());  // إضافة middleware الخاص بـ CORS
 
-// إعدادات الـ Express لقراءة بيانات JSON
+
 app.use(express.json());
-//
 
-
-// ربط السيرفر بـ MongoDB
-// mongoose.connect('mongodb://localhost:27017/employees', {
-//   useNewUrlParser: true,
-//   useUnifiedTopology: true,
-// })
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
 
