@@ -71,58 +71,6 @@ app.post("/api/users", async (req, res) => {
 // ✅ تشغيل السيرفر
 app.listen(port, () => console.log(`🚀 Server running on port ${port}`));
 
-// إنشاء نموذج الموظف (Employee)
-const employeeSchema = new mongoose.Schema({
-  name: String,
-  position: String,
-  salary: Number
-});
-
-const Employee = mongoose.model('Employee', employeeSchema);
-
-// مسار جلب جميع الموظفين
-app.get('/employees', async (req, res) => {
-  try {
-    const employees = await Employee.find();
-    res.json(employees);
-  } catch (err) {
-    res.status(500).send('Error retrieving employees');
-  }
-});
-
-// مسار إضافة موظف جديد
-app.post('/employees', async (req, res) => {
-  const { name, position, salary } = req.body;
-  console.log("Adding employee:", { name, position, salary });  // إضافة سجل للتحقق من البيانات المستلمة
-
-  const newEmployee = new Employee({
-    name,
-    position,
-    salary,
-  });
-  console.log("done");
-
-  try {
-    console.log("done");
-    await newEmployee.save();
-    res.status(201).send('Employee added');
-    console.log("done");
-  } catch (err) {
-    console.error("Error adding employee:", err);  // إضافة سجل للتحقق من الأخطاء
-    res.status(500).send('Error adding employee');
-  }
-});
-
-
-// مسار حذف موظف
-app.delete('/employees/:id', async (req, res) => {
-  try {
-    await Employee.findByIdAndDelete(req.params.id);
-    res.status(200).send('Employee deleted');
-  } catch (err) {
-    res.status(500).send('Error deleting employee');
-  }
-});
 
 // بدء السيرفر
 app.listen(port, () => {
