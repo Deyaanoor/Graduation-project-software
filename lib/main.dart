@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import './providers/employee_provider.dart';
-import './screens/employees_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'screens/home_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(); // تحميل متغيرات البيئة
+
   runApp(
-    ChangeNotifierProvider(
-      create: (ctx) => EmployeeProvider(),
+    ProviderScope(
+      // ✅ ضروري لتفعيل Riverpod
       child: MyApp(),
     ),
   );
@@ -17,7 +20,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: EmployeesScreen(),
+      title: 'Flutter + Riverpod + Node.js',
+      home: HomeScreen(),
     );
   }
 }

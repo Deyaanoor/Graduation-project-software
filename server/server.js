@@ -1,72 +1,25 @@
-const express = require('express');
-const cors = require('cors');  // استيراد حزمة CORS
-const { MongoClient, ServerApiVersion } = require('mongodb');
-require("dotenv").config(); // تحميل متغيرات البيئة
+const express = require("express");
+const cors = require("cors");
+const dotenv = require("dotenv");
+const userRoutes = require("./routes/userRoutes");
+const errorHandler = require("./middleware/errorHandler");
+
+dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(cors());  // إضافة middleware الخاص بـ CORS
-app.use(express.json());  // تمكين JSON Parsing
+app.use(cors());
+app.use(express.json());
 
-// 🔹 تحميل متغيرات البيئة
-const uri = process.env.MONGO_URI; 
-
-// 🔹 إعداد الاتصال بـ MongoDB
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
-});
-
-// ✅ دالة الاتصال بقاعدة البيانات
-async function connectDB() {
-  try {
-    await client.connect();
-    console.log("✅ Connected to MongoDB Atlas!");
-    return client.db("ProSoftware"); // اسم قاعدة البيانات
-  } catch (error) {
-    console.error("❌ MongoDB Connection Error:", error);
-    process.exit(1); // إيقاف التطبيق في حالة الخطأ
-  }
-}
-
-// ✅ Route لاختبار عمل الـ API
 app.get("/", (req, res) => {
   res.send("✅ API is working!");
 });
 
-// ✅ Route لجلب جميع المستخدمين من قاعدة البيانات
-app.get("/api/users", async (req, res) => {
-  try {
-    const database = await connectDB();
-    const usersCollection = database.collection("users");
+// ✅ استخدام المسارات الخاصة بالمستخدمين
+app.use("/api/users", userRoutes);
 
-    const users = await usersCollection.find().toArray();
-    res.json(users);
-  } catch (error) {
-    console.error("❌ Error fetching users:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+// ✅ Middleware لمعالجة الأخطاء
+app.use(errorHandler);
 
-// ✅ Route لإضافة مستخدم جديد
-app.post("/api/users", async (req, res) => {
-  try {
-    const database = await connectDB();
-    const usersCollection = database.collection("users");
-
-    const newUser = req.body; // البيانات القادمة من الطلب
-    const result = await usersCollection.insertOne(newUser);
-
-    res.status(201).json({ message: "User added!", id: result.insertedId });
-  } catch (error) {
-    console.error("❌ Error adding user:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
-// ✅ تشغيل السيرفر
 app.listen(port, () => console.log(`🚀 Server running on port ${port}`));
