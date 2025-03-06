@@ -1,8 +1,8 @@
 const { MongoClient } = require("mongodb");
 const dotenv = require("dotenv");
-
+console.log("deyaa")
 dotenv.config(); // تحميل المتغيرات من ملف .env
-
+console.log("omar")
 const connectDB = async () => {
   try {
     const client = new MongoClient(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
