@@ -1,21 +1,28 @@
-const { MongoClient } = require("mongodb");
+const { MongoClient, ServerApiVersion } = require("mongodb");
 const dotenv = require("dotenv");
 
-dotenv.config(); // تحميل المتغيرات من ملف .env
+dotenv.config(); // تحميل متغيرات البيئة
 
 const connectDB = async () => {
   try {
-    const client = new MongoClient(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    const client = new MongoClient(process.env.MONGO_URI, {
+      serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+      },
+    });
+
     await client.connect();
-    
-    const dbName = process.env.DB_NAME || "prosoftware"; // اسم القاعدة من .env أو افتراضيًا
+
+    const dbName = process.env.DB_NAME || "ProSoftware"; // اسم قاعدة البيانات
     const db = client.db(dbName);
 
-    console.log(`✅ Connected to the database: ${db.databaseName}`);
+    console.log(`✅ Connected to MongoDB Atlas! Database: ${db.databaseName}`);
     return db;
   } catch (error) {
-    console.error("❌ Error connecting to database:", error);
-    throw new Error("Failed to connect to the database");
+    console.error("❌ MongoDB Connection Error:", error);
+    process.exit(1); // إيقاف التطبيق عند حدوث خطأ
   }
 };
 
