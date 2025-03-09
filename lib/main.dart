@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_provider/Themes/theme.dart';
+import 'package:flutter_provider/screens/Technician/AttendancePage.dart';
+import 'package:flutter_provider/screens/Technician/SparePartsPage.dart';
+import 'package:flutter_provider/screens/Technician/home.dart';
+import 'package:flutter_provider/screens/Technician/report.dart';
 import 'package:flutter_provider/screens/auth/welcomePage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -19,17 +24,20 @@ void main() async {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
     return MaterialApp(
       title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        textTheme: GoogleFonts.latoTextTheme(textTheme).copyWith(
-          bodyLarge: GoogleFonts.montserrat(textStyle: textTheme.bodyLarge),
-        ),
-      ),
+      theme: lightTheme,
+      darkTheme: darkTheme,
+      themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
       home: WelcomePage(),
+      routes: {
+        '/welcome': (context) => WelcomePage(),
+        '/home': (context) => Home(),
+        '/report': (context) => ReportPage(),
+        '/attendance': (context) => AttendanceSalaryPage(),
+        '/SparePartsApp': (context) => SparePartsApp(),
+      },
     );
   }
 }
