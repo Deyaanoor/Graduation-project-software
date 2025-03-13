@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_provider/screens/Admin/dashboard_screen.dart';
 import 'package:flutter_provider/screens/auth/login.dart';
 import 'package:flutter_provider/screens/auth/signUp.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -17,7 +18,9 @@ class _WelcomePageState extends State<WelcomePage> {
     return InkWell(
       onTap: () {
         Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (context) => LoginPage()));
+            //  context, MaterialPageRoute(builder: (context) => LoginPage()));
+            context,
+            MaterialPageRoute(builder: (context) => DashboardScreen()));
       },
       child: Container(
         width: MediaQuery.of(context).size.width,

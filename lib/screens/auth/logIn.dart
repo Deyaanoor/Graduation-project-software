@@ -61,7 +61,8 @@ class _LoginPageState extends State<LoginPage> {
   Widget _submitButton() {
     return InkWell(
       onTap: () {
-        Navigator.pushNamed(context, '/home');
+        //Navigator.pushNamed(context, '/home');
+        Navigator.pushNamed(context, '/Admin-Dashboard');
       },
       child: Container(
         width: MediaQuery.of(context).size.width,
