@@ -9,8 +9,8 @@ final ThemeData lightTheme = ThemeData(
     bodyMedium: TextStyle(color: Color(0xFF424242)),
   ),
   colorScheme: ColorScheme.light(
-    primary: Color(0xFFFF9800),
-    secondary: Color(0xFFFFB74D),
+    secondary: Colors.deepOrange,
+    primary: Colors.orange,
     background: Colors.white,
     onBackground: Color(0xFF212121),
     surface: Color(0xFFFFFFFF),

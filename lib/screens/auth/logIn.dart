@@ -1,281 +1,230 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_provider/screens/auth/signUp.dart';
+import 'package:flutter_provider/Responsive/Responsive_helper.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
+import 'package:flutter_provider/screens/auth/Title_Project.dart';
+import 'package:flutter_provider/widgets/back_button.dart';
+import 'package:flutter_provider/screens/auth/divider_widget.dart';
+import 'package:flutter_provider/screens/auth/forgot_password.dart';
+import 'package:flutter_provider/screens/auth/register_label.dart';
 import 'package:flutter_provider/widgets/bezierContainer.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_provider/widgets/custom_button.dart';
+import 'package:flutter_provider/widgets/custom_text_field.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class LoginPage extends StatefulWidget {
-  LoginPage({Key? key, this.title}) : super(key: key);
-
-  final String? title;
+class LoginPage extends ConsumerWidget {
+  const LoginPage({super.key});
 
   @override
-  _LoginPageState createState() => _LoginPageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final TextEditingController emailController = TextEditingController();
+    final TextEditingController passwordController = TextEditingController();
 
-class _LoginPageState extends State<LoginPage> {
-  Widget _backButton() {
-    return InkWell(
-      onTap: () {
-        Navigator.pop(context);
-      },
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 10),
-        child: Row(
-          children: <Widget>[
-            Container(
-              padding: EdgeInsets.only(left: 0, top: 10, bottom: 10),
-              child: Icon(Icons.keyboard_arrow_left, color: Colors.black),
-            ),
-            Text('Back',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500))
-          ],
+    final height = MediaQuery.of(context).size.height;
+    final width = MediaQuery.of(context).size.width;
+    final lang = ref.watch(languageProvider);
+
+    return Scaffold(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          if (ResponsiveHelper.isMobile(context)) {
+            return _buildMobileView(
+                context, emailController, passwordController, height);
+          } else {
+            return _buildDesktopView(
+                context, emailController, passwordController, height, width);
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildMobileView(
+      BuildContext context,
+      TextEditingController emailController,
+      TextEditingController passwordController,
+      double height) {
+    return Stack(
+      children: [
+        Positioned(
+          top: -height * .15,
+          right: -MediaQuery.of(context).size.width * .4,
+          child: BezierContainer(),
         ),
-      ),
-    );
-  }
-
-  Widget _entryField(String title, {bool isPassword = false}) {
-    return Container(
-      margin: EdgeInsets.symmetric(vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            title,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(height: height * .2),
+                TitlePro(),
+                const SizedBox(height: 50),
+                CustomTextField(
+                  label: "Email",
+                  hint: "Enter your email",
+                  icon: Icons.email,
+                  controller: emailController,
+                ),
+                CustomTextField(
+                  label: "Password",
+                  hint: "Enter your password",
+                  icon: Icons.lock,
+                  isPassword: true,
+                  controller: passwordController,
+                ),
+                const SizedBox(height: 20),
+                CustomButton(
+                  text: 'Login',
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/home');
+                  },
+                  isGradient: true,
+                ),
+                ForgotPassword(),
+                DividerWidget(),
+                SizedBox(height: height * .055),
+                RegisterLabel(),
+              ],
+            ),
           ),
-          SizedBox(
-            height: 10,
-          ),
-          TextField(
-              obscureText: isPassword,
-              decoration: InputDecoration(
-                  border: InputBorder.none,
-                  fillColor: Color(0xfff3f3f4),
-                  filled: true))
-        ],
-      ),
-    );
-  }
-
-  Widget _submitButton() {
-    return InkWell(
-      onTap: () {
-        Navigator.pushNamed(context, '/home');
-      },
-      child: Container(
-        width: MediaQuery.of(context).size.width,
-        padding: EdgeInsets.symmetric(vertical: 15),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-            borderRadius: BorderRadius.all(Radius.circular(5)),
-            boxShadow: <BoxShadow>[
-              BoxShadow(
-                  color: Colors.grey.shade200,
-                  offset: Offset(2, 4),
-                  blurRadius: 5,
-                  spreadRadius: 2)
-            ],
-            gradient: LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [Color(0xfffbb448), Color(0xfff7892b)])),
-        child: Text(
-          'Login',
-          style: TextStyle(fontSize: 20, color: Colors.white),
         ),
-      ),
-    );
-  }
-
-  Widget _divider() {
-    return Container(
-      margin: EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        children: <Widget>[
-          SizedBox(
-            width: 20,
-          ),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10),
-              child: Divider(
-                thickness: 1,
-              ),
-            ),
-          ),
-          Text('or'),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10),
-              child: Divider(
-                thickness: 1,
-              ),
-            ),
-          ),
-          SizedBox(
-            width: 20,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _facebookButton() {
-    return Container(
-      height: 50,
-      margin: EdgeInsets.symmetric(vertical: 20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            flex: 1,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Color(0xff1959a9),
-                borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(5),
-                    topLeft: Radius.circular(5)),
-              ),
-              alignment: Alignment.center,
-              child: Text('f',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 25,
-                      fontWeight: FontWeight.w400)),
-            ),
-          ),
-          Expanded(
-            flex: 5,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Color(0xff2872ba),
-                borderRadius: BorderRadius.only(
-                    bottomRight: Radius.circular(5),
-                    topRight: Radius.circular(5)),
-              ),
-              alignment: Alignment.center,
-              child: Text('Log in with Facebook',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w400)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _createAccountLabel() {
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => SignUpPage()));
-      },
-      child: Container(
-        margin: EdgeInsets.symmetric(vertical: 20),
-        padding: EdgeInsets.all(15),
-        alignment: Alignment.bottomCenter,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'Don\'t have an account ?',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-            ),
-            SizedBox(
-              width: 10,
-            ),
-            Text(
-              'Register',
-              style: TextStyle(
-                  color: Color(0xfff79c4f),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _title() {
-    return RichText(
-      textAlign: TextAlign.center,
-      text: TextSpan(
-          text: 'd',
-          style: TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.w700,
-              color: Color(0xffe46b10)),
-          children: [
-            TextSpan(
-              text: 'ev',
-              style: TextStyle(color: Colors.black, fontSize: 30),
-            ),
-            TextSpan(
-              text: 'rnz',
-              style: TextStyle(color: Color(0xffe46b10), fontSize: 30),
-            ),
-          ]),
-    );
-  }
-
-  Widget _emailPasswordWidget() {
-    return Column(
-      children: <Widget>[
-        _entryField("Email id"),
-        _entryField("Password", isPassword: true),
+        const Positioned(top: 40, left: 0, child: BackButtonWidget()),
       ],
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final height = MediaQuery.of(context).size.height;
-    return Scaffold(
-        body: Container(
-      height: height,
-      child: Stack(
-        children: <Widget>[
-          Positioned(
-              top: -height * .15,
-              right: -MediaQuery.of(context).size.width * .4,
-              child: BezierContainer()),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  SizedBox(height: height * .2),
-                  _title(),
-                  SizedBox(height: 50),
-                  _emailPasswordWidget(),
-                  SizedBox(height: 20),
-                  _submitButton(),
-                  Container(
-                    padding: EdgeInsets.symmetric(vertical: 10),
-                    alignment: Alignment.centerRight,
-                    child: Text('Forgot Password ?',
-                        style: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w500)),
-                  ),
-                  _divider(),
-                  _facebookButton(),
-                  SizedBox(height: height * .055),
-                  _createAccountLabel(),
-                ],
-              ),
+  Widget _buildDesktopView(
+    BuildContext context,
+    TextEditingController emailController,
+    TextEditingController passwordController,
+    double height,
+    double width,
+  ) {
+    return Center(
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: height * 0.85,
+          maxWidth: width * 0.8,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 30,
+              spreadRadius: 5,
             ),
+          ],
+        ),
+        child: IntrinsicHeight(
+          child: Row(
+            children: [
+              Container(
+                width: width * 0.3,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.orange.shade700,
+                      Colors.orange.shade400,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.horizontal(
+                    left: Radius.circular(25),
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(40),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: height * 0.4,
+                          maxWidth: width * 0.2,
+                        ),
+                        child: Image.network(
+                          'https://i.postimg.cc/65vkqwg3/cleaned-image-3-removebg-preview.png',
+                          fit: BoxFit.contain,
+                          alignment: Alignment.center,
+                        ),
+                      ),
+                      SizedBox(height: 30),
+                      TitlePro(),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(horizontal: 50, vertical: 40),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TitlePro(),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      CustomTextField(
+                        label: "Email Address",
+                        hint: "Enter your email",
+                        icon: Icons.email,
+                        controller: emailController,
+                      ),
+                      SizedBox(height: 10),
+                      CustomTextField(
+                        label: "Password",
+                        hint: "Enter your password",
+                        icon: Icons.lock,
+                        isPassword: true,
+                        controller: passwordController,
+                      ),
+                      SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Checkbox(
+                                value: true,
+                                onChanged: (v) {},
+                                activeColor: Colors.orange.shade700,
+                              ),
+                              Text(
+                                'Remember me',
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                          ForgotPassword(),
+                        ],
+                      ),
+                      SizedBox(height: 20),
+                      CustomButton(
+                        text: 'Sign In',
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/home');
+                        },
+                        isGradient: true,
+                      ),
+                      SizedBox(height: 10),
+                      DividerWidget(),
+                      RegisterLabel(),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-          Positioned(top: 40, left: 0, child: _backButton()),
-        ],
+        ),
       ),
-    ));
+    );
   }
 }

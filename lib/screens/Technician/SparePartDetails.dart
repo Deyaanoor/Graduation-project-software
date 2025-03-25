@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SparePartDetails extends StatelessWidget {
-  final Map<String, String> item;
+  final Map<String, dynamic> item;
 
   const SparePartDetails({required this.item});
 

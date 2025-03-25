@@ -1,0 +1,402 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_provider/Responsive/responsive_helper.dart';
+import 'package:flutter_provider/screens/Technician/Home/Desktop_appbar.dart';
+import 'package:flutter_provider/screens/Technician/reports/components/image_upload_section.dart';
+import 'package:flutter_provider/screens/Technician/reports/components/repair_section.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:flutter_provider/widgets/custom_text_field.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
+
+class ReportPage extends ConsumerStatefulWidget {
+  const ReportPage({super.key});
+
+  @override
+  ConsumerState<ReportPage> createState() => _ReportPageState();
+}
+
+class _ReportPageState extends ConsumerState<ReportPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _ownerController = TextEditingController();
+  final _plateController = TextEditingController();
+  final _problemTitleController = TextEditingController();
+  final _costController = TextEditingController();
+  final _repairDescController = TextEditingController();
+  final _partController = TextEditingController();
+
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  List<XFile> _images = [];
+  bool _isListening = false;
+  List<String> _selectedParts = [];
+
+  @override
+  void dispose() {
+    _ownerController.dispose();
+    _plateController.dispose();
+    _problemTitleController.dispose();
+    _costController.dispose();
+    _repairDescController.dispose();
+    _partController.dispose();
+    super.dispose();
+  }
+
+  void _addPart() {
+    if (_partController.text.isNotEmpty) {
+      setState(() => _selectedParts.add(_partController.text));
+      _partController.clear();
+    }
+  }
+
+  void _removePart(int index) {
+    setState(() => _selectedParts.removeAt(index));
+  }
+
+  void _removeImage(int index) {
+    setState(() => _images.removeAt(index));
+  }
+
+  Future<void> _pickImages() async {
+    final ImagePicker picker = ImagePicker();
+    final List<XFile>? selectedImages = await picker.pickMultiImage();
+    if (selectedImages != null) {
+      setState(() => _images.addAll(selectedImages));
+    }
+  }
+
+  void _toggleListening() async {
+    final lang = ref.read(languageProvider);
+    final currentLang = ref.read(languageProvider.notifier).currentLanguageCode;
+
+    if (_isListening) {
+      setState(() => _isListening = false);
+      _speech.stop();
+    } else {
+      final micStatus = await Permission.microphone.request();
+      if (!micStatus.isGranted) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(lang['mic_permission_title'] ?? 'Permission Required'),
+            content: Text(
+                lang['mic_permission_content'] ?? 'Allow microphone access'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(lang['ok'] ?? 'OK'),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+
+      final available = await _speech.initialize();
+      if (available) {
+        setState(() => _isListening = true);
+        _speech.listen(
+          onResult: (result) => setState(() {
+            _repairDescController.text = result.recognizedWords;
+          }),
+          localeId: currentLang,
+        );
+      }
+    }
+  }
+
+  Widget _buildMainContent(BuildContext context, Map<String, String> lang) {
+    return ResponsiveHelper.isDesktop(context)
+        ? _buildDesktopLayout(lang)
+        : _buildMobileLayout(lang);
+  }
+
+  Widget _buildMobileLayout(Map<String, String> lang) {
+    return Column(
+      children: [
+        _buildOwnerField(lang),
+        const SizedBox(height: 20),
+        _buildPlateAndCostRow(lang),
+        const SizedBox(height: 20),
+        _buildProblemTitleField(lang),
+        const SizedBox(height: 20),
+        _buildPartsSection(lang),
+        const SizedBox(height: 20),
+        _buildRepairSection(lang),
+        const SizedBox(height: 20),
+        _buildImageUploadSection(lang),
+        const SizedBox(height: 30),
+        _buildActionButtons(lang),
+      ],
+    );
+  }
+
+  Widget _buildDesktopLayout(Map<String, String> lang) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                children: [
+                  _buildOwnerField(lang),
+                  const SizedBox(height: 25),
+                  _buildPlateAndCostRow(lang),
+                  const SizedBox(height: 25),
+                  _buildProblemTitleField(lang),
+                  const SizedBox(height: 25),
+                  _buildPartsSection(lang),
+                ],
+              ),
+            ),
+            const SizedBox(width: 40),
+            Expanded(
+              child: Column(
+                children: [
+                  _buildRepairSection(lang),
+                  const SizedBox(height: 25),
+                  _buildImageUploadSection(lang),
+                  const SizedBox(height: 35),
+                  _buildActionButtons(lang),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOwnerField(Map<String, String> lang) {
+    return CustomTextField(
+      label: lang['owner_name'] ?? 'Owner Name',
+      hint: lang['enter_owner'] ?? 'Enter owner name',
+      icon: Icons.person,
+      controller: _ownerController,
+      borderColor: Colors.orange,
+      backgroundColor: Colors.white,
+      iconColor: Colors.orange,
+    );
+  }
+
+  Widget _buildPlateAndCostRow(Map<String, String> lang) {
+    return Row(
+      children: [
+        Expanded(
+          child: CustomTextField(
+            label: lang['plate_number'] ?? 'Plate Number',
+            hint: lang['enter_plate'] ?? 'Enter plate number',
+            icon: Icons.directions_car,
+            controller: _plateController,
+            borderColor: Colors.orange,
+            backgroundColor: Colors.white,
+            iconColor: Colors.orange,
+          ),
+        ),
+        SizedBox(width: ResponsiveHelper.isDesktop(context) ? 25 : 15),
+        Expanded(
+          child: CustomTextField(
+            label: lang['cost'] ?? 'Cost',
+            hint: lang['enter_cost'] ?? 'Enter cost',
+            icon: Icons.attach_money,
+            controller: _costController,
+            inputType: TextInputType.number,
+            borderColor: Colors.orange,
+            backgroundColor: Colors.white,
+            iconColor: Colors.orange,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProblemTitleField(Map<String, String> lang) {
+    return CustomTextField(
+      label: lang['problem_title'] ?? 'Problem Title',
+      hint: lang['enter_problem_title'] ?? 'Enter problem title',
+      icon: Icons.error_outline,
+      controller: _problemTitleController,
+      borderColor: Colors.orange,
+      backgroundColor: Colors.white,
+      iconColor: Colors.orange,
+    );
+  }
+
+  Widget _buildPartsSection(Map<String, String> lang) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          lang['used_parts'] ?? 'Used Parts',
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.deepOrange,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.orange, width: 2),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _partController,
+                        decoration: InputDecoration(
+                          hintText: lang['search_parts'] ?? 'Search parts',
+                          border: InputBorder.none,
+                          contentPadding:
+                              const EdgeInsets.symmetric(horizontal: 10),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.orange,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.add, color: Colors.white),
+                        onPressed: _addPart,
+                      ),
+                    ),
+                  ],
+                ),
+                if (_selectedParts.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: List.generate(
+                        _selectedParts.length,
+                        (index) => Chip(
+                          label: Text(_selectedParts[index]),
+                          deleteIcon: const Icon(Icons.close, size: 18),
+                          onDeleted: () => _removePart(index),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRepairSection(Map<String, String> lang) {
+    return RepairSection(
+      controller: _repairDescController,
+      isListening: _isListening,
+      onVoicePressed: _toggleListening,
+      hint: lang['steps_hint'] ?? 'Enter repair steps',
+      voiceLabel: _isListening
+          ? lang['stop_record'] ?? 'Stop Recording'
+          : lang['voice_record'] ?? 'Voice Record',
+      title: lang['repair_description'] ?? 'Repair Description',
+      // isDesktop: ResponsiveHelper.isDesktop(context),
+    );
+  }
+
+  Widget _buildImageUploadSection(Map<String, String> lang) {
+    return ImageUploadSection(
+      images: _images,
+      onUpload: _pickImages,
+      onDelete: _removeImage,
+      title: lang['attach_photos'] ?? 'Attach Photos',
+      // isDesktop: ResponsiveHelper.isDesktop(context),
+    );
+  }
+
+  Widget _buildActionButtons(Map<String, String> lang) {
+    final buttonPadding = ResponsiveHelper.isDesktop(context)
+        ? const EdgeInsets.symmetric(vertical: 18, horizontal: 30)
+        : const EdgeInsets.symmetric(vertical: 15);
+
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange[100],
+              padding: buttonPadding,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              lang['save_draft'] ?? 'Save Draft',
+              style: TextStyle(
+                color: Colors.deepOrange,
+                fontSize: ResponsiveHelper.isDesktop(context) ? 18 : 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+        SizedBox(width: ResponsiveHelper.isDesktop(context) ? 25 : 15),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.deepOrange,
+              padding: buttonPadding,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              lang['send_admin'] ?? 'Send to Admin',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: ResponsiveHelper.isDesktop(context) ? 18 : 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final lang = ref.watch(languageProvider);
+    final textDirection = ref.read(languageProvider.notifier).textDirection;
+    final isDesktop = ResponsiveHelper.isDesktop(context);
+    return Directionality(
+      textDirection: textDirection,
+      child: Scaffold(
+        appBar: isDesktop
+            ? DesktopCustomAppBar()
+            : AppBar(
+                title: Text(lang['submit_report'] ?? 'Submit Report'),
+                centerTitle: true,
+                backgroundColor: Colors.orange,
+                elevation: ResponsiveHelper.isDesktop(context) ? 5 : 2,
+              ),
+        body: SingleChildScrollView(
+          padding:
+              EdgeInsets.all(ResponsiveHelper.isDesktop(context) ? 30 : 20),
+          child: Form(
+            key: _formKey,
+            child: _buildMainContent(context, lang),
+          ),
+        ),
+      ),
+    );
+  }
+}
