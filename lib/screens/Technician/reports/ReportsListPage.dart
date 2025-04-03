@@ -1,268 +1,211 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_provider/Responsive/Responsive_helper.dart';
-import 'package:flutter_provider/screens/Technician/reports/ReportDetailsPage.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_provider/providers/reports_provider.dart';
+import 'package:flutter_provider/providers/home_provider.dart';
+import 'package:flutter_provider/screens/Technician/reports/ReportDetailsPage.dart';
+import 'package:flutter_provider/Responsive/Responsive_helper.dart';
 
-class ReportsPage extends StatefulWidget {
-  @override
-  _ReportsPageState createState() => _ReportsPageState();
-}
-
-class _ReportsPageState extends State<ReportsPage> {
-  final List<Map<String, dynamic>> reports = [
-    {
-      'carPlate': 'ABC-123',
-      'problem': 'مشكلة في المحرك',
-      'date': DateTime(2023, 10, 1),
-      'owner': 'أحمد محمد',
-      'cost': '150 دينار',
-      'images': ['assets/car1.jpg', 'assets/car2.jpg']
-    },
-    {
-      'carPlate': 'ABC-123',
-      'problem': 'مشكلة في المحرك',
-      'date': DateTime(2023, 10, 1),
-      'owner': 'أحمد محمد',
-      'cost': '150 دينار',
-      'images': ['assets/car1.jpg', 'assets/car2.jpg']
-    },
-    {
-      'carPlate': 'ABC-123',
-      'problem': 'مشكلة في المحرك',
-      'date': DateTime(2023, 10, 1),
-      'owner': 'أحمد محمد',
-      'cost': '150 دينار',
-      'images': ['assets/car1.jpg', 'assets/car2.jpg']
-    },
-    {
-      'carPlate': 'ABC-123',
-      'problem': 'مشكلة في المحرك',
-      'date': DateTime(2023, 10, 1),
-      'owner': 'أحمد محمد',
-      'cost': '150 دينار',
-      'images': ['assets/car1.jpg', 'assets/car2.jpg']
-    },
-    {
-      'carPlate': 'ABC-123',
-      'problem': 'مشكلة في المحرك',
-      'date': DateTime(2023, 10, 1),
-      'owner': 'أحمد محمد',
-      'cost': '150 دينار',
-      'images': ['assets/car1.jpg', 'assets/car2.jpg']
-    },
-    {
-      'carPlate': 'ABC-123',
-      'problem': 'مشكلة في المحرك',
-      'date': DateTime(2023, 10, 1),
-      'owner': 'أحمد محمد',
-      'cost': '150 دينار',
-      'images': ['assets/car1.jpg', 'assets/car2.jpg']
-    },
-    {
-      'carPlate': 'ABC-123',
-      'problem': 'مشكلة في المحرك',
-      'date': DateTime(2023, 10, 1),
-      'owner': 'أحمد محمد',
-      'cost': '150 دينار',
-      'images': ['assets/car1.jpg', 'assets/car2.jpg']
-    },
-    // إضافة تقارير أخرى هنا
-  ];
-
-  DateTime? _selectedDate;
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime currentDate = DateTime.now();
-
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: currentDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2025, 12, 31),
-    );
-
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
-  }
+class ReportsPage extends ConsumerWidget {
+  const ReportsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final reportsAsyncValue = ref.watch(reportsProvider);
+
     return Scaffold(
-      backgroundColor: Colors.grey[200]!,
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    TextField(
-                      decoration: InputDecoration(
-                        hintText: 'ابحث...',
-                        prefixIcon: Icon(Icons.search, color: Colors.orange),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    InkWell(
-                      onTap: () => _selectDate(context),
-                      child: Container(
-                        padding:
-                            EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(15),
-                          border: Border.all(color: Colors.orange),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.calendar_today, color: Colors.orange),
-                            SizedBox(width: 8),
-                            Text(
-                              _selectedDate == null
-                                  ? 'اختر التاريخ'
-                                  : DateFormat('yyyy-MM-dd')
-                                      .format(_selectedDate!),
-                              style: TextStyle(color: Colors.orange),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                )),
-          ),
-          ResponsiveHelper.isDesktop(context)
-              ? SliverGrid(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 15,
-                    crossAxisSpacing: 15,
-                    childAspectRatio: 0.9,
-                  ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => _buildReportCard(
-                        reports[index], screenWidth,
-                        isGrid: true),
-                    childCount: reports.length,
-                  ),
-                )
-              : SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) =>
-                        _buildReportCard(reports[index], screenWidth),
-                    childCount: reports.length,
-                  ),
-                ),
-        ],
-      ),
+      backgroundColor: Colors.grey[200],
       floatingActionButton: FloatingActionButton(
+        onPressed: () => ref.read(selectedIndexProvider.notifier).state = 4,
         backgroundColor: Colors.orange,
-        child: Icon(Icons.add, color: Colors.white),
-        onPressed: () {
-          Navigator.pushNamed(context, "/report");
-        },
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+      body: RefreshIndicator(
+        onRefresh: () => ref.read(reportsProvider.notifier).fetchReports(),
+        child: CustomScrollView(
+          slivers: [
+            _buildSearchBar(),
+            _buildReportsList(reportsAsyncValue, context),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildReportCard(Map<String, dynamic> report, double screenWidth,
-      {bool isGrid = false}) {
-    Widget card = Hero(
-      tag: report['carPlate'],
+  SliverToBoxAdapter _buildSearchBar() {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: TextField(
+          decoration: InputDecoration(
+            hintText: 'ابحث...',
+            prefixIcon: const Icon(Icons.search, color: Colors.orange),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReportsList(
+      AsyncValue<List<Map<String, dynamic>>> asyncValue, BuildContext context) {
+    return asyncValue.when(
+      data: (reports) => _handleReportsData(reports, context),
+      loading: () => const SliverToBoxAdapter(
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stack) => SliverToBoxAdapter(
+        child:
+            Center(child: Text("خطأ في تحميل البيانات: ${error.toString()}")),
+      ),
+    );
+  }
+
+  Widget _handleReportsData(
+      List<Map<String, dynamic>> reports, BuildContext context) {
+    if (reports.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Text(
+              "لا توجد تقارير متاحة حالياً",
+              style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return ResponsiveHelper.isDesktop(context)
+        ? SliverGrid(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 15,
+              crossAxisSpacing: 15,
+              childAspectRatio: 0.9,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => _buildReportCard(context, reports[index]),
+              childCount: reports.length,
+            ),
+          )
+        : SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => _buildReportCard(context, reports[index]),
+              childCount: reports.length,
+            ),
+          );
+  }
+
+  Widget _buildReportCard(BuildContext context, Map<String, dynamic> report) {
+    final formattedDate = _formatDate(report['date']);
+    final cost = _parseCost(report['cost']);
+
+    return Hero(
+      tag: report['_id'] ?? UniqueKey().toString(),
       child: Card(
-        margin: EdgeInsets.all(10),
+        margin: const EdgeInsets.all(10),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
         elevation: 5,
         child: InkWell(
-          onTap: () {
-            Navigator.push(
-              context,
-              PageRouteBuilder(
-                transitionDuration: Duration(milliseconds: 500),
-                pageBuilder: (_, __, ___) => ReportDetailsPage(report: report),
-                transitionsBuilder: (_, animation, __, child) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: child,
-                  );
-                },
-              ),
-            );
-          },
+          onTap: () => _navigateToDetails(context, report),
           child: Padding(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      report['carPlate'],
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.orange,
-                      ),
-                    ),
-                    Text(
-                      DateFormat('yyyy-MM-dd').format(report['date']),
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ),
-                Divider(color: Colors.orange.withOpacity(0.3)),
-                SizedBox(height: 10),
-                Text(
-                  report['problem'],
-                  style: TextStyle(fontSize: 16),
-                ),
-                SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Chip(
-                      label: Text(report['cost']),
-                      backgroundColor: Colors.orange.withOpacity(0.2),
-                    ),
-                    Text(
-                      report['owner'],
-                      style: TextStyle(
-                        fontStyle: FontStyle.italic,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
+                _buildCardHeader(report, formattedDate),
+                const Divider(color: Colors.orange),
+                _buildIssueSection(report),
+                const SizedBox(height: 10),
+                _buildFooter(report, cost),
               ],
             ),
           ),
         ),
       ),
     );
+  }
 
-    if (isGrid) {
-      return card;
-    } else {
-      double cardWidth = ResponsiveHelper.isDesktop(context)
-          ? screenWidth * 0.4
-          : screenWidth * 0.9;
-      return Center(
-        child: SizedBox(
-          width: cardWidth,
-          child: card,
-        ),
+  String _formatDate(dynamic date) {
+    try {
+      return DateFormat('yyyy-MM-dd').format(
+        date is DateTime ? date : DateTime.parse(date.toString()),
       );
+    } catch (e) {
+      return 'تاريخ غير معروف';
     }
+  }
+
+  String _parseCost(dynamic cost) {
+    try {
+      return '${int.parse(cost.toString())} دينار';
+    } catch (e) {
+      return 'السعر غير محدد';
+    }
+  }
+
+  void _navigateToDetails(BuildContext context, Map<String, dynamic> report) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ReportDetailsPage(report: report),
+      ),
+    );
+  }
+
+  Widget _buildCardHeader(Map<String, dynamic> report, String date) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          report['plateNumber']?.toString() ?? 'بدون رقم لوحة',
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.orange,
+          ),
+        ),
+        Text(
+          date,
+          style: TextStyle(color: Colors.grey[600]),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIssueSection(Map<String, dynamic> report) {
+    return Expanded(
+      child: Text(
+        report['issue']?.toString() ?? 'لم يتم تحديد المشكلة',
+        style: const TextStyle(fontSize: 16),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
+
+  Widget _buildFooter(Map<String, dynamic> report, String cost) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Chip(
+          label: Text(cost),
+          backgroundColor: Colors.orange.withOpacity(0.2),
+        ),
+        Text(
+          report['owner']?.toString() ?? 'مالك غير معروف',
+          style: TextStyle(
+            fontStyle: FontStyle.italic,
+            color: Colors.grey[700],
+          ),
+        ),
+      ],
+    );
   }
 }

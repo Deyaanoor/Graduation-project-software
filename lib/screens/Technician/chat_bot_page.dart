@@ -64,7 +64,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
   }
 
   Future<void> _sendDataToAPI() async {
-    final url = 'https://1f17-35-226-214-73.ngrok-free.app/predict';
+    final url = 'https://8083-34-73-158-105.ngrok-free.app/predict';
 
     final response = await http.post(
       Uri.parse(url),

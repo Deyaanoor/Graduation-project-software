@@ -1,33 +1,41 @@
+const { MongoClient } = require("mongodb");
+const dotenv = require("dotenv");
+dotenv.config();
+
 const connectDB = require("../config/db");
 
-// ✅ جلب جميع المستخدمين
-const getUsers = async (req, res) => {
+const getAllNews = async (req, res) => {
   try {
-    const database = await connectDB();
-    const usersCollection = database.collection("users");
+    const db = await connectDB(); 
+    const collection = db.collection("news");
 
-    const users = await usersCollection.find().toArray();
-    res.json(users);
+    const newsItems = await collection.find().toArray(); 
+    res.json(newsItems);
   } catch (error) {
-    console.error("❌ Error fetching users:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error(error);
+    res.status(500).json({ message: 'خطأ في الخادم' });
   }
 };
 
-// ✅ إضافة مستخدم جديد
-const addUser = async (req, res) => {
+const addNews = async (req, res) => {
   try {
-    const database = await connectDB();
-    const usersCollection = database.collection("users");
+    const { title, content, admin, time } = req.body;
 
-    const newUser = req.body;
-    const result = await usersCollection.insertOne(newUser);
+    if (!title || !content || !admin || !time) {
+      return res.status(400).json({ message: "يجب توفير جميع الحقول!" });
+    }
 
-    res.status(201).json({ message: "User added!", id: result.insertedId });
+    const db = await connectDB();
+    const collection = db.collection("news");
+
+    const newNews = { title, content, admin, time };
+    await collection.insertOne(newNews);
+
+    res.status(201).json({ message: "تم إضافة الخبر بنجاح!", data: newNews });
   } catch (error) {
-    console.error("❌ Error adding user:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error(error);
+    res.status(500).json({ message: "خطأ في الخادم" });
   }
 };
 
-module.exports = { getUsers, addUser };
+module.exports = { getAllNews, addNews };

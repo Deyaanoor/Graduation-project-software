@@ -5,27 +5,27 @@ final List<Map<String, dynamic>> categories = [
       {
         'name': 'محرك V8',
         'type': 'بنزين',
-        'image': 'assets/engine_v8.jpg',
+        'image': '',
       },
       {
         'name': 'محرك V6',
         'type': 'ديزل',
-        'image': 'assets/engine_v6.jpg',
+        'image': '',
       },
       {
         'name': 'محرك V6',
         'type': 'ديزل',
-        'image': 'assets/engine_v6.jpg',
+        'image': '',
       },
       {
         'name': 'محرك V6',
         'type': 'ديزل',
-        'image': 'assets/engine_v6.jpg',
+        'image': '',
       },
       {
         'name': 'محرك V6',
         'type': 'ديزل',
-        'image': 'assets/engine_v6.jpg',
+        'image': '',
       },
     ],
   },
@@ -35,12 +35,12 @@ final List<Map<String, dynamic>> categories = [
       {
         'name': 'موتور كهربائي',
         'type': '12V',
-        'image': 'assets/electric_motor.jpg',
+        'image': '',
       },
       {
         'name': 'موتور هيدروليكي',
         'type': 'ضغط عالي',
-        'image': 'assets/hydraulic_motor.jpg',
+        'image': '',
       },
     ],
   },
@@ -50,12 +50,12 @@ final List<Map<String, dynamic>> categories = [
       {
         'name': 'ديسك بريك',
         'type': 'فرامل أمامية',
-        'image': 'assets/disc_brake.jpg',
+        'image': '',
       },
       {
         'name': 'بريك طبل',
         'type': 'فرامل خلفية',
-        'image': 'assets/drum_brake.jpg',
+        'image': '',
       },
     ],
   },

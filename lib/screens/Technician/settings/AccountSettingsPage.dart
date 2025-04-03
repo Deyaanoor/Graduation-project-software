@@ -12,28 +12,23 @@ class AccountSettingsPage extends StatefulWidget {
 
 class _AccountSettingsPageState extends State<AccountSettingsPage> {
   File? _selectedImage;
-  XFile? _pickedFile;
+  Uint8List? _selectedImageWebBytes;
 
   Future<void> _pickImage(ImageSource source) async {
     try {
-      if (kIsWeb ||
-          defaultTargetPlatform == TargetPlatform.windows ||
-          defaultTargetPlatform == TargetPlatform.linux ||
-          defaultTargetPlatform == TargetPlatform.macOS) {
-        // Desktop & Web Handling (المعدل)
+      if (kIsWeb) {
         FilePickerResult? result = await FilePicker.platform.pickFiles(
           type: FileType.image,
           allowCompression: true,
         );
 
-        if (result != null && result.files.isNotEmpty) {
-          PlatformFile file = result.files.first;
+        if (result != null) {
           setState(() {
-            _selectedImage = File(file.path!);
+            _selectedImageWebBytes = result.files.first.bytes;
+            _selectedImage = null;
           });
         }
-      } else {
-        // Mobile Handling (يبقى كما هو)
+      } else if (source == ImageSource.camera) {
         final pickedFile = await ImagePicker().pickImage(
           source: source,
           imageQuality: 85,
@@ -43,14 +38,24 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
         if (pickedFile != null) {
           setState(() {
             _selectedImage = File(pickedFile.path);
+            _selectedImageWebBytes = null;
+          });
+        }
+      } else {
+        FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+        if (result != null) {
+          setState(() {
+            _selectedImage = File(result.files.first.path!);
+            _selectedImageWebBytes = null;
           });
         }
       }
     } catch (e) {
-      print('حدث خطأ أثناء اختيار الصورة: $e');
+      print('حدث خطأ: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('حدث خطأ: ${e.toString()}'),
+          content: Text('فشل في اختيار الصورة'),
           backgroundColor: Colors.red,
         ),
       );
@@ -72,7 +77,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                 Navigator.pop(context);
               },
             ),
-            if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android ||
+            if (defaultTargetPlatform == TargetPlatform.android ||
                 defaultTargetPlatform == TargetPlatform.iOS)
               ListTile(
                 leading: Icon(Icons.camera_alt, color: Colors.orange.shade800),
@@ -90,7 +95,6 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    print('الصورة المختارة: $_selectedImage');
     return Scaffold(
       body: ResponsiveHelper.isMobile(context)
           ? _buildMobileLayout(context)
@@ -161,22 +165,25 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.orange.shade100,
-                    image: _pickedFile != null
+                    image: _selectedImage != null ||
+                            _selectedImageWebBytes != null
                         ? DecorationImage(
-                            image: kIsWeb
-                                ? NetworkImage(_pickedFile!.path)
-                                : FileImage(_selectedImage!),
+                            image: _selectedImageWebBytes != null
+                                ? MemoryImage(_selectedImageWebBytes!) 
+                                : FileImage(_selectedImage!)
+                                    as ImageProvider, 
                             fit: BoxFit.cover,
                           )
                         : null,
                   ),
-                  child: _pickedFile == null
-                      ? Icon(
-                          Icons.person_rounded,
-                          size: desktopMode ? 80 : 60,
-                          color: Colors.orange.shade800,
-                        )
-                      : null,
+                  child:
+                      _selectedImage == null && _selectedImageWebBytes == null
+                          ? Icon(
+                              Icons.person_rounded,
+                              size: desktopMode ? 80 : 60,
+                              color: Colors.orange.shade800,
+                            )
+                          : null,
                 ),
                 Positioned(
                   bottom: 0,
@@ -200,14 +207,22 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
         ),
         if (desktopMode) ...[
           SizedBox(height: 20),
-          Text('ضياء بني جابر',
-              style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade800)),
+          Text(
+            'ضياء بني جابر',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey.shade800,
+            ),
+          ),
           SizedBox(height: 8),
-          Text('الحساب الشخصي',
-              style: TextStyle(fontSize: 16, color: Colors.grey.shade600)),
+          Text(
+            'الحساب الشخصي',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey.shade600,
+            ),
+          ),
         ],
       ],
     );

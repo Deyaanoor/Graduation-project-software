@@ -9,7 +9,7 @@ import 'package:flutter_provider/screens/Technician/settings/AccountSettingsPage
 import 'package:flutter_provider/screens/Technician/settings/ContactInfoPage.dart';
 import 'package:flutter_provider/screens/Technician/settings/LanguageSelectionPage.dart';
 
-final selectedIndexProvider = StateProvider<int>((ref) => 0);
+final selectedIndexProviderSitting = StateProvider<int>((ref) => 0);
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -71,7 +71,7 @@ class SettingsPage extends ConsumerWidget {
   }
 
   Widget _buildDesktopLayout(lang, WidgetRef ref, BuildContext context) {
-    final selectedIndex = ref.watch(selectedIndexProvider);
+    final selectedIndex = ref.watch(selectedIndexProviderSitting);
     final currentLangCode =
         ref.read(languageProvider.notifier).currentLanguageCode;
 
@@ -236,7 +236,8 @@ class SettingsPage extends ConsumerWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(15),
         ),
-        onTap: () => ref.read(selectedIndexProvider.notifier).state = index,
+        onTap: () =>
+            ref.read(selectedIndexProviderSitting.notifier).state = index,
       ),
     );
   }

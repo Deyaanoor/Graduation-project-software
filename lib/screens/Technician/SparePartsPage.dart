@@ -21,7 +21,6 @@ class _SparePartsAppState extends State<SparePartsApp> {
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
-      appBar: DesktopCustomAppBar(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

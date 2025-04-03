@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
-import 'package:flutter_provider/screens/Technician/Home/Desktop_appbar.dart';
 import 'package:flutter_provider/screens/Technician/reports/components/image_upload_section.dart';
 import 'package:flutter_provider/screens/Technician/reports/components/repair_section.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +8,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:flutter_provider/widgets/custom_text_field.dart';
 import 'package:flutter_provider/providers/language_provider.dart';
+import 'package:flutter_provider/providers/reports_provider.dart';
+import 'dart:io'; // هذا الاستيراد ضروري لاستخدام File
 
 class ReportPage extends ConsumerStatefulWidget {
   const ReportPage({super.key});
@@ -25,6 +26,10 @@ class _ReportPageState extends ConsumerState<ReportPage> {
   final _costController = TextEditingController();
   final _repairDescController = TextEditingController();
   final _partController = TextEditingController();
+  final _makeController = TextEditingController();
+  final _modelController = TextEditingController();
+  final _yearController = TextEditingController();
+  final _symptomsController = TextEditingController();
 
   final stt.SpeechToText _speech = stt.SpeechToText();
   List<XFile> _images = [];
@@ -124,9 +129,14 @@ class _ReportPageState extends ConsumerState<ReportPage> {
         const SizedBox(height: 20),
         _buildRepairSection(lang),
         const SizedBox(height: 20),
+        _build_Make_Model_Year_Field(lang),
+        const SizedBox(height: 20),
+        _buildCarSymptomsField(lang),
+        const SizedBox(height: 20),
         _buildImageUploadSection(lang),
         const SizedBox(height: 30),
         _buildActionButtons(lang),
+        const SizedBox(height: 30),
       ],
     );
   }
@@ -148,6 +158,10 @@ class _ReportPageState extends ConsumerState<ReportPage> {
                   _buildProblemTitleField(lang),
                   const SizedBox(height: 25),
                   _buildPartsSection(lang),
+                  const SizedBox(height: 25),
+                  _build_Make_Model_Year_Field(lang),
+                  const SizedBox(height: 25),
+                  _buildCarSymptomsField(lang),
                 ],
               ),
             ),
@@ -209,6 +223,60 @@ class _ReportPageState extends ConsumerState<ReportPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _build_Make_Model_Year_Field(Map<String, String> lang) {
+    return Row(
+      children: [
+        Expanded(
+          child: CustomTextField(
+            label: lang['car_make'] ?? 'Car Make',
+            hint: lang['enter_car_make'] ?? 'Enter Car Make',
+            icon: Icons.car_crash,
+            controller: _makeController,
+            borderColor: Colors.orange,
+            backgroundColor: Colors.white,
+            iconColor: Colors.orange,
+          ),
+        ),
+        SizedBox(width: ResponsiveHelper.isDesktop(context) ? 25 : 15),
+        Expanded(
+          child: CustomTextField(
+            label: lang['car_model'] ?? 'Car Model',
+            hint: lang['enter_car_model'] ?? 'Enter Car Model',
+            icon: Icons.car_crash_outlined,
+            controller: _modelController,
+            borderColor: Colors.orange,
+            backgroundColor: Colors.white,
+            iconColor: Colors.orange,
+          ),
+        ),
+        SizedBox(width: ResponsiveHelper.isDesktop(context) ? 25 : 15),
+        Expanded(
+          child: CustomTextField(
+            label: lang['car_year'] ?? 'Car Year',
+            hint: lang['enter_car_year'] ?? 'Enter Car Year',
+            icon: Icons.date_range,
+            controller: _yearController,
+            borderColor: Colors.orange,
+            backgroundColor: Colors.white,
+            iconColor: Colors.orange,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCarSymptomsField(Map<String, String> lang) {
+    return CustomTextField(
+      label: lang['car_symptoms'] ?? 'Car Symptoms',
+      hint: lang['enter_car_symptoms'] ?? 'Enter Car Symptoms',
+      icon: Icons.car_repair_rounded,
+      controller: _symptomsController,
+      borderColor: Colors.orange,
+      backgroundColor: Colors.white,
+      iconColor: Colors.orange,
     );
   }
 
@@ -350,7 +418,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
         SizedBox(width: ResponsiveHelper.isDesktop(context) ? 25 : 15),
         Expanded(
           child: ElevatedButton(
-            onPressed: () {},
+            onPressed: () => _submitReport(),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.deepOrange,
               padding: buttonPadding,
@@ -372,22 +440,146 @@ class _ReportPageState extends ConsumerState<ReportPage> {
     );
   }
 
+  void _submitReport() async {
+    final lang = ref.read(languageProvider);
+    final reportsNotifier = ref.read(reportsProvider.notifier);
+
+    if (_formKey.currentState!.validate()) {
+      try {
+        if (_images.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(lang['upload_image_warning'] ??
+                    'Please upload at least one image')),
+          );
+          return;
+        }
+
+        // قراءة جميع الصور
+        final imageBytesList = await Future.wait(
+          _images.map((image) async => await image.readAsBytes()),
+        );
+
+        final fileNames = _images.map((image) => image.name).toList();
+
+        await reportsNotifier.addReport(
+          owner: _ownerController.text,
+          cost: _costController.text,
+          plateNumber: _plateController.text,
+          issue: _problemTitleController.text,
+          make: _makeController.text,
+          model: _modelController.text,
+          year: _yearController.text,
+          symptoms: _symptomsController.text,
+          repairDescription: _repairDescController.text,
+          usedParts: _selectedParts,
+          imageBytesList: imageBytesList,
+          fileNames: fileNames,
+        );
+
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              icon: Icon(
+                Icons.check_circle,
+                color: Colors.deepOrange,
+                size: 60,
+              ),
+              iconPadding: const EdgeInsets.only(top: 20),
+              title: Text(
+                lang['success'] ?? 'Success',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.deepOrange,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: Text(
+                lang['report_sent'] ?? 'Report sent successfully',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.grey,
+                  fontSize: 18,
+                ),
+              ),
+              actionsAlignment: MainAxisAlignment.center,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              elevation: 10,
+              backgroundColor: Colors.white,
+              actions: [
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: Colors.deepOrange.withOpacity(0.1),
+                  ),
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _resetForm();
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.deepOrange,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 30,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(
+                      lang['ok'] ?? 'OK',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.toString())),
+          );
+        }
+      }
+    }
+  }
+
+// دالة إعادة تعيين النموذج
+  void _resetForm() {
+    _formKey.currentState?.reset();
+    setState(() {
+      _selectedParts.clear();
+      _images.clear();
+      _ownerController.clear();
+      _plateController.clear();
+      _problemTitleController.clear();
+      _costController.clear();
+      _repairDescController.clear();
+      _partController.clear();
+      _makeController.clear();
+      _modelController.clear();
+      _yearController.clear();
+      _symptomsController.clear();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final lang = ref.watch(languageProvider);
     final textDirection = ref.read(languageProvider.notifier).textDirection;
-    final isDesktop = ResponsiveHelper.isDesktop(context);
     return Directionality(
       textDirection: textDirection,
       child: Scaffold(
-        appBar: isDesktop
-            ? DesktopCustomAppBar()
-            : AppBar(
-                title: Text(lang['submit_report'] ?? 'Submit Report'),
-                centerTitle: true,
-                backgroundColor: Colors.orange,
-                elevation: ResponsiveHelper.isDesktop(context) ? 5 : 2,
-              ),
         body: SingleChildScrollView(
           padding:
               EdgeInsets.all(ResponsiveHelper.isDesktop(context) ? 30 : 20),
