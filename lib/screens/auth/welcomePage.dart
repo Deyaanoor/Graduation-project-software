@@ -140,7 +140,7 @@ class WelcomePage extends ConsumerWidget {
                   Navigator.pushNamed(context, "/login");
                 },
                 backgroundColor: Colors.white,
-                textColor: Color(0xFFFB8C00), // لون برتقالي
+                textColor: Color(0xFFFB8C00),
                 borderColor: Colors.transparent,
                 hasShadow: true,
                 isGradient: false,

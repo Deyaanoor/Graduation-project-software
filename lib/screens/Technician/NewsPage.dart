@@ -16,7 +16,6 @@ class NewsPage extends ConsumerWidget {
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          // الهيدر
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
             child: Column(
@@ -39,8 +38,6 @@ class NewsPage extends ConsumerWidget {
               ],
             ),
           ),
-
-          // قائمة الأخبار
           Expanded(
             child: RefreshIndicator(
               onRefresh: () => ref.read(newsProvider.notifier).refreshNews(),
@@ -58,7 +55,6 @@ class NewsPage extends ConsumerWidget {
     );
   }
 
-  // بناء قائمة الأخبار
   Widget _buildNewsList(BuildContext context, double screenWidth,
       List<Map<String, dynamic>> newsItems) {
     return ListView.builder(
@@ -69,7 +65,6 @@ class NewsPage extends ConsumerWidget {
     );
   }
 
-  // بطاقة الخبر الواحد
   Widget _buildNewsCard(
       BuildContext context, double screenWidth, Map<String, dynamic> news) {
     return Center(
@@ -87,7 +82,6 @@ class NewsPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // الهيدر الداخلي (الرمز + الوقت)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -102,8 +96,6 @@ class NewsPage extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 15),
-
-                // العنوان
                 Text(
                   news['title'],
                   style: const TextStyle(
@@ -113,8 +105,6 @@ class NewsPage extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-
-                // المحتوى
                 Text(
                   news['content'],
                   style: TextStyle(
@@ -124,12 +114,8 @@ class NewsPage extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 15),
-
-                // الخط الفاصل
                 Divider(color: Colors.grey[300]),
                 const SizedBox(height: 10),
-
-                // معلومات المرسل
                 Row(
                   children: [
                     const Icon(Icons.person_outline,

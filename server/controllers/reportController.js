@@ -91,7 +91,7 @@ const addReport = async (req, res) => {
       symptoms,
       repairDescription,
       usedParts,
-      imageUrls: req.files.map(file => file.path) // حفظ جميع مسارات الصور
+      imageUrls: req.files.map(file => file.path)
     };
 
     const db = await connectDB();

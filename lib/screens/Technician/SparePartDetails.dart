@@ -68,7 +68,6 @@ class SparePartDetails extends StatelessWidget {
                       ),
                     ),
 
-                    // بطاقة المعلومات
                     Container(
                       width: double.infinity,
                       margin: EdgeInsets.symmetric(horizontal: 20),
@@ -97,9 +96,7 @@ class SparePartDetails extends StatelessWidget {
                             ),
                             textAlign: TextAlign.center,
                           ),
-
                           SizedBox(height: 15),
-
                           Text(
                             item['type'] ?? '',
                             style: GoogleFonts.cairo(
@@ -107,10 +104,7 @@ class SparePartDetails extends StatelessWidget {
                               color: Colors.orange[600],
                             ),
                           ),
-
                           SizedBox(height: 30),
-
-                          // زر أخذ القطعة
                           Container(
                             width: double.infinity,
                             height: 55,

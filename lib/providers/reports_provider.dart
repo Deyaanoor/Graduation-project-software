@@ -123,8 +123,8 @@ class ReportsNotifier
     required String symptoms,
     required String repairDescription,
     required List<String> usedParts,
-    required List<Uint8List> imageBytesList, // قائمة بيانات الصور
-    required List<String> fileNames, // قائمة أسماء الملفات
+    required List<Uint8List> imageBytesList,
+    required List<String> fileNames,
   }) async {
     try {
       state = const AsyncValue.loading();
@@ -140,7 +140,7 @@ class ReportsNotifier
           'year': year,
           'symptoms': symptoms,
           'repairDescription': repairDescription,
-          'usedParts': jsonEncode(usedParts), // تصحيح الخطأ المطبعي
+          'usedParts': jsonEncode(usedParts),
           'date': DateTime.now().toIso8601String(),
         });
 

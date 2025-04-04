@@ -26,7 +26,6 @@ class SignUpPage extends ConsumerWidget {
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
-          // Check if the screen is smaller than 900 (for mobile)
           if (width < 900) {
             return _buildMobileView(context, nameController, emailController,
                 passwordController, height);
