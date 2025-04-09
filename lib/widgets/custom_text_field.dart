@@ -3,14 +3,15 @@ import 'package:flutter/material.dart';
 class CustomTextField extends StatelessWidget {
   final String label;
   final String? hint;
-  final IconData? icon; // جعل الأيقونة اختيارية
+  final IconData? icon;
   final bool isPassword;
   final TextEditingController controller;
   final TextInputType? inputType;
-  final Color? borderColor; // لون البوردر
-  final bool showBorder; // عرض البوردر أو إخفائه
-  final Color? backgroundColor; // لون خلفية النص
-  final Color? iconColor; // لون الأيقونة
+  final Color? borderColor;
+  final bool showBorder;
+  final Color? backgroundColor;
+  final Color? iconColor;
+  final String? Function(String?)? validator;
 
   const CustomTextField({
     super.key,
@@ -24,6 +25,7 @@ class CustomTextField extends StatelessWidget {
     this.showBorder = true,
     this.backgroundColor,
     this.iconColor,
+    this.validator,
   });
 
   @override
@@ -39,36 +41,57 @@ class CustomTextField extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        TextField(
+        TextFormField(
           controller: controller,
           obscureText: isPassword,
           keyboardType: inputType,
+          validator: validator,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.black,
+          ),
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: icon != null
-                ? Icon(icon, color: iconColor ?? Colors.orange) // لون الأيقونة
+                ? Icon(icon, color: iconColor ?? Colors.orange)
                 : null,
             enabledBorder: showBorder
                 ? OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(
-                      color: borderColor ?? Colors.orange, // لون البوردر
-                      width: 2,
-                    ),
-                  )
-                : InputBorder.none, // إخفاء البوردر
-            focusedBorder: showBorder
-                ? OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color:
-                          borderColor ?? Theme.of(context).colorScheme.primary,
+                      color: borderColor ?? Colors.orange,
                       width: 2,
                     ),
                   )
                 : InputBorder.none,
-            fillColor:
-                backgroundColor ?? const Color(0xfff3f3f4), // لون الخلفية
+            focusedBorder: showBorder
+                ? OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: borderColor ?? Colors.orange,
+                      width: 2,
+                    ),
+                  )
+                : InputBorder.none,
+            errorBorder: showBorder
+                ? OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: Colors.red,
+                      width: 2,
+                    ),
+                  )
+                : InputBorder.none,
+            focusedErrorBorder: showBorder
+                ? OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: Colors.red, // تغيير اللون عند التركيز ووجود خطأ
+                      width: 2,
+                    ),
+                  )
+                : InputBorder.none,
+            fillColor: backgroundColor ?? const Color(0xfff3f3f4),
             filled: true,
             contentPadding: const EdgeInsets.symmetric(
               vertical: 15,

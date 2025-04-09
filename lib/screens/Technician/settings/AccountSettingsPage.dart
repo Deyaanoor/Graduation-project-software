@@ -2,17 +2,40 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
+import 'package:flutter_provider/providers/auth/auth_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
-class AccountSettingsPage extends StatefulWidget {
+import 'package:shared_preferences/shared_preferences.dart';
+
+class AccountSettingsPage extends ConsumerStatefulWidget {
+  const AccountSettingsPage({super.key});
   @override
   _AccountSettingsPageState createState() => _AccountSettingsPageState();
 }
 
-class _AccountSettingsPageState extends State<AccountSettingsPage> {
+class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
   File? _selectedImage;
   Uint8List? _selectedImageWebBytes;
+  String? userId;
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId();
+  }
+
+  Future<void> _loadUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+
+    if (token != null) {
+      final extractedUserId = extractUserIdFromToken(token);
+      setState(() {
+        userId = extractedUserId;
+      });
+    }
+  }
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -52,7 +75,6 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
         }
       }
     } catch (e) {
-      print('حدث خطأ: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('فشل في اختيار الصورة'),
@@ -95,27 +117,46 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: ResponsiveHelper.isMobile(context)
-          ? _buildMobileLayout(context)
-          : _buildDesktopLayout(context),
+    if (userId == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final userInfoAsync = ref.watch(getUserInfoProvider(userId!));
+
+    return userInfoAsync.when(
+      data: (userData) {
+        return Scaffold(
+          body: ResponsiveHelper.isMobile(context)
+              ? _buildMobileLayout(context, userData)
+              : _buildDesktopLayout(context, userData),
+        );
+      },
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (err, _) => Scaffold(
+        body: Center(child: Text('❌ خطأ: $err')),
+      ),
     );
   }
 
-  Widget _buildMobileLayout(BuildContext context) {
+  Widget _buildMobileLayout(
+      BuildContext context, Map<String, dynamic> userData) {
     return SingleChildScrollView(
       padding: EdgeInsets.all(20),
       child: Column(
         children: [
-          _buildAvatarSection(),
+          _buildAvatarSection(userData: userData),
           SizedBox(height: 30),
-          _buildProfileCard(context, isMobile: true),
+          _buildProfileCard(context, isMobile: true, userData: userData),
         ],
       ),
     );
   }
 
-  Widget _buildDesktopLayout(BuildContext context) {
+  Widget _buildDesktopLayout(
+      BuildContext context, Map<String, dynamic> userData) {
     return Center(
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 1200),
@@ -128,12 +169,14 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                 flex: 1,
                 child: Padding(
                   padding: EdgeInsets.only(right: 40),
-                  child: _buildAvatarSection(desktopMode: true),
+                  child: _buildAvatarSection(
+                      desktopMode: true, userData: userData),
                 ),
               ),
               Expanded(
                 flex: 2,
-                child: _buildProfileCard(context, isMobile: false),
+                child: _buildProfileCard(context,
+                    isMobile: false, userData: userData),
               ),
             ],
           ),
@@ -142,7 +185,10 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
     );
   }
 
-  Widget _buildAvatarSection({bool desktopMode = false}) {
+  Widget _buildAvatarSection({
+    bool desktopMode = false,
+    required Map<String, dynamic> userData,
+  }) {
     return Column(
       children: [
         GestureDetector(
@@ -169,9 +215,8 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                             _selectedImageWebBytes != null
                         ? DecorationImage(
                             image: _selectedImageWebBytes != null
-                                ? MemoryImage(_selectedImageWebBytes!) 
-                                : FileImage(_selectedImage!)
-                                    as ImageProvider, 
+                                ? MemoryImage(_selectedImageWebBytes!)
+                                : FileImage(_selectedImage!) as ImageProvider,
                             fit: BoxFit.cover,
                           )
                         : null,
@@ -208,7 +253,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
         if (desktopMode) ...[
           SizedBox(height: 20),
           Text(
-            'ضياء بني جابر',
+            userData['name'] ?? 'غير معروف',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -228,7 +273,11 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
     );
   }
 
-  Widget _buildProfileCard(BuildContext context, {required bool isMobile}) {
+  Widget _buildProfileCard(
+    BuildContext context, {
+    required bool isMobile,
+    required Map<String, dynamic> userData,
+  }) {
     return Card(
       elevation: isMobile ? 4 : 8,
       shape: RoundedRectangleBorder(
@@ -241,7 +290,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
             _buildEditableField(
               context,
               label: 'الاسم الكامل',
-              value: 'ضياء بني جابر',
+              value: userData['name'] ?? 'غير معروف',
               icon: Icons.person_outline_rounded,
               isMobile: isMobile,
             ),
@@ -249,7 +298,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
             _buildEditableField(
               context,
               label: 'البريد الإلكتروني',
-              value: 'diaa@example.com',
+              value: userData['email'] ?? 'غير معروف',
               icon: Icons.email_outlined,
               isMobile: isMobile,
             ),
@@ -257,7 +306,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
             _buildEditableField(
               context,
               label: 'رقم الهاتف',
-              value: '+970 59-0000000',
+              value: userData['phoneNumber'] ?? 'غير متوفر',
               icon: Icons.phone_android_outlined,
               isMobile: isMobile,
             ),

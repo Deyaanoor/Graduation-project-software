@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_provider/Responsive/Responsive_helper.dart';
+import 'package:flutter_provider/Responsive/responsive_helper.dart';
+import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/screens/auth/Title_Project.dart';
-import 'package:flutter_provider/widgets/back_button.dart';
 import 'package:flutter_provider/screens/auth/divider_widget.dart';
 import 'package:flutter_provider/screens/auth/forgot_password.dart';
 import 'package:flutter_provider/screens/auth/register_label.dart';
+import 'package:flutter_provider/widgets/back_button.dart';
 import 'package:flutter_provider/widgets/bezierContainer.dart';
 import 'package:flutter_provider/widgets/custom_button.dart';
+import 'package:flutter_provider/widgets/custom_snackbar.dart';
 import 'package:flutter_provider/widgets/custom_text_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class LoginPage extends ConsumerWidget {
-  const LoginPage({super.key});
+  LoginPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -21,28 +24,32 @@ class LoginPage extends ConsumerWidget {
 
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
-    final lang = ref.watch(languageProvider);
+    final lang =
+        ref.watch(languageProvider); // على حسب اللغة المختارة في التطبيق
 
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (ResponsiveHelper.isMobile(context)) {
             return _buildMobileView(
-                context, emailController, passwordController, height);
+                context, emailController, passwordController, height, ref);
           } else {
-            return _buildDesktopView(
-                context, emailController, passwordController, height, width);
+            return _buildDesktopView(context, emailController,
+                passwordController, height, width, ref);
           }
         },
       ),
     );
   }
 
+  final _formKey = GlobalKey<FormState>();
+
   Widget _buildMobileView(
       BuildContext context,
       TextEditingController emailController,
       TextEditingController passwordController,
-      double height) {
+      double height,
+      WidgetRef ref) {
     return Stack(
       children: [
         Positioned(
@@ -53,39 +60,60 @@ class LoginPage extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(height: height * .2),
-                TitlePro(),
-                const SizedBox(height: 50),
-                CustomTextField(
-                  label: "Email",
-                  hint: "Enter your email",
-                  icon: Icons.email,
-                  controller: emailController,
-                ),
-                CustomTextField(
-                  label: "Password",
-                  hint: "Enter your password",
-                  icon: Icons.lock,
-                  isPassword: true,
-                  controller: passwordController,
-                ),
-                const SizedBox(height: 20),
-                CustomButton(
-                  text: 'Login',
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/home');
-                  },
-                  isGradient: true,
-                ),
-                ForgotPassword(),
-                DividerWidget(),
-                SizedBox(height: height * .055),
-                RegisterLabel(),
-              ],
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(height: height * .2),
+                  TitlePro(),
+                  const SizedBox(height: 50),
+                  CustomTextField(
+                    label: "Email",
+                    hint: "Enter your email",
+                    icon: Icons.email,
+                    controller: emailController,
+                    validator: (value) {
+                      if (value == null ||
+                          value.isEmpty ||
+                          !value.contains('@')) {
+                        return 'Please enter a valid email';
+                      }
+                      return null;
+                    },
+                  ),
+                  CustomTextField(
+                    label: "Password",
+                    hint: "Enter your password",
+                    icon: Icons.lock,
+                    isPassword: true,
+                    controller: passwordController,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your password';
+                      }
+                      if (value.length < 6) {
+                        return 'Password must be at least 6 characters';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  CustomButton(
+                    text: 'Login',
+                    onPressed: () async {
+                      handleLogin(
+                          context, emailController, passwordController, ref);
+                    },
+                    isGradient: true,
+                  ),
+                  ForgotPassword(),
+                  DividerWidget(),
+                  SizedBox(height: height * .055),
+                  RegisterLabel(),
+                ],
+              ),
             ),
           ),
         ),
@@ -100,6 +128,7 @@ class LoginPage extends ConsumerWidget {
     TextEditingController passwordController,
     double height,
     double width,
+    WidgetRef ref,
   ) {
     return Center(
       child: Container(
@@ -161,63 +190,86 @@ class LoginPage extends ConsumerWidget {
               Expanded(
                 child: SingleChildScrollView(
                   padding: EdgeInsets.symmetric(horizontal: 50, vertical: 40),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TitlePro(),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      CustomTextField(
-                        label: "Email Address",
-                        hint: "Enter your email",
-                        icon: Icons.email,
-                        controller: emailController,
-                      ),
-                      SizedBox(height: 10),
-                      CustomTextField(
-                        label: "Password",
-                        hint: "Enter your password",
-                        icon: Icons.lock,
-                        isPassword: true,
-                        controller: passwordController,
-                      ),
-                      SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Checkbox(
-                                value: true,
-                                onChanged: (v) {},
-                                activeColor: Colors.orange.shade700,
-                              ),
-                              Text(
-                                'Remember me',
-                                style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontSize: 14,
+                  child: Form(
+                    key: _formKey, // إضافة الـ GlobalKey هنا
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TitlePro(),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        CustomTextField(
+                          label: "Email Address",
+                          hint: "Enter your email",
+                          icon: Icons.email,
+                          controller: emailController,
+                          validator: (value) {
+                            if (value == null ||
+                                value.isEmpty ||
+                                !value.contains('@')) {
+                              return 'Please enter a valid email';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 10),
+                        CustomTextField(
+                          label: "Password",
+                          hint: "Enter your password",
+                          icon: Icons.lock,
+                          isPassword: true,
+                          controller: passwordController,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your password';
+                            }
+                            if (value.length < 6) {
+                              return 'Password must be at least 6 characters';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Checkbox(
+                                  value: true,
+                                  onChanged: (v) {},
+                                  activeColor: Colors.orange.shade700,
                                 ),
-                              ),
-                            ],
-                          ),
-                          ForgotPassword(),
-                        ],
-                      ),
-                      SizedBox(height: 20),
-                      CustomButton(
-                        text: 'Sign In',
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/home');
-                        },
-                        isGradient: true,
-                      ),
-                      SizedBox(height: 10),
-                      DividerWidget(),
-                      RegisterLabel(),
-                    ],
+                                Text(
+                                  'Remember me',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            ForgotPassword(),
+                          ],
+                        ),
+                        SizedBox(height: 20),
+                        CustomButton(
+                          text: 'Login',
+                          onPressed: () async {
+                            if (_formKey.currentState!.validate()) {
+                              handleLogin(context, emailController,
+                                  passwordController, ref);
+                            }
+                          },
+                          isGradient: true,
+                        ),
+                        SizedBox(height: 10),
+                        DividerWidget(),
+                        RegisterLabel(),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -226,5 +278,34 @@ class LoginPage extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  void handleLogin(BuildContext context, TextEditingController emailController,
+      TextEditingController passwordController, WidgetRef ref) async {
+    if (_formKey.currentState?.validate() ?? false) {
+      final credentials = {
+        'email': emailController.text,
+        'password': passwordController.text,
+      };
+
+      try {
+        final result = await ref.read(loginUserProvider(credentials).future);
+
+        // ما في داعي لتخزين التوكن هنا لأن البروفايدر قام بذلك
+        print('Login token: $result');
+
+        CustomSnackBar.showSuccessSnackBar(
+          context,
+          'Login successful',
+        );
+        Navigator.pushNamed(context, '/home');
+      } catch (e) {
+        print('Login error: $e');
+        CustomSnackBar.showErrorSnackBar(
+          context,
+          'Login failed',
+        );
+      }
+    }
   }
 }

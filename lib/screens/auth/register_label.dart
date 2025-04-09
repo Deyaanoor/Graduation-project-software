@@ -17,3 +17,21 @@ class RegisterLabel extends StatelessWidget {
     );
   }
 }
+
+class LoginLabel extends StatelessWidget {
+  const LoginLabel({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => Navigator.pushNamed(context, '/login'),
+      child: const Text(
+        "Already have an account? Login",
+        style: TextStyle(
+            color: Color(0xfff79c4f),
+            fontSize: 13,
+            fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+}
