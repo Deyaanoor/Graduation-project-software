@@ -119,7 +119,7 @@ const updateAvatar = async (req, res) => {
 };
 
 const getUserInfo = async (req, res) => {
-  const userId = req.params.userId;  // الوصول إلى userId من الـ URL parameters
+  const userId = req.params.userId;  
 
   try {
     const db = await connectDB();
@@ -134,6 +134,7 @@ const getUserInfo = async (req, res) => {
       name: user.name,
       email: user.email,
       phoneNumber: user.phoneNumber,
+      password: user.password,
       avatar: user.avatar,
     });
   } catch (error) {

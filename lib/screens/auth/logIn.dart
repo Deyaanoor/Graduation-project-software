@@ -291,16 +291,12 @@ class LoginPage extends ConsumerWidget {
       try {
         final result = await ref.read(loginUserProvider(credentials).future);
 
-        // ما في داعي لتخزين التوكن هنا لأن البروفايدر قام بذلك
-        print('Login token: $result');
-
         CustomSnackBar.showSuccessSnackBar(
           context,
           'Login successful',
         );
         Navigator.pushNamed(context, '/home');
       } catch (e) {
-        print('Login error: $e');
         CustomSnackBar.showErrorSnackBar(
           context,
           'Login failed',

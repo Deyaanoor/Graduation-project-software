@@ -310,6 +310,14 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
               icon: Icons.phone_android_outlined,
               isMobile: isMobile,
             ),
+            Divider(height: isMobile ? 30 : 40, color: Colors.grey.shade200),
+            _buildEditableField(
+              context,
+              label: 'Password',
+              value: userData['password'] ?? 'غير متوفر',
+              icon: Icons.password_outlined,
+              isMobile: isMobile,
+            ),
           ],
         ),
       ),
@@ -331,16 +339,18 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
             children: [
               Text(label,
                   style: TextStyle(
-                    color: Colors.grey.shade600,
+                    color: const Color.fromARGB(221, 104, 102, 102),
                     fontSize: isMobile ? 14 : 16,
                   )),
               SizedBox(height: isMobile ? 4 : 8),
-              Text(value,
-                  style: TextStyle(
-                    fontSize: isMobile ? 16 : 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade800,
-                  )),
+              Text(
+                label.toLowerCase() == 'password' ? '•' * value.length : value,
+                style: TextStyle(
+                  fontSize: isMobile ? 16 : 18,
+                  fontWeight: FontWeight.w600,
+                  color: const Color.fromARGB(221, 104, 102, 102),
+                ),
+              ),
             ],
           ),
         ),
@@ -357,76 +367,100 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
       BuildContext context, String field, String currentValue, bool isMobile) {
     final TextEditingController controller =
         TextEditingController(text: currentValue);
+    bool isPassword = field.toLowerCase() == 'password';
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        contentPadding: EdgeInsets.all(isMobile ? 20 : 30),
-        titlePadding: EdgeInsets.all(isMobile ? 20 : 30),
-        title: Text('تعديل $field',
-            textAlign: TextAlign.right,
-            style: TextStyle(
-                color: Colors.orange.shade800, fontSize: isMobile ? 20 : 24)),
-        content: SizedBox(
-          width: isMobile ? null : MediaQuery.of(context).size.width * 0.4,
-          child: TextFormField(
-            controller: controller,
-            textAlign: TextAlign.right,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: Colors.orange.shade50,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: EdgeInsets.all(isMobile ? 15 : 20),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          bool obscureText = isPassword;
+
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-            style: TextStyle(fontSize: isMobile ? 16 : 18),
-          ),
-        ),
-        actionsPadding: EdgeInsets.only(
-            bottom: isMobile ? 15 : 20,
-            left: isMobile ? 20 : 30,
-            right: isMobile ? 20 : 30),
-        actions: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: isMobile ? 15 : 25,
-                      vertical: isMobile ? 10 : 15),
-                  backgroundColor: Colors.red.shade100,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+            contentPadding: EdgeInsets.all(isMobile ? 20 : 30),
+            titlePadding: EdgeInsets.all(isMobile ? 20 : 30),
+            title: Text('تعديل $field',
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                    color: Colors.orange.shade800,
+                    fontSize: isMobile ? 20 : 24)),
+            content: SizedBox(
+              width: isMobile ? null : MediaQuery.of(context).size.width * 0.4,
+              child: TextFormField(
+                controller: controller,
+                obscureText: isPassword ? obscureText : false,
+                textAlign: TextAlign.right,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.orange.shade50,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: EdgeInsets.all(isMobile ? 15 : 20),
+                  suffixIcon: isPassword
+                      ? IconButton(
+                          icon: Icon(
+                            obscureText
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: Colors.orange.shade600,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              obscureText = !obscureText;
+                            });
+                          },
+                        )
+                      : null,
                 ),
-                child: Text('حذف',
-                    style: TextStyle(
-                        color: Colors.red.shade800,
-                        fontSize: isMobile ? 14 : 16)),
+                style: TextStyle(fontSize: isMobile ? 16 : 18),
               ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: isMobile ? 15 : 25,
-                      vertical: isMobile ? 10 : 15),
-                  backgroundColor: Colors.orange.shade800,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-                child: Text('حفظ التغييرات',
-                    style: TextStyle(
-                        color: Colors.white, fontSize: isMobile ? 14 : 16)),
+            ),
+            actionsPadding: EdgeInsets.only(
+                bottom: isMobile ? 15 : 20,
+                left: isMobile ? 20 : 30,
+                right: isMobile ? 20 : 30),
+            actions: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: isMobile ? 15 : 25,
+                          vertical: isMobile ? 10 : 15),
+                      backgroundColor: Colors.red.shade100,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text('حذف',
+                        style: TextStyle(
+                            color: Colors.red.shade800,
+                            fontSize: isMobile ? 14 : 16)),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: isMobile ? 15 : 25,
+                          vertical: isMobile ? 10 : 15),
+                      backgroundColor: Colors.orange.shade800,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text('حفظ التغييرات',
+                        style: TextStyle(
+                            color: Colors.white, fontSize: isMobile ? 14 : 16)),
+                  ),
+                ],
               ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
