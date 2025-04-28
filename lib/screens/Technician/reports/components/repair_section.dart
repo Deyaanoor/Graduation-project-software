@@ -46,6 +46,9 @@ class RepairSection extends StatelessWidget {
                 TextField(
                   controller: controller,
                   maxLines: 5,
+                  style: TextStyle(
+                    color: Colors.black,
+                  ),
                   decoration: InputDecoration(
                     hintText: hint,
                     border: InputBorder.none,

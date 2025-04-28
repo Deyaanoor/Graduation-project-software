@@ -10,6 +10,7 @@ cloudinary.config({
   api_secret: "ifXxCdY2tdgnGG5y_55a_ZlDPKM"
 });
 
+
 const storage = new multerStorageCloudinary({
   cloudinary: cloudinary,
   params: {
@@ -22,25 +23,29 @@ const upload = multer({ storage: storage });
 
 const getReports = async (req, res) => {
   try {
+    const { userId } = req.params;
     const db = await connectDB();
     const reportsCollection = db.collection('reports');
 
-    const reports = await reportsCollection.find({}, {
-      projection: { 
-        owner: 1,
-        cost: 1,
-        plateNumber: 1,
-        date: 1,
-        issue: 1,
-        make:1,
-        model:1,
-        year:1,
-        symptoms:1,
-        repairDescription: 1,
-        usedParts: 1,
-        imageUrls: 1 
-      }
-    }).toArray();
+    const employee = await db.collection('employees').findOne({ _id: new ObjectId(userId) });
+    const owner = await db.collection('owners').findOne({ _id: new ObjectId(userId) });
+    
+    let garageId;
+    if (owner) {
+      const garage = await db.collection('garages').findOne({ owner_id: owner._id });
+      garageId = garage ? garage._id : null;
+    } else if (employee) {
+      const garage = await db.collection('garages').findOne({ _id: employee.garage_id }); 
+      garageId = garage ? garage._id : null;
+    } else {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!garageId) {
+      return res.status(404).json({ message: 'Garage not found for this user' });
+    }
+
+    const reports = await reportsCollection.find({ garageId }).toArray();
 
     res.status(200).json(reports);
   } catch (error) {
@@ -48,6 +53,67 @@ const getReports = async (req, res) => {
     res.status(500).json({ message: "An error occurred while fetching reports" });
   }
 };
+
+
+const addReport = async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: "No images uploaded" });
+    }
+
+    const {owner,  cost, plateNumber, date, issue, make, model, year, symptoms, repairDescription, usedParts, status, mechanicName ,user_id} = req.body;
+
+    const db = await connectDB();
+    const employeesCollection = db.collection('employees');
+    const ownersCollection = db.collection('owners'); 
+
+    let garageId;
+
+    const ownerDocument = await ownersCollection.findOne({ _id: new ObjectId(user_id) });
+    if (ownerDocument) {
+      garageId = ownerDocument.garage_id;
+    } else {
+      const employee = await employeesCollection.findOne({ _id: new ObjectId(user_id) });
+      if (employee) {
+        garageId = employee.garage_id;
+      } else {
+        return res.status(400).json({ message: "Owner or employee not found" });
+      }
+    }
+
+    const newReport = {
+      
+      owner,
+      cost,
+      plateNumber,
+      date,
+      issue,
+      make,
+      model,
+      year,
+      symptoms,
+      repairDescription,
+      usedParts,
+      imageUrls: req.files.map(file => file.path),
+      status: "pending",
+      mechanicName,
+      garageId 
+    };
+
+    const reportsCollection = db.collection('reports');
+    const result = await reportsCollection.insertOne(newReport);
+
+    res.status(201).json({
+      message: "Report added successfully",
+      reportId: result.insertedId, 
+      data: newReport
+    });
+  } catch (error) {
+    console.error("Error adding report:", error);
+    res.status(500).json({ message: "An error occurred while adding report" });
+  }
+};
+
 
 const getReportDetails = async (req, res) => {
   try {
@@ -68,44 +134,7 @@ const getReportDetails = async (req, res) => {
   }
 };
 
-const addReport = async (req, res) => {
-  try {
-    console.log("Request body:", req.body);
-    console.log("Uploaded files:", req.files); 
 
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ message: "No images uploaded" });
-    }
 
-    const { owner, cost, plateNumber, date, issue,make,model,year,symptoms ,repairDescription, usedParts } = req.body;
-    
-    const newReport = {
-      owner,
-      cost,
-      plateNumber,
-      date,
-      issue,
-      make,
-      model,
-      year,
-      symptoms,
-      repairDescription,
-      usedParts,
-      imageUrls: req.files.map(file => file.path)
-    };
-
-    const db = await connectDB();
-    const reportsCollection = db.collection('reports');
-    await reportsCollection.insertOne(newReport);
-
-    res.status(201).json({
-      message: "Report added successfully",
-      data: newReport
-    });
-  } catch (error) {
-    console.error("Error adding report:", error);
-    res.status(500).json({ message: "An error occurred while adding report" });
-  }
-};
 
 module.exports = { getReports, getReportDetails, addReport, upload };

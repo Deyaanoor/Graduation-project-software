@@ -1,15 +1,22 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
+import 'package:flutter_provider/providers/auth/auth_provider.dart';
+import 'package:flutter_provider/providers/notifications_provider.dart';
 import 'package:flutter_provider/screens/Technician/reports/components/image_upload_section.dart';
 import 'package:flutter_provider/screens/Technician/reports/components/repair_section.dart';
+import 'package:flutter_provider/widgets/AIDesktopButton%20.dart';
+import 'package:flutter_provider/widgets/CustomDialog.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:flutter_provider/widgets/custom_text_field.dart';
 import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/providers/reports_provider.dart';
-import 'dart:io'; // هذا الاستيراد ضروري لاستخدام File
+import 'dart:io';
 
 class ReportPage extends ConsumerStatefulWidget {
   const ReportPage({super.key});
@@ -35,6 +42,21 @@ class _ReportPageState extends ConsumerState<ReportPage> {
   List<XFile> _images = [];
   bool _isListening = false;
   List<String> _selectedParts = [];
+  @override
+  void initState() {
+    super.initState();
+
+    final selectedReport = ref.read(selectedReportProvider);
+
+    if (selectedReport != null) {
+      _ownerController.text = selectedReport['owner'] ?? '';
+      _plateController.text = selectedReport['plateNumber'] ?? '';
+      _partController.text = selectedReport['part'] ?? '';
+      _makeController.text = selectedReport['make'] ?? '';
+      _modelController.text = selectedReport['model'] ?? '';
+      _yearController.text = selectedReport['year']?.toString() ?? '';
+    }
+  }
 
   @override
   void dispose() {
@@ -110,38 +132,108 @@ class _ReportPageState extends ConsumerState<ReportPage> {
     }
   }
 
-  Widget _buildMainContent(BuildContext context, Map<String, String> lang) {
-    return ResponsiveHelper.isDesktop(context)
-        ? _buildDesktopLayout(lang)
-        : _buildMobileLayout(lang);
+  bool isLoading = false;
+
+  Future<void> _sendDataToAPI() async {
+    setState(() {
+      isLoading = true;
+      _repairDescController.text = '';
+    });
+
+    final url = 'https://9641-35-236-177-189.ngrok-free.app/predict';
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'Make': _makeController.text,
+          'Model': _modelController.text,
+          'Problem': _partController.text,
+          'Symptoms': _plateController.text,
+          'Year': int.parse(
+              _yearController.text.isEmpty ? '0' : _yearController.text),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        final solution = responseData['Solution'];
+
+        setState(() {
+          _repairDescController.text = '$solution';
+        });
+      } else {
+        setState(() {
+          _repairDescController.text = 'حدث خطأ أثناء الاتصال بالسيرفر.';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _repairDescController.text = 'فشل الاتصال: $e';
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
-  Widget _buildMobileLayout(Map<String, String> lang) {
+  Widget buildLoadingIndicator() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        CircularProgressIndicator(color: Colors.orange),
+        SizedBox(width: 10),
+        Text(
+          'جاري التحليل...',
+          style: TextStyle(fontSize: 16, color: Colors.orange),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMainContent(
+      BuildContext context, Map<String, String> lang, String userName) {
+    return ResponsiveHelper.isDesktop(context)
+        ? _buildDesktopLayout(lang, userName)
+        : _buildMobileLayout(lang, userName);
+  }
+
+  Widget _buildMobileLayout(Map<String, String> lang, String userName) {
     return Column(
       children: [
         _buildOwnerField(lang),
         const SizedBox(height: 20),
         _buildPlateAndCostRow(lang),
         const SizedBox(height: 20),
+        _build_Make_Model_Year_Field(lang),
+        const SizedBox(height: 20),
         _buildProblemTitleField(lang),
+        const SizedBox(height: 20),
+        _buildCarSymptomsField(lang),
+        const SizedBox(height: 20),
+        AIDesktopButton(
+          onPressed: _sendDataToAPI,
+        ),
+        const SizedBox(height: 20),
+        if (isLoading) buildLoadingIndicator(),
         const SizedBox(height: 20),
         _buildPartsSection(lang),
         const SizedBox(height: 20),
         _buildRepairSection(lang),
         const SizedBox(height: 20),
-        _build_Make_Model_Year_Field(lang),
-        const SizedBox(height: 20),
-        _buildCarSymptomsField(lang),
-        const SizedBox(height: 20),
         _buildImageUploadSection(lang),
         const SizedBox(height: 30),
-        _buildActionButtons(lang),
+        _buildActionButtons(lang, userName),
         const SizedBox(height: 30),
       ],
     );
   }
 
-  Widget _buildDesktopLayout(Map<String, String> lang) {
+  Widget _buildDesktopLayout(Map<String, String> lang, String userName) {
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1200),
@@ -155,13 +247,17 @@ class _ReportPageState extends ConsumerState<ReportPage> {
                   const SizedBox(height: 25),
                   _buildPlateAndCostRow(lang),
                   const SizedBox(height: 25),
-                  _buildProblemTitleField(lang),
-                  const SizedBox(height: 25),
-                  _buildPartsSection(lang),
-                  const SizedBox(height: 25),
                   _build_Make_Model_Year_Field(lang),
                   const SizedBox(height: 25),
+                  _buildProblemTitleField(lang),
+                  const SizedBox(height: 25),
                   _buildCarSymptomsField(lang),
+                  const SizedBox(height: 25),
+                  AIDesktopButton(
+                    onPressed: _sendDataToAPI,
+                  ),
+                  const SizedBox(height: 20),
+                  if (isLoading) buildLoadingIndicator(),
                 ],
               ),
             ),
@@ -169,11 +265,13 @@ class _ReportPageState extends ConsumerState<ReportPage> {
             Expanded(
               child: Column(
                 children: [
+                  _buildPartsSection(lang),
+                  const SizedBox(height: 25),
                   _buildRepairSection(lang),
                   const SizedBox(height: 25),
                   _buildImageUploadSection(lang),
                   const SizedBox(height: 35),
-                  _buildActionButtons(lang),
+                  _buildActionButtons(lang, userName),
                 ],
               ),
             ),
@@ -320,6 +418,8 @@ class _ReportPageState extends ConsumerState<ReportPage> {
                     Expanded(
                       child: TextField(
                         controller: _partController,
+                        style:
+                            const TextStyle(fontSize: 16, color: Colors.black),
                         decoration: InputDecoration(
                           hintText: lang['search_parts'] ?? 'Search parts',
                           border: InputBorder.none,
@@ -388,37 +488,17 @@ class _ReportPageState extends ConsumerState<ReportPage> {
     );
   }
 
-  Widget _buildActionButtons(Map<String, String> lang) {
+  Widget _buildActionButtons(Map<String, String> lang, String userName) {
     final buttonPadding = ResponsiveHelper.isDesktop(context)
         ? const EdgeInsets.symmetric(vertical: 18, horizontal: 30)
         : const EdgeInsets.symmetric(vertical: 15);
 
     return Row(
       children: [
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange[100],
-              padding: buttonPadding,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text(
-              lang['save_draft'] ?? 'Save Draft',
-              style: TextStyle(
-                color: Colors.deepOrange,
-                fontSize: ResponsiveHelper.isDesktop(context) ? 18 : 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
         SizedBox(width: ResponsiveHelper.isDesktop(context) ? 25 : 15),
         Expanded(
           child: ElevatedButton(
-            onPressed: () => _submitReport(),
+            onPressed: () => _submitReport(userName),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.deepOrange,
               padding: buttonPadding,
@@ -440,10 +520,9 @@ class _ReportPageState extends ConsumerState<ReportPage> {
     );
   }
 
-  void _submitReport() async {
+  void _submitReport(String userName) async {
     final lang = ref.read(languageProvider);
     final reportsNotifier = ref.read(reportsProvider.notifier);
-
     if (_formKey.currentState!.validate()) {
       try {
         if (_images.isEmpty) {
@@ -455,94 +534,43 @@ class _ReportPageState extends ConsumerState<ReportPage> {
           return;
         }
 
-        // قراءة جميع الصور
         final imageBytesList = await Future.wait(
           _images.map((image) async => await image.readAsBytes()),
         );
 
         final fileNames = _images.map((image) => image.name).toList();
+        final userId = ref.watch(userIdProvider).value;
+        final reportId = await reportsNotifier.addReport(
+            owner: _ownerController.text,
+            cost: _costController.text,
+            plateNumber: _plateController.text,
+            issue: _problemTitleController.text,
+            make: _makeController.text,
+            model: _modelController.text,
+            year: _yearController.text,
+            symptoms: _symptomsController.text,
+            repairDescription: _repairDescController.text,
+            usedParts: _selectedParts,
+            imageBytesList: imageBytesList,
+            fileNames: fileNames,
+            status: 'Pending',
+            mechanicName: userName,
+            userId: userId!);
 
-        await reportsNotifier.addReport(
-          owner: _ownerController.text,
-          cost: _costController.text,
-          plateNumber: _plateController.text,
-          issue: _problemTitleController.text,
-          make: _makeController.text,
-          model: _modelController.text,
-          year: _yearController.text,
-          symptoms: _symptomsController.text,
-          repairDescription: _repairDescController.text,
-          usedParts: _selectedParts,
-          imageBytesList: imageBytesList,
-          fileNames: fileNames,
-        );
+        await ref.read(notificationsProvider.notifier).sendNotification(
+              adminId: userId,
+              reportId: reportId,
+              senderName: userName,
+            );
 
         if (mounted) {
-          showDialog(
+          CustomDialogPage.show(
             context: context,
-            builder: (ctx) => AlertDialog(
-              icon: Icon(
-                Icons.check_circle,
-                color: Colors.deepOrange,
-                size: 60,
-              ),
-              iconPadding: const EdgeInsets.only(top: 20),
-              title: Text(
-                lang['success'] ?? 'Success',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.deepOrange,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              content: Text(
-                lang['report_sent'] ?? 'Report sent successfully',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.grey,
-                  fontSize: 18,
-                ),
-              ),
-              actionsAlignment: MainAxisAlignment.center,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              elevation: 10,
-              backgroundColor: Colors.white,
-              actions: [
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Colors.deepOrange.withOpacity(0.1),
-                  ),
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      _resetForm();
-                    },
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.deepOrange,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 30,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: Text(
-                      lang['ok'] ?? 'OK',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            type: MessageType.success,
+            title: 'Success',
+            content: 'Report sent successfully',
           );
+          _resetForm();
         }
       } catch (e) {
         if (mounted) {
@@ -576,15 +604,23 @@ class _ReportPageState extends ConsumerState<ReportPage> {
   Widget build(BuildContext context) {
     final lang = ref.watch(languageProvider);
     final textDirection = ref.read(languageProvider.notifier).textDirection;
+
+    final userId = ref.watch(userIdProvider).value;
+    final userInfo =
+        userId != null ? ref.watch(getUserInfoProvider(userId)).value : null;
+    final userName =
+        userInfo != null ? userInfo['name'] ?? 'بدون اسم' : 'جاري التحميل...';
+
     return Directionality(
       textDirection: textDirection,
       child: Scaffold(
         body: SingleChildScrollView(
-          padding:
-              EdgeInsets.all(ResponsiveHelper.isDesktop(context) ? 30 : 20),
+          padding: EdgeInsets.all(
+            ResponsiveHelper.isDesktop(context) ? 30 : 20,
+          ),
           child: Form(
             key: _formKey,
-            child: _buildMainContent(context, lang),
+            child: _buildMainContent(context, lang, userName),
           ),
         ),
       ),

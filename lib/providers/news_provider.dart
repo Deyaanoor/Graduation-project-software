@@ -2,9 +2,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+final String _apiUrl = 'http://localhost:5000/news';
+
 final newsProvider = StateNotifierProvider.autoDispose<NewsNotifier,
     AsyncValue<List<Map<String, dynamic>>>>((ref) {
-  return NewsNotifier();
+  final link = ref.keepAlive();
+  final notifier = NewsNotifier();
+
+  ref.onDispose(() {
+    link.close();
+  });
+
+  return notifier;
 });
 
 class NewsNotifier
@@ -12,8 +21,6 @@ class NewsNotifier
   NewsNotifier() : super(const AsyncValue.loading()) {
     fetchNews();
   }
-
-  final String _apiUrl = 'http://localhost:5000/news';
 
   Future<void> fetchNews() async {
     try {
@@ -27,16 +34,21 @@ class NewsNotifier
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
+
         final items = data.cast<Map<String, dynamic>>()
           ..sort((a, b) =>
               DateTime.parse(b['time']).compareTo(DateTime.parse(a['time'])));
 
-        state = AsyncValue.data(items);
+        if (mounted) {
+          state = AsyncValue.data(items);
+        }
       } else {
-        throw Exception('فشل في جلب البيانات');
+        throw Exception('فشل في جلب البيانات من السيرفر');
       }
     } catch (e) {
-      state = AsyncValue.error(e, StackTrace.current);
+      if (mounted) {
+        state = AsyncValue.error(e, StackTrace.current);
+      }
     }
   }
 

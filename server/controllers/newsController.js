@@ -13,6 +13,7 @@ const getNews = async (req, res) => {
   }
 };
 
+
 const addNews = async (req, res) => {
   try {
     const { title, content, admin, time } = req.body;

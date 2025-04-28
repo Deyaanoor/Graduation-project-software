@@ -13,6 +13,7 @@ cloudinary.config({
   api_secret: "ifXxCdY2tdgnGG5y_55a_ZlDPKM"
 });
 
+// Set up Cloudinary storage for multer
 const storage = new multerStorageCloudinary({
   cloudinary: cloudinary,
   params: {
@@ -21,7 +22,10 @@ const storage = new multerStorageCloudinary({
   },
 });
 
+// Set up multer for file upload
 const upload = multer({ storage: storage });
+
+
 
 const registerUser = async (req, res) => {
   const { name, email, password, phoneNumber } = req.body;
@@ -29,31 +33,64 @@ const registerUser = async (req, res) => {
   try {
     const db = await connectDB();
     const usersCollection = db.collection('users');
-    const existingUser = await usersCollection.findOne({ email });
+    const employeesCollection = db.collection('employees');
+    const ownersCollection = db.collection('owners');
 
+    const existingUser = await usersCollection.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'Email already exists' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const owner = await ownersCollection.findOne({ email, name });
+    if (owner) {
+      const role = 'owner';
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const newUser = {
+        _id: owner._id, // نفس ID الموجود في جدول owners
+        name,
+        email,
+        password: hashedPassword,
+        phoneNumber,
+        role,
+        ownerId: owner._id, // تخزنه كمرجع كمان (اختياري)
+        avatar: null,
+      };
 
-    const newUser = {
-      name,
-      email,
-      password: hashedPassword,
-      phoneNumber,
-      role: 'user',
-      avatar: null,
-    };
+      await usersCollection.insertOne(newUser);
+      return res.status(201).json({ message: 'Owner account created successfully', role });
+    }
 
-    await usersCollection.insertOne(newUser);
-    res.status(201).json({ message: 'Account created successfully' });
+    // هل هو موظف؟
+    const employee = await employeesCollection.findOne({ email, name, phoneNumber });
+    if (employee) {
+      const role = 'employee';
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const newUser = {
+        _id: employee._id,
+        name,
+        email,
+        password: hashedPassword,
+        phoneNumber,
+        role,
+        avatar: null,
+      };
+
+      await usersCollection.insertOne(newUser);
+      return res.status(201).json({ message: 'Employee account created successfully', role });
+    }
+
+    // مش موظف ولا owner
+    return res.status(400).json({ message: 'User must be either an employee or an owner' });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'An error occurred during registration' });
   }
 };
 
+
+//loginUser
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
@@ -73,9 +110,11 @@ const loginUser = async (req, res) => {
 
     const token = jwt.sign({ userId: user._id, role: user.role }, 'your_jwt_secret', { expiresIn: '1h' });
 
+    
     res.status(200).json({
       message: 'Login successful',
       token,
+      role: user.role,
     });
   } catch (error) {
     console.error(error);
@@ -84,40 +123,42 @@ const loginUser = async (req, res) => {
 };
 
 const updateAvatar = async (req, res) => {
-  const { userId } = req.body;
+  const { userId } = req.params;
+
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded' });
+  }
 
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'Image is required' });
-    }
-
-    const result = req.file;
+    // رفع الصورة إلى Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: 'avatars',
+    });
 
     const avatarUrl = result.secure_url;
 
     const db = await connectDB();
     const usersCollection = db.collection('users');
 
-    const updatedUser = await usersCollection.updateOne(
+    const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    await usersCollection.updateOne(
       { _id: new ObjectId(userId) },
       { $set: { avatar: avatarUrl } }
     );
 
-    if (updatedUser.modifiedCount === 0) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.status(200).json({
-      message: 'Avatar updated successfully',
-      avatarUrl: avatarUrl,
-    });
-
+    res.status(200).json({ message: 'Avatar updated successfully', avatarUrl });
   } catch (error) {
-    console.error("Error uploading image:", error);
-    res.status(500).json({ message: "An error occurred while updating the avatar" });
+    console.error(error);
+    res.status(500).json({ message: 'Error uploading avatar' });
   }
 };
 
+
+//Get user info
 const getUserInfo = async (req, res) => {
   const userId = req.params.userId;  
 
@@ -135,6 +176,7 @@ const getUserInfo = async (req, res) => {
       email: user.email,
       phoneNumber: user.phoneNumber,
       password: user.password,
+      role: user.role,
       avatar: user.avatar,
     });
   } catch (error) {
@@ -143,9 +185,10 @@ const getUserInfo = async (req, res) => {
   }
 };
 
-
+//updateUserInfo
 const updateUserInfo = async (req, res) => {
-  const { userId, name, password, phoneNumber } = req.body;
+  const { userId } = req.params;  
+  const { name, password, phoneNumber } = req.body;
 
   try {
     const db = await connectDB();
@@ -156,7 +199,7 @@ const updateUserInfo = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const updatedFields = {};
+    const updatedFields = {};  
 
     if (name) updatedFields.name = name;
     if (phoneNumber) updatedFields.phoneNumber = phoneNumber;
@@ -165,6 +208,7 @@ const updateUserInfo = async (req, res) => {
       updatedFields.password = hashedPassword;
     }
 
+ 
     const updatedUser = await usersCollection.updateOne(
       { _id: new ObjectId(userId) },
       { $set: updatedFields }
@@ -181,4 +225,4 @@ const updateUserInfo = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser, updateAvatar, getUserInfo, updateUserInfo, upload };
+module.exports = { registerUser, loginUser, updateAvatar, getUserInfo, updateUserInfo, upload};

@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/home_provider.dart';
 import 'package:flutter_provider/providers/news_provider.dart';
 import 'package:flutter_provider/providers/reports_provider.dart';
+import 'package:flutter_provider/screens/Admin/Garage/garage_page.dart';
+import 'package:flutter_provider/screens/Owner/Employee/employee_screen.dart';
+import 'package:flutter_provider/screens/Owner/OverviewPage.dart';
+import 'package:flutter_provider/screens/Technician/Home/mobile_appbar.dart';
+import 'package:flutter_provider/screens/Technician/reports/RecordOptionsSection.dart';
+import 'package:flutter_provider/widgets/UserProfileCard.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter_provider/Responsive/Responsive_helper.dart';
@@ -23,7 +30,6 @@ class Home extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedIndex = ref.watch(selectedIndexProvider);
-    print(selectedIndex);
     final isSidebarExpanded = ref.watch(isSidebarExpandedProvider);
     final lang = ref.watch(languageProvider);
 
@@ -31,31 +37,75 @@ class Home extends ConsumerWidget {
       ref.read(newsProvider.notifier).refreshNews();
     }
 
-    final List<Widget> _pages = [
-      NewsPage(),
-      ReportsPage(),
-      ChatBotPage(),
-      SparePartsApp(),
-      ReportPage(),
-      AttendanceSalaryPage(),
-    ];
+    final userIdAsync = ref.watch(userIdProvider);
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (ResponsiveHelper.isMobile(context)) {
-          return _buildMobileLayout(context, lang, selectedIndex, _pages, ref);
-        } else {
-          return _buildDesktopLayout(
-            context,
-            lang,
-            selectedIndex,
-            _pages,
-            ref,
-            isSidebarExpanded,
-          );
+    return userIdAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, stack) {
+        print("❌ Error loading userId: $err");
+        return Center(child: Text("Error loading user ID"));
+      },
+      data: (userId) {
+        if (userId == null) {
+          return Center(child: Text("User ID not found"));
         }
+
+        final userInfoAsync = ref.watch(getUserInfoProvider(userId));
+
+        return userInfoAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (err, stack) {
+            print("❌ Error loading user info: $err");
+            return Center(child: Text("Error loading user info"));
+          },
+          data: (userInfo) {
+            final userRole = userInfo['role'];
+            final List<Widget> _pages = _getPagesByRole(userRole, ref);
+
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                if (ResponsiveHelper.isMobile(context)) {
+                  return _buildMobileLayout(
+                      context, lang, selectedIndex, _pages, ref, userInfo);
+                } else {
+                  return _buildDesktopLayout(context, lang, selectedIndex,
+                      _pages, ref, isSidebarExpanded, userInfo);
+                }
+              },
+            );
+          },
+        );
       },
     );
+  }
+
+  List<Widget> _getPagesByRole(String role, WidgetRef ref) {
+    switch (role.toLowerCase()) {
+      case 'admin':
+        return [
+          GaragePage(),
+        ];
+      case 'owner':
+        return [
+          OverviewPage(),
+          ReportsPageList(),
+          EmployeeListScreen(key: UniqueKey()),
+          NewsPage(),
+          RecordOptionsSection(),
+          ReportPage(key: UniqueKey()),
+        ];
+      case 'employee':
+        return [
+          NewsPage(),
+          ReportsPageList(),
+          ChatBotPage(),
+          SparePartsApp(),
+          RecordOptionsSection(),
+          ReportPage(key: UniqueKey()),
+        ];
+      default:
+        return [];
+    }
   }
 
   Widget _buildMobileLayout(
@@ -64,18 +114,60 @@ class Home extends ConsumerWidget {
     int selectedIndex,
     List<Widget> pages,
     WidgetRef ref,
+    Map<String, dynamic> userInfo,
   ) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF3E0),
-      appBar: AppBar(
-        title: Text(lang['home'] ?? 'Home'),
-        backgroundColor: Colors.orange,
+      backgroundColor:
+          const Color.fromARGB(255, 248, 149, 36), // لون الخلفية الأساسي
+      appBar: CustomAppBar(userInfo: userInfo),
+      body: Container(
+        color: const Color.fromARGB(255, 248, 149, 36), // نفس لون الخلفية
+        padding: EdgeInsets.only(top: 10), // تأكد إنه ما فيه padding من فوق
+        child: IndexedStack(
+          index: selectedIndex,
+          children: pages,
+        ),
       ),
-      body: IndexedStack(
-        index: selectedIndex,
-        children: pages,
-      ),
-      bottomNavigationBar: CurvedNavigationBar(
+      bottomNavigationBar:
+          _buildBottomNavBar(lang, selectedIndex, ref, userInfo['role']),
+      drawer: _buildDrawer(context, lang, userInfo),
+    );
+  }
+
+  Widget _buildBottomNavBar(
+    Map<String, String> lang,
+    int selectedIndex,
+    WidgetRef ref,
+    String userRole,
+  ) {
+    if (userRole.toLowerCase() == 'admin') {
+      return CurvedNavigationBar(
+        color: const Color(0xFFFF8F00),
+        backgroundColor: Colors.grey[200]!,
+        items: <Widget>[
+          buildNavItem(
+              Icons.auto_awesome, lang['car_Ai'] ?? 'Car AI', 3, selectedIndex),
+        ],
+        onTap: (index) =>
+            ref.read(selectedIndexProvider.notifier).state = index,
+      );
+    } else if (userRole.toLowerCase() == 'owner') {
+      return CurvedNavigationBar(
+        color: const Color(0xFFFF8F00),
+        backgroundColor: Colors.grey[200]!,
+        items: <Widget>[
+          buildNavItem(Icons.dashboard, lang['dashboard'] ?? 'Dashboard', 0,
+              selectedIndex),
+          buildNavItem(Icons.calendar_today, lang['report'] ?? 'Report', 1,
+              selectedIndex),
+          buildNavItem(
+              Icons.article, lang['Employee'] ?? 'Employee', 2, selectedIndex),
+        ],
+        onTap: (index) =>
+            ref.read(selectedIndexProvider.notifier).state = index,
+      );
+    } else if (userRole.toLowerCase() == 'employee') {
+      return CurvedNavigationBar(
         color: const Color(0xFFFF8F00),
         backgroundColor: Colors.grey[200]!,
         items: <Widget>[
@@ -87,9 +179,9 @@ class Home extends ConsumerWidget {
         ],
         onTap: (index) =>
             ref.read(selectedIndexProvider.notifier).state = index,
-      ),
-      drawer: _buildDrawer(context, lang),
-    );
+      );
+    }
+    throw Exception('Unsupported user role: $userRole');
   }
 
   Widget _buildDesktopLayout(
@@ -99,10 +191,11 @@ class Home extends ConsumerWidget {
     List<Widget> pages,
     WidgetRef ref,
     bool isSidebarExpanded,
+    Map<String, dynamic> userInfo,
   ) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF3E0),
-      appBar: const DesktopCustomAppBar(),
+      appBar: DesktopCustomAppBar(userInfo: userInfo),
       body: Row(
         children: [
           AnimatedContainer(
@@ -120,7 +213,7 @@ class Home extends ConsumerWidget {
             ),
             child: Column(
               children: [
-                _buildUserHeader(isSidebarExpanded),
+                _buildUserHeader(isSidebarExpanded, userInfo),
                 Expanded(
                   child: _buildSidebarContent(
                     context,
@@ -128,6 +221,7 @@ class Home extends ConsumerWidget {
                     selectedIndex,
                     ref,
                     isSidebarExpanded,
+                    userInfo,
                   ),
                 ),
                 _buildCollapseButton(context, ref, isSidebarExpanded),
@@ -151,20 +245,25 @@ class Home extends ConsumerWidget {
     int selectedIndex,
     WidgetRef ref,
     bool isExpanded,
+    Map<String, dynamic> userInfo,
   ) {
     return SingleChildScrollView(
       child: Column(
         children: [
-          _buildMainNavSection(context, lang, selectedIndex, ref, isExpanded),
+          _buildMainNavSection(
+              context, lang, selectedIndex, ref, isExpanded, userInfo['role']),
           _buildSecondaryNavSection(
-              context, lang, selectedIndex, ref, isExpanded),
+              context, lang, selectedIndex, ref, isExpanded, userInfo['role']),
           _buildSettingsSection(context, lang, isExpanded),
         ],
       ),
     );
   }
 
-  Widget _buildUserHeader(bool isExpanded) {
+  Widget _buildUserHeader(
+    bool isExpanded,
+    Map<String, dynamic> userInfo,
+  ) {
     return Container(
       height: 120,
       padding: const EdgeInsets.all(20),
@@ -173,47 +272,10 @@ class Home extends ConsumerWidget {
           bottom: BorderSide(color: Colors.grey[300]!),
         ),
       ),
-      child: isExpanded
-          ? Row(
-              children: [
-                const CircleAvatar(
-                  radius: 30,
-                  backgroundImage: NetworkImage(
-                      'https://images.unsplash.com/photo-1485290334039-a3c69043e517'),
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Jane Doe',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey[800],
-                        ),
-                      ),
-                      Text(
-                        'jane.doe@example.com',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            )
-          : const Center(
-              child: CircleAvatar(
-                radius: 30,
-                backgroundImage: NetworkImage(
-                    'https://images.unsplash.com/photo-1485290334039-a3c69043e517'),
-              ),
-            ),
+      child: UserProfileCard(
+        isExpanded: isExpanded,
+        userInfo: userInfo,
+      ),
     );
   }
 
@@ -223,6 +285,7 @@ class Home extends ConsumerWidget {
     int selectedIndex,
     WidgetRef ref,
     bool isExpanded,
+    String userRole,
   ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
@@ -240,30 +303,59 @@ class Home extends ConsumerWidget {
                 ),
               ),
             ),
-          _buildNavButton(
-            context: context,
-            icon: Icons.article,
-            label: lang['news'] ?? 'News',
-            isSelected: selectedIndex == 0,
-            onTap: () => ref.read(selectedIndexProvider.notifier).state = 0,
-            isExpanded: isExpanded,
-          ),
-          _buildNavButton(
-            context: context,
-            icon: Icons.calendar_today,
-            label: lang['report'] ?? 'Reports',
-            isSelected: selectedIndex == 1,
-            onTap: () => ref.read(selectedIndexProvider.notifier).state = 1,
-            isExpanded: isExpanded,
-          ),
-          _buildNavButton(
-            context: context,
-            icon: Icons.auto_awesome,
-            label: lang['car_Ai'] ?? 'Car AI',
-            isSelected: selectedIndex == 2,
-            onTap: () => ref.read(selectedIndexProvider.notifier).state = 2,
-            isExpanded: isExpanded,
-          ),
+          if (userRole.toLowerCase() == 'admin' ||
+              userRole.toLowerCase() == 'owner')
+            _buildNavButton(
+              context: context,
+              icon: Icons.dashboard,
+              label: lang['dashboard'] ?? 'Dashboard',
+              isSelected: selectedIndex == 0,
+              onTap: () => ref.read(selectedIndexProvider.notifier).state = 0,
+              isExpanded: isExpanded,
+            ),
+          if (userRole.toLowerCase() == 'owner' ||
+              userRole.toLowerCase() == 'employee')
+            _buildNavButton(
+              context: context,
+              icon: Icons.article,
+              label: lang['news'] ?? 'News',
+              isSelected: userRole.toLowerCase() == 'owner'
+                  ? selectedIndex == 1
+                  : selectedIndex == 0,
+              onTap: () => ref.read(selectedIndexProvider.notifier).state =
+                  userRole.toLowerCase() == 'owner' ? 1 : 0,
+              isExpanded: isExpanded,
+            ),
+          if (userRole.toLowerCase() == 'owner' ||
+              userRole.toLowerCase() == 'employee')
+            _buildNavButton(
+              context: context,
+              icon: Icons.calendar_today,
+              label: lang['report'] ?? 'Reports',
+              isSelected: userRole.toLowerCase() == 'owner'
+                  ? selectedIndex == 2
+                  : selectedIndex == 1,
+              onTap: () => ref.read(selectedIndexProvider.notifier).state =
+                  userRole.toLowerCase() == 'owner' ? 2 : 1,
+              isExpanded: isExpanded,
+            ),
+          if (userRole.toLowerCase() == 'owner' ||
+              userRole.toLowerCase() == 'employee')
+            _buildNavButton(
+              context: context,
+              icon: Icons.auto_awesome,
+              label: lang['car_Ai'] ?? 'Car AI',
+              isSelected: userRole.toLowerCase() == 'employee' ||
+                      userRole.toLowerCase() == 'owner'
+                  ? selectedIndex == 3
+                  : selectedIndex == 2,
+              onTap: () => ref.read(selectedIndexProvider.notifier).state =
+                  userRole.toLowerCase() == 'employee' ||
+                          userRole.toLowerCase() == 'owner'
+                      ? 3
+                      : 2,
+              isExpanded: isExpanded,
+            ),
         ],
       ),
     );
@@ -275,6 +367,7 @@ class Home extends ConsumerWidget {
     int selectedIndex,
     WidgetRef ref,
     bool isExpanded,
+    String userRole,
   ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
@@ -292,38 +385,40 @@ class Home extends ConsumerWidget {
                 ),
               ),
             ),
-          _buildNavButton(
-            context: context,
-            icon: Icons.build,
-            label: lang['spare_parts'] ?? 'Spare Parts',
-            isSelected: selectedIndex == 3,
-            onTap: () => ref.read(selectedIndexProvider.notifier).state = 3,
-            isExpanded: isExpanded,
-          ),
-          _buildNavButton(
-            context: context,
-            icon: Icons.map,
-            label: lang['map'] ?? 'Map',
-            isSelected: selectedIndex == 4,
-            onTap: () => ref.read(selectedIndexProvider.notifier).state = 4,
-            isExpanded: isExpanded,
-          ),
-          _buildNavButton(
-            context: context,
-            icon: Icons.chat,
-            label: lang['chat_with_admin'] ?? 'Chat',
-            isSelected: selectedIndex == 5,
-            onTap: () => ref.read(selectedIndexProvider.notifier).state = 5,
-            isExpanded: isExpanded,
-          ),
-          _buildNavButton(
-            context: context,
-            icon: Icons.assignment,
-            label: lang['attendance'] ?? 'Attendance',
-            isSelected: selectedIndex == 6,
-            onTap: () => ref.read(selectedIndexProvider.notifier).state = 6,
-            isExpanded: isExpanded,
-          ),
+          if (userRole.toLowerCase() == 'owner' ||
+              userRole.toLowerCase() == 'employee')
+            _buildNavButton(
+              context: context,
+              icon: Icons.build,
+              label: lang['spare_parts'] ?? 'Spare Parts',
+              isSelected: userRole.toLowerCase() == 'employee' ||
+                      userRole.toLowerCase() == 'owner'
+                  ? selectedIndex == 4
+                  : selectedIndex == 3,
+              onTap: () => ref.read(selectedIndexProvider.notifier).state =
+                  userRole.toLowerCase() == 'admin' ||
+                          userRole.toLowerCase() == 'owner'
+                      ? 4
+                      : 3,
+              isExpanded: isExpanded,
+            ),
+          if (userRole.toLowerCase() == 'owner' ||
+              userRole.toLowerCase() == 'employee')
+            _buildNavButton(
+              context: context,
+              icon: Icons.assignment,
+              label: lang['attendance'] ?? 'Attendance',
+              isSelected: userRole.toLowerCase() == 'admin' ||
+                      userRole.toLowerCase() == 'owner'
+                  ? selectedIndex == 6
+                  : selectedIndex == 5,
+              onTap: () => ref.read(selectedIndexProvider.notifier).state =
+                  userRole.toLowerCase() == 'admin' ||
+                          userRole.toLowerCase() == 'owner'
+                      ? 6
+                      : 5,
+              isExpanded: isExpanded,
+            ),
         ],
       ),
     );
@@ -365,7 +460,6 @@ class Home extends ConsumerWidget {
       height: 50,
       margin: const EdgeInsets.only(bottom: 8),
       child: InkWell(
-        // تمت إزالة الـ Tooltip
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
         child: AnimatedContainer(
@@ -428,76 +522,70 @@ class Home extends ConsumerWidget {
     );
   }
 
-  Drawer _buildDrawer(BuildContext context, Map<String, String> lang) {
+  Drawer _buildDrawer(
+    BuildContext context,
+    Map<String, String> lang,
+    Map<String, dynamic> userInfo,
+  ) {
     return Drawer(
       child: Container(
         decoration: const BoxDecoration(color: Color(0xFFF5F5F5)),
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            UserAccountsDrawerHeader(
-              currentAccountPicture: const CircleAvatar(
-                backgroundImage: NetworkImage(
-                  'https://images.unsplash.com/photo-1485290334039-a3c69043e517',
-                ),
+            UserProfileCard(
+              isMobile: true,
+              userInfo: userInfo,
+            ),
+            if (userInfo['role'].toLowerCase() == 'owner' ||
+                userInfo['role'].toLowerCase() == 'admin')
+              buildDrawerItem(context, lang['dashboard'] ?? 'Dashboard',
+                  Icons.dashboard, NewsPage()),
+            if (userInfo['role'].toLowerCase() == 'owner' ||
+                userInfo['role'].toLowerCase() == 'employee')
+              buildDrawerItem(
+                context,
+                lang['news'] ?? 'News',
+                Icons.article,
+                NewsPage(),
               ),
-              accountEmail: Text(
-                'jane.doe@example.com',
-                style: TextStyle(color: Colors.black87),
+            if (userInfo['role'].toLowerCase() == 'owner' ||
+                userInfo['role'].toLowerCase() == 'employee')
+              buildDrawerItem(
+                context,
+                lang['report'] ?? 'Reports',
+                Icons.assignment,
+                ReportsPageList(),
               ),
-              accountName: const Text(
-                'Jane Doe',
-                style: TextStyle(fontSize: 24.0, color: Colors.black87),
+            if (userInfo['role'].toLowerCase() == 'owner' ||
+                userInfo['role'].toLowerCase() == 'employee')
+              buildDrawerItem(
+                context,
+                lang['car_Ai'] ?? 'Car AI',
+                Icons.auto_awesome,
+                ChatBotPage(),
               ),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.orange, Colors.orange[100]!],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+            if (userInfo['role'].toLowerCase() == 'owner' ||
+                userInfo['role'].toLowerCase() == 'employee')
+              buildDrawerItem(
+                context,
+                lang['spare_parts'] ?? 'Spare Parts',
+                Icons.build,
+                SparePartsApp(),
               ),
-            ),
+            if (userInfo['role'].toLowerCase() == 'owner' ||
+                userInfo['role'].toLowerCase() == 'employee')
+              buildDrawerItem(
+                context,
+                lang['attendance'] ?? 'Attendance',
+                Icons.calendar_today,
+                AttendanceSalaryPage(),
+              ),
             buildDrawerItem(
               context,
-              lang['home'] ?? '',
-              Icons.home,
-              const ReportPage(),
-            ),
-            buildDrawerItem(
-              context,
-              lang['report'] ?? '',
-              Icons.assignment,
-              const ReportPage(),
-            ),
-            buildDrawerItem(
-              context,
-              lang['attendance'] ?? '',
-              Icons.calendar_today,
-              const AttendanceSalaryPage(),
-            ),
-            buildDrawerItem(
-              context,
-              lang['spare_parts'] ?? '',
-              Icons.build,
-              const SparePartsApp(),
-            ),
-            buildDrawerItem(
-              context,
-              lang['map'] ?? '',
-              Icons.map,
-              const ReportPage(),
-            ),
-            buildDrawerItem(
-              context,
-              lang['chat_with_admin'] ?? '',
-              Icons.chat,
-              const ReportPage(),
-            ),
-            buildDrawerItem(
-              context,
-              lang['settings'] ?? '',
+              lang['settings'] ?? 'Settings',
               Icons.settings,
-              const SettingsPage(),
+              SettingsPage(),
             ),
           ],
         ),

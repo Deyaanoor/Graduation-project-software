@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
-import 'package:flutter_provider/providers/theamDark_mode.dart';
+import 'package:flutter_provider/screens/Admin/Garage/theamDark_mode.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_provider/screens/Technician/settings/navigation_helper.dart';
 import 'package:flutter_provider/screens/Technician/settings/settings_card.dart';

@@ -11,20 +11,22 @@ final reportsProvider = StateNotifierProvider<ReportsNotifier,
 
 class ReportsNotifier
     extends StateNotifier<AsyncValue<List<Map<String, dynamic>>>> {
-  ReportsNotifier() : super(const AsyncValue.loading()) {
-    fetchReports();
-  }
+  ReportsNotifier() : super(const AsyncValue.loading());
 
   static const String _baseUrl = 'http://localhost:5000/reports';
 
-  Future<void> fetchReports() async {
+  Future<void> fetchReports({required String userId}) async {
     try {
       state = const AsyncValue.loading();
-      final response = await http.get(Uri.parse(_baseUrl));
+      final response = await http.get(
+        Uri.parse('$_baseUrl/$userId'), // أضف userId هنا
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      );
 
       if (response.statusCode == 200) {
-        print('Full response: ${response.body}');
-
         final List<dynamic> data = jsonDecode(response.body);
 
         final List<Map<String, dynamic>> reports = data
@@ -60,6 +62,8 @@ class ReportsNotifier
         'usedParts': _parseUsedParts(item['usedParts']),
         'date': _parseDate(item['date']),
         'imageUrls': _parseImageUrls(item['imageUrls']),
+        'status': item['status']?.toString() ?? 'غير محدد',
+        'mechanicName': item['mechanicName']?.toString() ?? 'غير معروف',
       };
     } catch (e, stack) {
       print('Error parsing item: $e\nStack trace: $stack');
@@ -112,7 +116,7 @@ class ReportsNotifier
     }
   }
 
-  Future<void> addReport({
+  Future<String> addReport({
     required String owner,
     required String cost,
     required String plateNumber,
@@ -125,6 +129,9 @@ class ReportsNotifier
     required List<String> usedParts,
     required List<Uint8List> imageBytesList,
     required List<String> fileNames,
+    required String status,
+    required String mechanicName,
+    required String userId,
   }) async {
     try {
       state = const AsyncValue.loading();
@@ -142,12 +149,14 @@ class ReportsNotifier
           'repairDescription': repairDescription,
           'usedParts': jsonEncode(usedParts),
           'date': DateTime.now().toIso8601String(),
+          'status': status,
+          'mechanicName': mechanicName,
+          'user_id': userId,
         });
 
-      // إضافة جميع الصور
       for (int i = 0; i < imageBytesList.length; i++) {
         request.files.add(http.MultipartFile.fromBytes(
-          'images', // نفس الاسم المستخدم في الباكند
+          'images',
           imageBytesList[i],
           filename: fileNames[i],
           contentType: MediaType('image', _getFileExtension(fileNames[i])),
@@ -157,7 +166,11 @@ class ReportsNotifier
       final response = await request.send();
 
       if (response.statusCode == 201) {
-        await fetchReports();
+        final responseBody = await response.stream.bytesToString();
+        final jsonResponse = jsonDecode(responseBody);
+        final reportId = jsonResponse['reportId'];
+
+        return reportId;
       } else {
         throw Exception('Failed to add report: ${response.statusCode}');
       }
@@ -172,11 +185,30 @@ class ReportsNotifier
     return parts.length > 1 ? parts.last : 'jpeg';
   }
 
-  Future<void> refreshReports() async {
+  Future<void> refreshReports(String userId) async {
     try {
-      await fetchReports();
+      await fetchReports(userId: userId);
     } catch (e) {
       rethrow;
     }
   }
+
+  Future<Map<String, dynamic>?> fetchReportById(String reportId) async {
+    try {
+      final response = await http.get(Uri.parse('$_baseUrl/report/$reportId'));
+
+      if (response.statusCode == 200) {
+        final dynamic data = jsonDecode(response.body);
+        return _parseReportItem(data);
+      } else {
+        throw Exception('Failed to load report: ${response.statusCode}');
+      }
+    } catch (e, stack) {
+      ('Error fetching report by ID: $e\nStack trace: $stack');
+      return null; // Return null if error occurs
+    }
+  }
 }
+
+final selectedReportProvider =
+    StateProvider<Map<String, dynamic>?>((ref) => null);

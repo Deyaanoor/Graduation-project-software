@@ -13,6 +13,7 @@ const connectDB = async () => {
       },
     });
 
+    
     await client.connect();
 
     const dbName = process.env.DB_NAME || "ProSoftware"; 

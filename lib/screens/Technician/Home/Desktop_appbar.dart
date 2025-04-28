@@ -1,13 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_provider/screens/Owner/notifications/notifications_screen.dart';
 import 'package:flutter_provider/screens/Technician/Home/home.dart';
 import 'package:flutter_provider/screens/auth/welcomePage.dart';
 
-class DesktopCustomAppBar extends StatelessWidget
+class DesktopCustomAppBar extends StatefulWidget
     implements PreferredSizeWidget {
-  const DesktopCustomAppBar({Key? key}) : super(key: key);
+  const DesktopCustomAppBar({Key? key, required this.userInfo})
+      : super(key: key);
+  final Map<String, dynamic> userInfo;
+
+  @override
+  _DesktopCustomAppBarState createState() => _DesktopCustomAppBarState();
 
   @override
   Size get preferredSize => const Size.fromHeight(130.0);
+}
+
+class _DesktopCustomAppBarState extends State<DesktopCustomAppBar> {
+  bool showNotifications = false;
+  OverlayEntry? _overlayEntry;
 
   @override
   Widget build(BuildContext context) {
@@ -141,7 +152,7 @@ class DesktopCustomAppBar extends StatelessWidget
                     ),
                   const Spacer(),
                   if (screenWidth > 600)
-                    _buildDesktopActions(context)
+                    _buildDesktopActions(context, widget.userInfo)
                   else
                     _buildMobileMenu(context),
                 ],
@@ -173,40 +184,99 @@ class DesktopCustomAppBar extends StatelessWidget
     );
   }
 
-  Widget _buildDesktopActions(BuildContext context) {
-    return Row(
+  Widget _buildDesktopActions(
+      BuildContext context, Map<String, dynamic> userInfo) {
+    return Stack(
+      clipBehavior: Clip.none,
       children: [
-        TextButton(
-          onPressed: () => Navigator.pushNamed(context, "contactUs"),
-          child: const Text(
-            'Contact Us',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+        Row(
+          children: [
+            TextButton(
+              onPressed: () => Navigator.pushNamed(context, "contactUs"),
+              child: const Text(
+                'Contact Us',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-          ),
+            const SizedBox(width: 10),
+            IconButton(
+              icon: const Icon(Icons.search, color: Colors.white, size: 30),
+              onPressed: () {},
+            ),
+            const SizedBox(width: 10),
+            if (userInfo['role'] == 'owner')
+              IconButton(
+                icon: Badge(
+                  label: const Text('3', style: TextStyle(color: Colors.white)),
+                  backgroundColor: Colors.red,
+                  child: const Icon(Icons.notifications,
+                      color: Colors.white, size: 30),
+                ),
+                onPressed: () {
+                  if (_overlayEntry == null) {
+                    _showNotifications(context);
+                  } else {
+                    _hideNotifications();
+                  }
+                },
+              ),
+            const SizedBox(width: 10),
+            _buildProfileMenu(context, userInfo),
+            const SizedBox(width: 20),
+          ],
         ),
-        const SizedBox(width: 10),
-        IconButton(
-          icon: const Icon(Icons.search, color: Colors.white, size: 30),
-          onPressed: () {},
-        ),
-        const SizedBox(width: 10),
-        IconButton(
-          icon: Badge(
-            label: const Text('3', style: TextStyle(color: Colors.white)),
-            backgroundColor: Colors.red,
-            child:
-                const Icon(Icons.notifications, color: Colors.white, size: 30),
-          ),
-          onPressed: () {},
-        ),
-        const SizedBox(width: 10),
-        _buildProfileMenu(context),
-        const SizedBox(width: 20),
       ],
     );
+  }
+
+  void _hideNotifications() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+  }
+
+  void _showNotifications(BuildContext context) {
+    final overlay = Overlay.of(context);
+    final RenderBox box = context.findRenderObject() as RenderBox;
+    final Offset position = box.localToGlobal(Offset.zero);
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) => Stack(
+        children: [
+          GestureDetector(
+            onTap: () {
+              _hideNotifications();
+            },
+            behavior: HitTestBehavior.translucent,
+            child: Container(
+              color: Colors.transparent,
+            ),
+          ),
+          Positioned(
+            top: position.dy + box.size.height - 60,
+            right: position.dx + 120,
+            child: Material(
+              elevation: 8,
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                width: 350,
+                height: 400,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: NotificationsPage(), // صفحتك
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    overlay.insert(_overlayEntry!);
   }
 
   Widget _buildMobileMenu(BuildContext context) {
@@ -252,11 +322,27 @@ class DesktopCustomAppBar extends StatelessWidget
     );
   }
 
-  Widget _buildProfileMenu(BuildContext context) {
+  Widget _buildProfileMenu(
+      BuildContext context, Map<String, dynamic> userInfo) {
+    final avatarUrl = userInfo['avatar'];
+    final hasAvatar = avatarUrl != null && avatarUrl.toString().isNotEmpty;
+
     return PopupMenuButton<String>(
-      icon: const CircleAvatar(
-        backgroundImage: NetworkImage(''),
-        radius: 25,
+      icon: Container(
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.orange, width: 2),
+        ),
+        child: CircleAvatar(
+          radius: 25,
+          backgroundColor: Colors.white,
+          backgroundImage: hasAvatar ? NetworkImage(avatarUrl) : null,
+          child: !hasAvatar
+              ? const Icon(Icons.person, size: 28, color: Colors.orange)
+              : null,
+        ),
       ),
       onSelected: (value) {
         switch (value) {
@@ -267,21 +353,23 @@ class DesktopCustomAppBar extends StatelessWidget
             Navigator.pushNamed(context, '/settings');
             break;
           case 'Logout':
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => WelcomePage()));
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => WelcomePage()),
+            );
             break;
         }
       },
-      itemBuilder: (BuildContext context) => [
-        const PopupMenuItem<String>(
+      itemBuilder: (BuildContext context) => const [
+        PopupMenuItem<String>(
           value: 'Profile',
           child: Text('Profile'),
         ),
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: 'Settings',
           child: Text('Settings'),
         ),
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: 'Logout',
           child: Text('Logout'),
         ),

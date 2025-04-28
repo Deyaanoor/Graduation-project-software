@@ -13,7 +13,6 @@ class NewsPage extends ConsumerWidget {
     final newsAsync = ref.watch(newsProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
       body: Column(
         children: [
           Padding(

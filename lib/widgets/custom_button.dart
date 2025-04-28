@@ -6,6 +6,7 @@ class CustomButton extends StatelessWidget {
   final Color textColor;
   final Color backgroundColor;
   final Color borderColor;
+
   final bool hasShadow;
   final bool isGradient;
 

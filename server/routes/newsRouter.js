@@ -5,7 +5,8 @@ const router = express.Router();
 
 router.get("/", getNews);
 
-router.post("/", addNews);
+router.post("/addNew", addNews);
+
 
 module.exports = router;
 

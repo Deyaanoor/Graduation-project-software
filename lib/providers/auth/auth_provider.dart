@@ -1,9 +1,15 @@
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const String apiUrl = 'http://localhost:5000/users';
+final avatarFileProvider = StateProvider<File?>((ref) => null);
 
 Future<void> saveToken(String token) async {
   final prefs = await SharedPreferences.getInstance();
@@ -31,7 +37,8 @@ final registerUserProvider = FutureProvider.autoDispose
 });
 
 final loginUserProvider = FutureProvider.autoDispose
-    .family<String, Map<String, String>>((ref, credentials) async {
+    .family<Map<String, dynamic>, Map<String, String>>(
+        (ref, credentials) async {
   final response = await http.post(
     Uri.parse('$apiUrl/login'),
     headers: {'Content-Type': 'application/json'},
@@ -41,30 +48,73 @@ final loginUserProvider = FutureProvider.autoDispose
   if (response.statusCode == 200) {
     final responseData = json.decode(response.body);
     final token = responseData['token'];
+    final role = responseData['role'];
 
     await saveToken(token);
 
-    return token;
+    return {
+      'token': token,
+      'role': role,
+    };
   } else {
     throw Exception('failed to login user');
   }
 });
 
-final updateAvatarProvider = FutureProvider.autoDispose
-    .family<String, Map<String, String>>((ref, avatarData) async {
-  final response = await http.post(
-    Uri.parse('$apiUrl/update-avatar'),
-    body: avatarData,
-    headers: {'Content-Type': 'multipart/form-data'},
-  );
+Future<void> updateAvatar({
+  required String userId,
+  required dynamic imageFile,
+  required bool isWeb,
+}) async {
+  try {
+    final uri = Uri.parse('$apiUrl/updateAvatar/$userId');
+    final request = http.MultipartRequest('PUT', uri);
 
-  if (response.statusCode == 200) {
-    final responseData = json.decode(response.body);
-    return responseData['avatarUrl'];
-  } else {
-    throw Exception('failed to update avatar');
+    if (isWeb) {
+      request.files.add(http.MultipartFile.fromBytes(
+        'avatar',
+        imageFile,
+        filename: 'avatar.jpg',
+        contentType: MediaType('image', 'jpeg'),
+      ));
+    } else {
+      request.files.add(await http.MultipartFile.fromPath(
+        'avatar',
+        imageFile.path,
+        contentType: MediaType('image', 'jpeg'),
+      ));
+    }
+
+    final response = await request.send();
+    final responseData = await response.stream.bytesToString();
+
+    if (response.statusCode != 200) {
+      throw Exception('فشل في رفع الصورة: $responseData');
+    }
+  } catch (e) {
+    throw Exception('خطأ أثناء رفع الصورة: $e');
   }
-});
+}
+
+Future<void> refreshAvatar({
+  required String userId,
+  required dynamic imageFile,
+  required bool isWeb,
+  required Function onSuccess,
+  required Function onError,
+}) async {
+  try {
+    await updateAvatar(
+      userId: userId,
+      imageFile: imageFile,
+      isWeb: isWeb,
+    );
+
+    onSuccess();
+  } catch (e) {
+    onError(e);
+  }
+}
 
 final getUserInfoProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>, String>((ref, userId) async {
@@ -90,15 +140,21 @@ final getUserInfoProvider = FutureProvider.autoDispose
 });
 
 final updateUserInfoProvider = FutureProvider.autoDispose
-    .family<void, Map<String, dynamic>>((ref, userData) async {
+    .family<void, Map<String, dynamic>>((ref, originalUserData) async {
   final token = await getToken();
-
   if (token == null) {
     throw Exception('لا يوجد توكن');
   }
 
+  final userData = Map<String, dynamic>.from(originalUserData);
+  final userId = userData.remove('userId');
+
+  if (userId == null) {
+    throw Exception('لا يوجد userId');
+  }
+
   final response = await http.put(
-    Uri.parse('$apiUrl/update-user-info'),
+    Uri.parse('$apiUrl/update-user-info/$userId'),
     headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token',
@@ -110,7 +166,7 @@ final updateUserInfoProvider = FutureProvider.autoDispose
     return;
   } else {
     final error = json.decode(response.body);
-    throw Exception(error['message'] ?? 'failed to update user info');
+    throw Exception(error['message'] ?? 'فشل في التحديث');
   }
 });
 
@@ -123,3 +179,15 @@ String? extractUserIdFromToken(String token) {
 
   return payloadMap['userId'];
 }
+
+final userIdProvider = FutureProvider<String?>((ref) async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('auth_token');
+  print('Retrieved token: $token');
+  if (token != null) {
+    final userId = extractUserIdFromToken(token);
+    print('Extracted userId: $userId');
+    return userId;
+  }
+  return null;
+});

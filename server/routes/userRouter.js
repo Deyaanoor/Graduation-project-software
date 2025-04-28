@@ -1,13 +1,15 @@
 const express = require('express');
-const { registerUser, loginUser, updateAvatar, upload, getUserInfo, updateUserInfo } = require('../controllers/userController');
+const { registerUser, loginUser, updateAvatar, upload, getUserInfo, updateUserInfo ,addEmployee } = require('../controllers/userController');
 const router = express.Router();
-const authMiddleware = require('../middleware/userMidd');
+
 
 router.post('/register', registerUser);
 router.post('/login', loginUser);
-router.post('/update-avatar', upload.single('avatar'), updateAvatar);
-router.get('/get-user-info/:userId', getUserInfo);  
-router.put('/update-user-info', updateUserInfo);
-router.get('/user-data', authMiddleware, getUserInfo);  
 
+router.get('/get-user-info/:userId', getUserInfo);  
+
+router.put('/update-user-info/:userId', updateUserInfo);
+
+
+router.put('/updateAvatar/:userId', upload.single('avatar'), updateAvatar);
 module.exports = router;

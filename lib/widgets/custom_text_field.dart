@@ -11,6 +11,7 @@ class CustomTextField extends StatelessWidget {
   final bool showBorder;
   final Color? backgroundColor;
   final Color? iconColor;
+
   final String? Function(String?)? validator;
 
   const CustomTextField({

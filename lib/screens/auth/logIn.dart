@@ -290,12 +290,21 @@ class LoginPage extends ConsumerWidget {
 
       try {
         final result = await ref.read(loginUserProvider(credentials).future);
+        final role = result['role'];
+        print(role);
 
         CustomSnackBar.showSuccessSnackBar(
           context,
           'Login successful',
         );
-        Navigator.pushNamed(context, '/home');
+
+        if (role == 'admin') {
+          Navigator.pushNamed(context, '/home');
+        } else if (role == 'owner') {
+          Navigator.pushNamed(context, '/home');
+        } else if (role == 'employee') {
+          Navigator.pushNamed(context, '/home');
+        }
       } catch (e) {
         CustomSnackBar.showErrorSnackBar(
           context,
