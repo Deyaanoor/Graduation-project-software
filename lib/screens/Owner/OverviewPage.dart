@@ -279,13 +279,13 @@ class OverviewPage extends ConsumerWidget {
                                 ),
                               ),
                               const SizedBox(width: 16),
-                              Expanded(
-                                child: _buildChartCard(
-                                  'الإيرادات آخر 6 شهور',
-                                  _buildLineChart(),
-                                  context,
-                                ),
-                              ),
+                              // Expanded(
+                              //   child: _buildChartCard(
+                              //     ' آخر 6 شهور ايرادات',
+                              //     _buildLineChart(),
+                              //     context,
+                              //   ),
+                              // ),
                               const SizedBox(width: 16),
                               Expanded(
                                 child: topEmployeesAsync.when(

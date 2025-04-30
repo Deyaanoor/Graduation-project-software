@@ -1,7 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:io' as io;
+import 'dart:typed_data';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
+import 'package:flutter_provider/providers/home_provider.dart';
 import 'package:flutter_provider/providers/notifications_provider.dart';
 import 'package:flutter_provider/screens/Technician/reports/components/image_upload_section.dart';
 import 'package:flutter_provider/screens/Technician/reports/components/repair_section.dart';
@@ -10,13 +16,14 @@ import 'package:flutter_provider/widgets/CustomDialog.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:provider/provider.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:flutter_provider/widgets/custom_text_field.dart';
 import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/providers/reports_provider.dart';
-import 'dart:io';
+import 'dart:developer';
+import 'dart:convert';
 
 class ReportPage extends ConsumerStatefulWidget {
   const ReportPage({super.key});
@@ -47,7 +54,9 @@ class _ReportPageState extends ConsumerState<ReportPage> {
     super.initState();
 
     final selectedReport = ref.read(selectedReportProvider);
+    final editReport = ref.read(isEditModeProvider.notifier).state;
 
+    log("EditReport $editReport");
     if (selectedReport != null) {
       _ownerController.text = selectedReport['owner'] ?? '';
       _plateController.text = selectedReport['plateNumber'] ?? '';
@@ -55,6 +64,28 @@ class _ReportPageState extends ConsumerState<ReportPage> {
       _makeController.text = selectedReport['make'] ?? '';
       _modelController.text = selectedReport['model'] ?? '';
       _yearController.text = selectedReport['year']?.toString() ?? '';
+      if (editReport != false) {
+        _problemTitleController.text = selectedReport['issue'] ?? '';
+        _costController.text = selectedReport['cost']?.toString() ?? '';
+        _repairDescController.text = selectedReport['repairDescription'] ?? '';
+        _symptomsController.text = selectedReport['symptoms'] ?? '';
+        final imageUrls = selectedReport['imageUrls'];
+        if (imageUrls != null) {
+          initImagesFromUrls(List<String>.from(imageUrls as List));
+        }
+        final rawUsedParts = selectedReport['usedParts'];
+
+        if (rawUsedParts != null) {
+          if (rawUsedParts is String) {
+            // إذا كانت مخزنة كنص JSON
+            final decoded = jsonDecode(rawUsedParts);
+            _selectedParts.addAll(List<String>.from(decoded));
+          } else if (rawUsedParts is List) {
+            // إذا كانت بالفعل List
+            _selectedParts.addAll(List<String>.from(rawUsedParts));
+          }
+        }
+      }
     }
   }
 
@@ -66,7 +97,51 @@ class _ReportPageState extends ConsumerState<ReportPage> {
     _costController.dispose();
     _repairDescController.dispose();
     _partController.dispose();
+
+    if (ref.read(isEditModeProvider)) {
+      ref.read(isEditModeProvider.notifier).state = false;
+    }
     super.dispose();
+  }
+
+  Future<void> initImagesFromUrls(List<String> urls) async {
+    print(">> Loading URLs: $urls");
+    for (String url in urls) {
+      try {
+        print(">> Downloading $url");
+        XFile xfile = await urlToXFile(url);
+        print(">> Got file: ${xfile.path}");
+        _images.add(xfile);
+      } catch (e) {
+        print("❌ Error downloading image: $e");
+      }
+    }
+    setState(() {});
+    print(">> _images now contains: $_images");
+  }
+
+  Future<XFile> urlToXFile(String url) async {
+    print(">> Fetching URL: $url");
+
+    final response = await http.get(Uri.parse(url));
+    print(">> Response status: ${response.statusCode}");
+
+    if (response.statusCode == 200) {
+      if (kIsWeb) {
+        // ✅ في الويب: لا يمكننا استخدام File، فنستخدم XFile.memory
+        return XFile.fromData(response.bodyBytes, name: "web_image.jpg");
+      } else {
+        // ✅ في Android/iOS: نستخدم المسار المؤقت
+        final dir = await getTemporaryDirectory();
+        final filePath =
+            '${dir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final file = io.File(filePath);
+        await file.writeAsBytes(response.bodyBytes);
+        return XFile(file.path);
+      }
+    } else {
+      throw Exception("❌ Failed to download image: ${response.statusCode}");
+    }
   }
 
   void _addPart() {
@@ -498,7 +573,9 @@ class _ReportPageState extends ConsumerState<ReportPage> {
         SizedBox(width: ResponsiveHelper.isDesktop(context) ? 25 : 15),
         Expanded(
           child: ElevatedButton(
-            onPressed: () => _submitReport(userName),
+            onPressed: () => ref.watch(isEditModeProvider)
+                ? _updateReport()
+                : _submitReport(userName),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.deepOrange,
               padding: buttonPadding,
@@ -507,7 +584,9 @@ class _ReportPageState extends ConsumerState<ReportPage> {
               ),
             ),
             child: Text(
-              lang['send_admin'] ?? 'Send to Admin',
+              ref.watch(isEditModeProvider)
+                  ? 'Update'
+                  : lang['send_admin'] ?? 'Send to Admin',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: ResponsiveHelper.isDesktop(context) ? 18 : 16,
@@ -578,6 +657,108 @@ class _ReportPageState extends ConsumerState<ReportPage> {
             SnackBar(content: Text(e.toString())),
           );
         }
+      }
+    }
+  }
+
+  Future<void> _updateReport() async {
+    final lang = ref.read(languageProvider);
+    final reportsNotifier = ref.read(reportsProvider.notifier);
+    final selectedReport = ref.read(selectedReportProvider);
+
+    if (selectedReport == null) return;
+
+    try {
+      // تحديد الحقول التي تغيرت فقط
+      final updatedFields = <String, dynamic>{};
+
+      if (_ownerController.text != selectedReport['owner']) {
+        updatedFields['owner'] = _ownerController.text;
+      }
+      if (_plateController.text != selectedReport['plateNumber']) {
+        updatedFields['plateNumber'] = _plateController.text;
+      }
+      if (_problemTitleController.text != selectedReport['issue']) {
+        updatedFields['issue'] = _problemTitleController.text;
+      }
+      if (_costController.text != selectedReport['cost']?.toString()) {
+        updatedFields['cost'] = _costController.text;
+      }
+      if (_repairDescController.text != selectedReport['repairDescription']) {
+        updatedFields['repairDescription'] = _repairDescController.text;
+      }
+      if (_makeController.text != selectedReport['make']) {
+        updatedFields['make'] = _makeController.text;
+      }
+      if (_modelController.text != selectedReport['model']) {
+        updatedFields['model'] = _modelController.text;
+      }
+      if (_yearController.text != selectedReport['year']?.toString()) {
+        updatedFields['year'] = _yearController.text;
+      }
+      if (_symptomsController.text != selectedReport['symptoms']) {
+        updatedFields['symptoms'] = _symptomsController.text;
+      }
+
+      // تحديث الأجزاء إذا تغيرت
+      final originalParts =
+          List<String>.from(selectedReport['usedParts'] ?? []);
+      if (!const ListEquality().equals(_selectedParts, originalParts)) {
+        updatedFields['usedParts'] = _selectedParts;
+      }
+
+      // تحديث الصور إذا تمت إضافة صور جديدة
+      List<Uint8List>? imageBytesList;
+      List<String>? fileNames;
+
+      if (_images.isNotEmpty) {
+        imageBytesList = await Future.wait(
+          _images.map((image) async => await image.readAsBytes()),
+        );
+        fileNames = _images.map((image) => image.name).toList();
+      }
+
+      if (updatedFields.isNotEmpty || imageBytesList != null) {
+        await reportsNotifier.updateReport(
+          reportId: selectedReport['_id'],
+          owner: updatedFields['owner'],
+          cost: updatedFields['cost'],
+          plateNumber: updatedFields['plateNumber'],
+          issue: updatedFields['issue'],
+          make: updatedFields['make'],
+          model: updatedFields['model'],
+          year: updatedFields['year'],
+          symptoms: updatedFields['symptoms'],
+          repairDescription: updatedFields['repairDescription'],
+          usedParts: updatedFields['usedParts'],
+          imageBytesList: imageBytesList,
+          fileNames: fileNames,
+        );
+
+        if (mounted) {
+          CustomDialogPage.show(
+            context: context,
+            type: MessageType.success,
+            title: lang['success'] ?? 'Success',
+            content: lang['report_updated'] ?? 'Report updated successfully',
+          );
+          _resetForm();
+          ref.read(isEditModeProvider.notifier).state =
+              false; // تفعيل وضع التعديل
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(lang['no_changes'] ?? 'No changes detected')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
       }
     }
   }

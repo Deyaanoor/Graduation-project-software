@@ -14,7 +14,7 @@ class ReportsNotifier
   ReportsNotifier() : super(const AsyncValue.loading());
 
   static const String _baseUrl = 'http://localhost:5000/reports';
-
+//http://localhost:5000/reports/updateReport/68051c64f2fe665d734479e2
   Future<void> fetchReports({required String userId}) async {
     try {
       state = const AsyncValue.loading();
@@ -40,7 +40,7 @@ class ReportsNotifier
       } else {
         throw Exception('Failed to load reports: ${response.statusCode}');
       }
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       state = AsyncValue.error(e, stack);
     }
   }
@@ -65,7 +65,7 @@ class ReportsNotifier
         'status': item['status']?.toString() ?? 'غير محدد',
         'mechanicName': item['mechanicName']?.toString() ?? 'غير معروف',
       };
-    } catch (e, stack) {
+    } on Exception catch (e, stack) {
       print('Error parsing item: $e\nStack trace: $stack');
       return {};
     }
@@ -159,7 +159,8 @@ class ReportsNotifier
           'images',
           imageBytesList[i],
           filename: fileNames[i],
-          contentType: MediaType('image', _getFileExtension(fileNames[i])),
+          contentType: MediaType(
+              'image', ReportsNotifier._getFileExtension(fileNames[i])),
         ));
       }
 
@@ -180,7 +181,7 @@ class ReportsNotifier
     }
   }
 
-  String _getFileExtension(String fileName) {
+  static String _getFileExtension(String fileName) {
     final parts = fileName.split('.');
     return parts.length > 1 ? parts.last : 'jpeg';
   }
@@ -205,7 +206,78 @@ class ReportsNotifier
       }
     } catch (e, stack) {
       ('Error fetching report by ID: $e\nStack trace: $stack');
-      return null; // Return null if error occurs
+      return null;
+    }
+  }
+
+  Future<void> updateReport({
+    required String reportId,
+    String? owner,
+    String? cost,
+    String? plateNumber,
+    String? issue,
+    String? make,
+    String? model,
+    String? year,
+    String? symptoms,
+    String? repairDescription,
+    List<String>? usedParts,
+    List<Uint8List>? imageBytesList,
+    List<String>? fileNames,
+  }) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/updateReport/$reportId');
+      final request = http.MultipartRequest('PATCH', uri);
+
+      if (owner != null) request.fields['owner'] = owner;
+      if (cost != null) request.fields['cost'] = cost;
+      if (plateNumber != null) request.fields['plateNumber'] = plateNumber;
+      if (issue != null) request.fields['issue'] = issue;
+      if (make != null) request.fields['make'] = make;
+      if (model != null) request.fields['model'] = model;
+      if (year != null) request.fields['year'] = year;
+      if (symptoms != null) request.fields['symptoms'] = symptoms;
+      if (repairDescription != null) {
+        request.fields['repairDescription'] = repairDescription;
+      }
+      if (usedParts != null) {
+        request.fields['usedParts'] = jsonEncode(usedParts);
+      }
+
+      if (imageBytesList != null && fileNames != null) {
+        for (int i = 0; i < imageBytesList.length; i++) {
+          request.files.add(http.MultipartFile.fromBytes(
+            'images',
+            imageBytesList[i],
+            filename: fileNames[i],
+          ));
+        }
+      }
+
+      final response = await request.send();
+      if (response.statusCode != 200) {
+        throw Exception('Failed to update report: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error updating report: $e');
+    }
+  }
+
+  Future<void> deleteReport(String reportId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$_baseUrl/deleteReport/$reportId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        state = AsyncValue.data(
+            state.value?.where((r) => r['_id'] != reportId).toList() ?? []);
+      } else {
+        throw Exception('Failed to delete report: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error deleting report: $e');
     }
   }
 }

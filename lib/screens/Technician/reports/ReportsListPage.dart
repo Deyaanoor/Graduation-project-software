@@ -36,6 +36,7 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
         backgroundColor: Colors.orange,
         child: const Icon(Icons.add, color: Colors.white),
       ),
+      backgroundColor: Colors.grey[50],
       body: Column(
         children: [
           _buildSearchBar(),
@@ -118,10 +119,9 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
       columns.add(_buildDataColumn('Mechanic', Icons.build, 5));
     }
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.9,
+    return Expanded(
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
         child: DataTable2(
           columnSpacing: 12,
           horizontalMargin: 16,

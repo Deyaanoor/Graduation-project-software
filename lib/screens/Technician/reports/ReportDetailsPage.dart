@@ -1,12 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_provider/providers/home_provider.dart';
+import 'package:flutter_provider/providers/reports_provider.dart';
 import 'package:flutter_provider/screens/Technician/reports/components/pdf_page.dart';
+import 'package:flutter_provider/widgets/custom_button.dart';
+import 'package:flutter_provider/widgets/top_snackbar.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as ref;
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_provider/providers/reports_provider.dart';
 
-class ReportDetailsPage extends StatelessWidget {
+class ReportDetailsPage extends StatefulWidget {
   final Map<String, dynamic> report;
 
   const ReportDetailsPage({super.key, required this.report});
+
+  @override
+  _ReportDetailsPageState createState() => _ReportDetailsPageState();
+}
+
+class _ReportDetailsPageState extends State<ReportDetailsPage> {
+  Map<String, dynamic> get report => widget.report;
 
   @override
   Widget build(BuildContext context) {
@@ -287,60 +301,86 @@ class ReportDetailsPage extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.photo_library,
-                    color: Colors.orange), // Changed to orange
-                const SizedBox(width: 8),
-                const Text(
-                  'الملفات المرفقة',
-                  style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.photo_library,
                       color: Colors.orange), // Changed to orange
-                ),
-                const Spacer(),
-                Text(
-                  '${images.length} صورة',
-                  style: TextStyle(color: Colors.grey[600]),
-                )
-              ],
-            ),
-            const Divider(color: Colors.grey),
-            const SizedBox(height: 12),
-            images.isEmpty
-                ? _buildEmptyState('لا توجد صور مرفقة', Icons.photo_camera)
-                : GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: isDesktop ? 3 : 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 1,
-                    ),
-                    itemCount: images.length,
-                    itemBuilder: (context, index) => GestureDetector(
-                      onTap: () => _showFullScreenImage(context, images[index]),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: CachedNetworkImage(
-                          imageUrl: images[index],
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            color: Colors.grey[200],
-                            child: const Center(
-                                child: CircularProgressIndicator()),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'الملفات المرفقة',
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange), // Changed to orange
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${images.length} صورة',
+                    style: TextStyle(color: Colors.grey[600]),
+                  )
+                ],
+              ),
+              const Divider(color: Colors.grey),
+              const SizedBox(height: 12),
+              images.isEmpty
+                  ? _buildEmptyState('لا توجد صور مرفقة', Icons.photo_camera)
+                  : GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: isDesktop ? 3 : 2,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 1,
+                      ),
+                      itemCount: images.length,
+                      itemBuilder: (context, index) => GestureDetector(
+                        onTap: () =>
+                            _showFullScreenImage(context, images[index]),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: CachedNetworkImage(
+                            imageUrl: images[index],
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              color: Colors.grey[200],
+                              child: const Center(
+                                  child: CircularProgressIndicator()),
+                            ),
+                            errorWidget: (context, url, error) =>
+                                const Icon(Icons.broken_image),
                           ),
-                          errorWidget: (context, url, error) =>
-                              const Icon(Icons.broken_image),
                         ),
                       ),
                     ),
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Expanded(
+                  flex: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: CustomButton(
+                      onPressed: () => _deleteReport(),
+                      text: "حذف",
+                      backgroundColor: Colors.red,
+                    ),
                   ),
-          ],
-        ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: CustomButton(
+                      onPressed: () => _navigateToEditReport(
+                          context, report), // ← تمرير التقرير
+                      text: "تعديل",
+                      backgroundColor: Colors.orange,
+                    ),
+                  ),
+                ),
+              ]),
+            ]),
       ),
     );
   }
@@ -392,6 +432,66 @@ class ReportDetailsPage extends StatelessWidget {
       return date is DateTime ? date : DateTime.parse(date.toString());
     } catch (_) {
       return DateTime.now();
+    }
+  }
+
+  void _navigateToEditReport(
+      BuildContext context, Map<String, dynamic> report) {
+    final ref = ProviderScope.containerOf(context); // الحصول على الـ ref
+
+    // حفظ التقرير ووضع التعديل في الـ Providers
+    ref.read(selectedReportProvider.notifier).state = report;
+    ref.read(isEditModeProvider.notifier).state = true; // تفعيل وضع التعديل
+
+    // الانتقال إلى صفحة ReportPage (state = 5)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Navigator.pop(context);
+      ref.read(selectedIndexProvider.notifier).state = 5;
+    });
+  }
+
+  void _deleteReport() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('حذف التقرير'),
+        content: const Text('هل أنت متأكد من رغبتك في حذف هذا التقرير'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('إلغاء'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('حذف', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed ?? false) {
+      try {
+        final String reportId = report['_id'];
+        final ref = ProviderScope.containerOf(context);
+        await ref.read(reportsProvider.notifier).deleteReport(reportId);
+
+        TopSnackBar.show(
+          context: context,
+          title: "تم الحذف",
+          message: "تم حذف التقرير بنجاح",
+          icon: Icons.check_circle,
+          color: Colors.green,
+        );
+        Navigator.pop(context);
+      } catch (e) {
+        TopSnackBar.show(
+          context: context,
+          title: "خطأ",
+          message: "فشل في الحذف: ${e.toString()}",
+          icon: Icons.error,
+          color: Colors.red,
+        );
+      }
     }
   }
 }

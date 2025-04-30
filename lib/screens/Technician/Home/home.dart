@@ -33,11 +33,12 @@ class Home extends ConsumerWidget {
     final isSidebarExpanded = ref.watch(isSidebarExpandedProvider);
     final lang = ref.watch(languageProvider);
 
-    if (selectedIndex == 0) {
-      ref.read(newsProvider.notifier).refreshNews();
-    }
-
     final userIdAsync = ref.watch(userIdProvider);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (selectedIndex == 0 && userIdAsync.value != null) {
+        ref.read(newsProvider.notifier).refreshNews(userIdAsync.value!);
+      }
+    });
 
     return userIdAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -77,6 +78,10 @@ class Home extends ConsumerWidget {
         );
       },
     );
+  }
+
+  void _resetSelectedIndex(WidgetRef ref) {
+    ref.read(isEditModeProvider.notifier).state = false;
   }
 
   List<Widget> _getPagesByRole(String role, WidgetRef ref) {
@@ -412,11 +417,16 @@ class Home extends ConsumerWidget {
                       userRole.toLowerCase() == 'owner'
                   ? selectedIndex == 6
                   : selectedIndex == 5,
-              onTap: () => ref.read(selectedIndexProvider.notifier).state =
-                  userRole.toLowerCase() == 'admin' ||
-                          userRole.toLowerCase() == 'owner'
-                      ? 6
-                      : 5,
+              onTap: () {
+                ref.read(isEditModeProvider.notifier).state = false;
+
+                ref.read(selectedReportProvider.notifier).state = null;
+                ref.read(selectedIndexProvider.notifier).state =
+                    userRole.toLowerCase() == 'admin' ||
+                            userRole.toLowerCase() == 'owner'
+                        ? 6
+                        : 5;
+              },
               isExpanded: isExpanded,
             ),
         ],

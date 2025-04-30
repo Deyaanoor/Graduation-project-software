@@ -134,7 +134,90 @@ const getReportDetails = async (req, res) => {
   }
 };
 
+const updateReport = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      owner,
+      cost,
+      plateNumber,
+      date,
+      issue,
+      make,
+      model,
+      year,
+      symptoms,
+      repairDescription,
+      usedParts,
+      status,
+      mechanicName,
+    } = req.body;
+
+    const db = await connectDB();
+    const reportsCollection = db.collection('reports');
+
+    const report = await reportsCollection.findOne({ _id: new ObjectId(id) });
+console.log("report :",report);
+    if (!report) {
+      return res.status(404).json({ message: "Report not found" });
+    }
+
+    let updatedFields = {};
+
+    if (owner !== undefined) updatedFields.owner = owner;
+    if (cost !== undefined) updatedFields.cost = cost;
+    if (plateNumber !== undefined) updatedFields.plateNumber = plateNumber;
+    if (date !== undefined) updatedFields.date = date;
+    if (issue !== undefined) updatedFields.issue = issue;
+    if (make !== undefined) updatedFields.make = make;
+    if (model !== undefined) updatedFields.model = model;
+    if (year !== undefined) updatedFields.year = year;
+    if (symptoms !== undefined) updatedFields.symptoms = symptoms;
+    if (repairDescription !== undefined) updatedFields.repairDescription = repairDescription;
+    if (usedParts !== undefined) updatedFields.usedParts = usedParts;
+    if (status !== undefined) updatedFields.status = status;
+    if (mechanicName !== undefined) updatedFields.mechanicName = mechanicName;
+
+    // إذا فيه صور جديدة مرفوعة
+    if (req.files && req.files.length > 0) {
+      updatedFields.imageUrls = req.files.map(file => file.path);
+    }
+
+    await reportsCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updatedFields }
+    );
+
+    res.status(200).json({ message: "Report updated successfully" });
+
+  } catch (error) {
+    console.error("❌ Error updating report:", error);
+    res.status(500).json({ message: "An error occurred while updating the report" });
+  }
+};
+
+const deleteReport=async (req,res)=>{
+
+    try {
+      const db = await connectDB();
+      const reportsCollection = db.collection('reports');
+  
+      const result = await reportsCollection.deleteOne({ _id: new ObjectId(req.params.id) });
+  
+      if (result.deletedCount === 0) {
+        return res.status(404).json({ message: 'Report not found' });
+      }
+  
+      res.status(200).json({ message: 'Report deleted successfully' });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  
+};
 
 
 
-module.exports = { getReports, getReportDetails, addReport, upload };
+
+
+
+module.exports = { getReports, getReportDetails, addReport, upload ,updateReport, deleteReport};

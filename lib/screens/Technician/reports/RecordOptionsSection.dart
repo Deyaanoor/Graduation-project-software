@@ -84,6 +84,8 @@ class _RecordOptionsSectionState extends ConsumerState<RecordOptionsSection> {
   void _handleResultSelection(Map<String, dynamic> report) {
     ref.read(selectedReportProvider.notifier).state = report;
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(isEditModeProvider.notifier).state = false;
+
       ref.read(selectedIndexProvider.notifier).state = 5;
     });
   }
@@ -328,6 +330,7 @@ class _WebMainActions extends StatelessWidget {
                     icon: Icons.person_add,
                     label: 'إنشاء جديد',
                     onPressed: () {
+                      ref.read(isEditModeProvider.notifier).state = false;
                       ref.read(selectedReportProvider.notifier).state = null;
                       ref.read(selectedIndexProvider.notifier).state = 5;
                     },
