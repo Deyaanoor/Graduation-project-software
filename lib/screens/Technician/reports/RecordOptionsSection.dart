@@ -3,7 +3,6 @@ import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/home_provider.dart';
 import 'package:flutter_provider/providers/reports_provider.dart';
-import 'package:flutter_provider/screens/Technician/reports/report.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class RecordOptionsSection extends ConsumerStatefulWidget {
@@ -62,7 +61,6 @@ class _RecordOptionsSectionState extends ConsumerState<RecordOptionsSection> {
             return value.contains(_searchQuery.toLowerCase());
           }).toList();
 
-    // تصفية التكرار حسب owner و plateNumber
     final seen = <String>{};
     final uniqueReports = <Map<String, dynamic>>[];
 
@@ -84,48 +82,40 @@ class _RecordOptionsSectionState extends ConsumerState<RecordOptionsSection> {
   void _handleResultSelection(Map<String, dynamic> report) {
     ref.read(selectedReportProvider.notifier).state = report;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(isEditModeProvider.notifier).state = false;
-
       ref.read(selectedIndexProvider.notifier).state = 5;
     });
   }
 
   Widget _buildWebMasterpiece() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: RadialGradient(
-          center: Alignment.topLeft,
-          radius: 1.5,
-          colors: [
-            _primaryColor.withOpacity(0.2),
-            _primaryColor.withOpacity(0.1),
-            Colors.white
-          ],
-        ),
-      ),
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 500),
-              child: _showSearch
-                  ? _TopSearchSection(
-                      controller: _searchController,
-                      onChanged: _handleSearch,
-                      color: _primaryColor,
-                      searchType: _searchType,
-                      searchTypes: _searchTypes,
-                      onSearchTypeChanged: (value) =>
-                          setState(() => _searchType = value!),
-                      onBackPressed: () => _toggleSearch(false),
-                    )
-                  : _WebMainActions(
-                      onSearchPressed: () => _toggleSearch(true),
-                      color: _primaryColor,
-                    ),
-            ),
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment.topLeft,
+            radius: 1.5,
+            colors: [
+              _primaryColor.withOpacity(0.2),
+              _primaryColor.withOpacity(0.1),
+              Colors.white
+            ],
           ),
-          if (_showSearch)
+        ),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 500),
+                  child: _TopSearchSection(
+                    controller: _searchController,
+                    onChanged: _handleSearch,
+                    color: _primaryColor,
+                    searchType: _searchType,
+                    searchTypes: _searchTypes,
+                    onSearchTypeChanged: (value) =>
+                        setState(() => _searchType = value!),
+                    onBackPressed: () => _toggleSearch(false),
+                  )),
+            ),
             Positioned(
               top: 100,
               left: 0,
@@ -136,8 +126,10 @@ class _RecordOptionsSectionState extends ConsumerState<RecordOptionsSection> {
                 color: _primaryColor,
               ),
             ),
-        ],
+          ],
+        ),
       ),
+      floatingActionButton: buildAddReportButton(),
     );
   }
 
@@ -164,32 +156,43 @@ class _RecordOptionsSectionState extends ConsumerState<RecordOptionsSection> {
               top: _showSearch ? 80 : MediaQuery.of(context).size.height * 0.15,
               left: 0,
               right: 0,
-              child: _MobileMainActions(
-                showSearch: _showSearch,
-                onSearchPressed: () => _toggleSearch(true),
+              child: _MobileSearchSection(
+                controller: _searchController,
+                results: filteredReports,
+                onItemSelected: _handleResultSelection,
+                onClose: () => _toggleSearch(false),
                 color: _primaryColor,
+                searchType: _searchType,
+                onSearchTypeChanged: (value) =>
+                    setState(() => _searchType = value!),
+                searchTypes: _searchTypes,
               ),
             ),
-            if (_showSearch)
-              WillPopScope(
-                onWillPop: () async {
-                  _toggleSearch(false);
-                  return false;
-                },
-                child: _MobileSearchSection(
-                  controller: _searchController,
-                  results: filteredReports,
-                  onItemSelected: _handleResultSelection,
-                  onClose: () => _toggleSearch(false),
-                  color: _primaryColor,
-                  searchType: _searchType,
-                  onSearchTypeChanged: (value) =>
-                      setState(() => _searchType = value!),
-                  searchTypes: _searchTypes,
-                ),
-              )
           ],
         ),
+      ),
+      floatingActionButton: buildAddReportButton(),
+    );
+  }
+
+  Widget buildAddReportButton() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 40),
+      child: FloatingActionButton.extended(
+        onPressed: () {
+          ref.read(selectedReportProvider.notifier).state = null;
+          ref.read(selectedIndexProvider.notifier).state = 5;
+        },
+        label: Text(
+          'Add new report',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        icon: Icon(Icons.add),
+        backgroundColor: Colors.orange.shade600,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 6,
       ),
     );
   }
@@ -297,128 +300,6 @@ class _TopSearchSection extends ConsumerWidget {
   }
 }
 
-class _WebMainActions extends StatelessWidget {
-  final VoidCallback onSearchPressed;
-  final Color color;
-
-  const _WebMainActions({
-    required this.onSearchPressed,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'إدارة السجلات',
-            style: TextStyle(
-              fontSize: 36,
-              color: color,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 40),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Consumer(
-                builder: (context, ref, _) {
-                  return _ActionButton(
-                    icon: Icons.person_add,
-                    label: 'إنشاء جديد',
-                    onPressed: () {
-                      ref.read(isEditModeProvider.notifier).state = false;
-                      ref.read(selectedReportProvider.notifier).state = null;
-                      ref.read(selectedIndexProvider.notifier).state = 5;
-                    },
-                    color: color,
-                    isWeb: true,
-                  );
-                },
-              ),
-              const SizedBox(width: 40),
-              _ActionButton(
-                icon: Icons.folder_open,
-                label: 'فتح سجل',
-                onPressed: onSearchPressed,
-                color: color,
-                isWeb: true,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ---------------------------- Mobile Components ----------------------------
-class _MobileMainActions extends StatelessWidget {
-  final bool showSearch;
-  final VoidCallback onSearchPressed;
-  final Color color;
-
-  const _MobileMainActions({
-    required this.showSearch,
-    required this.onSearchPressed,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 400),
-          height: showSearch ? 0 : 120,
-          child: OverflowBox(
-            maxHeight: 120,
-            child: Consumer(
-              builder: (context, ref, _) {
-                return _ActionButton(
-                  icon: Icons.person_add,
-                  label: 'جديد',
-                  onPressed: () {
-                    ref.read(selectedReportProvider.notifier).state = null;
-                    ref.read(selectedIndexProvider.notifier).state = 5;
-                  },
-                  color: color,
-                  isWeb: false,
-                );
-              },
-            ),
-          ),
-        ),
-        const SizedBox(height: 30),
-        AnimatedOpacity(
-          opacity: showSearch ? 0 : 1,
-          duration: const Duration(milliseconds: 200),
-          child: _ActionButton(
-            icon: Icons.search,
-            label: 'بحث',
-            onPressed: onSearchPressed,
-            color: color,
-            isWeb: false,
-          ),
-        ),
-        const SizedBox(height: 30),
-        Text(
-          'اختر أحد الخيارات',
-          style: TextStyle(
-            color: color.withOpacity(0.8),
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _MobileSearchSection extends StatelessWidget {
   final TextEditingController controller;
   final List<Map<String, dynamic>> results;
@@ -516,21 +397,21 @@ class _MobileSearchSection extends StatelessWidget {
                   ],
                 ),
               ),
-              Expanded(
-                child: ListView.builder(
-                  padding: EdgeInsets.only(top: 15),
-                  itemCount: results.length,
-                  itemBuilder: (context, index) => ListTile(
-                    leading: Icon(Icons.description, color: color),
-                    title: Text(
-                      '${results[index]['owner']} - ${results[index]['plateNumber']}',
-                      style: TextStyle(color: Colors.grey[800], fontSize: 16),
-                    ),
-                    trailing: Icon(Icons.chevron_left, color: color),
-                    onTap: () => onItemSelected(results[index]),
+              ListView.builder(
+                padding: const EdgeInsets.only(top: 15),
+                itemCount: results.length,
+                shrinkWrap: true, // مهم جدًا
+                physics: NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) => ListTile(
+                  leading: Icon(Icons.description, color: color),
+                  title: Text(
+                    '${results[index]['owner']} - ${results[index]['plateNumber']}',
+                    style: TextStyle(color: Colors.grey[800], fontSize: 16),
                   ),
+                  trailing: Icon(Icons.chevron_left, color: color),
+                  onTap: () => onItemSelected(results[index]),
                 ),
-              ),
+              )
             ],
           ),
         ),
@@ -618,11 +499,11 @@ class _SearchResultsPanel extends StatelessWidget {
             ),
           ],
         ),
-        child: SizedBox(
-          height: 400,
+        child: Padding(
+          padding: const EdgeInsets.all(15),
           child: ListView.separated(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.all(15),
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
             itemCount: results.length,
             separatorBuilder: (_, __) => Divider(color: color.withOpacity(0.2)),
             itemBuilder: (context, index) => ListTile(
