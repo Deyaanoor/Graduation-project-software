@@ -3,6 +3,7 @@ import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/home_provider.dart';
 import 'package:flutter_provider/providers/news_provider.dart';
 import 'package:flutter_provider/providers/reports_provider.dart';
+import 'package:flutter_provider/screens/Admin/Garage/ContactUsInboxPage.dart';
 import 'package:flutter_provider/screens/Admin/Garage/garage_page.dart';
 import 'package:flutter_provider/screens/Client/ClientGaragesPage.dart';
 import 'package:flutter_provider/screens/Client/GarageRequestsPage.dart';
@@ -94,6 +95,7 @@ class Home extends ConsumerWidget {
       case 'admin':
         return [
           GaragePage(),
+          ContactUsInboxPage(),
         ];
       case 'owner':
         return [
@@ -370,6 +372,15 @@ class Home extends ConsumerWidget {
               label: lang['dashboard'] ?? 'Dashboard',
               isSelected: selectedIndex == 0,
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 0,
+              isExpanded: isExpanded,
+            ),
+          if (userRole.toLowerCase() == 'admin')
+            _buildNavButton(
+              context: context,
+              icon: Icons.support_agent,
+              label: lang['ContactUsInboxPage'] ?? 'ContactUsInboxPage',
+              isSelected: selectedIndex == 1,
+              onTap: () => ref.read(selectedIndexProvider.notifier).state = 1,
               isExpanded: isExpanded,
             ),
           if (userRole.toLowerCase() == 'owner' ||

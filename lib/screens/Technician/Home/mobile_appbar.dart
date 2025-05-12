@@ -8,7 +8,10 @@ class CustomAppBar extends ConsumerStatefulWidget
     implements PreferredSizeWidget {
   final Map<String, dynamic> userInfo;
 
-  const CustomAppBar({Key? key, required this.userInfo}) : super(key: key);
+  const CustomAppBar({
+    Key? key,
+    required this.userInfo,
+  }) : super(key: key);
 
   @override
   ConsumerState<CustomAppBar> createState() => _CustomAppBarState();

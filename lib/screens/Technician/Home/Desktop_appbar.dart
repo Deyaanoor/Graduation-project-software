@@ -4,6 +4,7 @@ import 'package:flutter_provider/providers/notifications_provider.dart';
 import 'package:flutter_provider/screens/Owner/notifications/notifications_screen.dart';
 import 'package:flutter_provider/screens/Technician/Home/home.dart';
 import 'package:flutter_provider/screens/auth/welcomePage.dart';
+import 'package:flutter_provider/screens/contactUs.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class DesktopCustomAppBar extends ConsumerStatefulWidget
@@ -211,7 +212,24 @@ class _DesktopCustomAppBarState extends ConsumerState<DesktopCustomAppBar> {
         Row(
           children: [
             TextButton(
-              onPressed: () => Navigator.pushNamed(context, "contactUs"),
+              onPressed: () => {
+                showDialog(
+                  context: context,
+                  builder: (context) => Dialog(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: SizedBox(
+                        width: 600,
+                        height: 400,
+                        child: ContactUsPage(),
+                      ),
+                    ),
+                  ),
+                )
+              },
               child: const Text(
                 'Contact Us',
                 style: TextStyle(

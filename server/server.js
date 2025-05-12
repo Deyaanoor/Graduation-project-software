@@ -9,9 +9,9 @@ const employeeRoutes = require("./routes/employeeRouter");
 const garageRoutes = require("./routes/garageRouter");
 const notificationsRoutes = require("./routes/notificationsRoutes");
 const overviewRoutes = require("./routes/overviewRoutes");
+const contactUsRoutes = require("./routes/contactUsRoutes");
 const clientRoutes = require("./routes/clientRouter");
 const requestRoutes = require("./routes/requestRouter");
-
 dotenv.config({ path: "../assets/.env" });
 
 
@@ -35,7 +35,9 @@ app.use('/employees', employeeRoutes);
 app.use('/garages', garageRoutes);
 app.use('/notifications', notificationsRoutes);
 app.use('/overview', overviewRoutes); 
+app.use('/contactMessages', contactUsRoutes);
 app.use('/clients', clientRoutes); 
 app.use('/requests', requestRoutes);
+
 
 app.listen(port, () => console.log(`🚀 Server running on port ${port}`));
