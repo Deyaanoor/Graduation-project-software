@@ -5,7 +5,7 @@ import 'dart:convert';
 final String _apiUrl = 'http://localhost:5000/overview';
 
 final monthlyReportsCountProvider =
-    FutureProvider.family<int, String>((ref, userId) async {
+    FutureProvider.family.autoDispose<int, String>((ref, userId) async {
   final response = await http.post(
     Uri.parse('$_apiUrl/reports-count'),
     body: json.encode({'userId': userId}),
@@ -21,7 +21,7 @@ final monthlyReportsCountProvider =
 
 // دالة لتحميل عدد الموظفين
 final employeeCountProvider =
-    FutureProvider.family<int, String>((ref, userId) async {
+    FutureProvider.family.autoDispose<int, String>((ref, userId) async {
   final response = await http.post(
     Uri.parse('$_apiUrl/employee-count'),
     body: json.encode({'userId': userId}),
@@ -37,7 +37,7 @@ final employeeCountProvider =
 
 // دالة لتحميل راتب الموظفين الإجمالي
 final employeeSalaryProvider =
-    FutureProvider.family<double, String>((ref, userId) async {
+    FutureProvider.family.autoDispose<double, String>((ref, userId) async {
   final response = await http.post(
     Uri.parse('$_apiUrl/employee-salary'),
     body: json.encode({'userId': userId}),
@@ -53,7 +53,7 @@ final employeeSalaryProvider =
 
 // دالة لتحميل ملخص الشهر
 final monthlySummaryProvider =
-    FutureProvider.family<double, String>((ref, userId) async {
+    FutureProvider.family.autoDispose<double, String>((ref, userId) async {
   final response = await http.post(
     Uri.parse('$_apiUrl/MonthlySummary'),
     body: json.encode({'userId': userId}),
@@ -67,9 +67,8 @@ final monthlySummaryProvider =
   }
 });
 
-final modelsSummaryProvider =
-    FutureProvider.family<List<Map<String, dynamic>>, String>(
-        (ref, userId) async {
+final modelsSummaryProvider = FutureProvider.family
+    .autoDispose<List<Map<String, dynamic>>, String>((ref, userId) async {
   final response = await http.post(
     Uri.parse('$_apiUrl/get-models-summary'), // غير الرابط حسب مكانك
     body: json.encode({'userId': userId}),
@@ -90,9 +89,8 @@ final modelsSummaryProvider =
   }
 });
 
-final topEmployeesProvider =
-    FutureProvider.family<List<Map<String, dynamic>>, String>(
-        (ref, userId) async {
+final topEmployeesProvider = FutureProvider.family
+    .autoDispose<List<Map<String, dynamic>>, String>((ref, userId) async {
   final response = await http.post(
     Uri.parse('$_apiUrl/top-employees'),
     body: json.encode({'userId': userId}),
@@ -113,9 +111,8 @@ final topEmployeesProvider =
   }
 });
 
-final reportsProvider =
-    FutureProvider.family<List<Map<String, dynamic>>, String>(
-        (ref, userId) async {
+final reportsProvider = FutureProvider.family
+    .autoDispose<List<Map<String, dynamic>>, String>((ref, userId) async {
   final response = await http.post(
     Uri.parse('$_apiUrl/reports'), // غير $_apiUrl حسب متغيرك
     body: json.encode({'userId': userId}),

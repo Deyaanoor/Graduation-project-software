@@ -9,6 +9,9 @@ const employeeRoutes = require("./routes/employeeRouter");
 const garageRoutes = require("./routes/garageRouter");
 const notificationsRoutes = require("./routes/notificationsRoutes");
 const overviewRoutes = require("./routes/overviewRoutes");
+const clientRoutes = require("./routes/clientRouter");
+const requestRoutes = require("./routes/requestRouter");
+
 dotenv.config({ path: "../assets/.env" });
 
 
@@ -21,6 +24,7 @@ if (!process.env.MONGO_URI) {
 }
 
 connectDB();
+app.use(express.urlencoded({ extended: true }));
 
 app.use(cors());
 app.use(express.json()); 
@@ -31,7 +35,7 @@ app.use('/employees', employeeRoutes);
 app.use('/garages', garageRoutes);
 app.use('/notifications', notificationsRoutes);
 app.use('/overview', overviewRoutes); 
-
-
+app.use('/clients', clientRoutes); 
+app.use('/requests', requestRoutes);
 
 app.listen(port, () => console.log(`🚀 Server running on port ${port}`));

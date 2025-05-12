@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
+import 'package:flutter_provider/providers/home_provider.dart';
 import 'package:flutter_provider/providers/notifications_provider.dart';
 import 'package:flutter_provider/providers/reports_provider.dart';
 import 'package:flutter_provider/screens/Technician/reports/ReportDetailsPage.dart';
@@ -113,170 +114,181 @@ class NotificationsPage extends ConsumerWidget {
                     elevation: 3,
                     color: isRead ? Colors.grey.shade300 : Colors.white,
                     child: ListTile(
-                      leading: const CircleAvatar(
-                        backgroundColor: Colors.blue,
-                        child: Icon(Icons.assignment, color: Colors.white),
-                      ),
-                      title: Text(
-                        notification['title'] ?? '',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: Colors.black87,
+                        leading: CircleAvatar(
+                          backgroundColor: notification['type'] == 'report'
+                              ? Colors.blue
+                              : Color(0xFFFFA726),
+                          child: Icon(
+                            notification['type'] == 'report'
+                                ? Icons.assignment
+                                : Icons.article,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 4),
-                          Text(
-                            notification['body'] ?? '',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              color: Colors.black,
-                            ),
+                        title: Text(
+                          notification['title'] ?? '',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.black87,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            formatDate(notification['timestamp']),
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade700,
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text(
+                              notification['body'] ?? '',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                color: Colors.black,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (!isRead)
-                            const Icon(
-                              Icons.circle,
-                              color: Colors.blue,
-                              size: 10,
+                            const SizedBox(height: 4),
+                            Text(
+                              formatDate(notification['timestamp']),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade700,
+                              ),
                             ),
-                          if (ResponsiveHelper.isMobile(context))
-                            Dismissible(
-                              key: Key(notification['_id']),
-                              direction: DismissDirection.endToStart,
-                              background: Container(
-                                alignment: Alignment.centerRight,
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 20),
-                                color: Colors.red,
-                                child: const Icon(
-                                  Icons.delete,
-                                  color: Colors.white,
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (!isRead)
+                              const Icon(
+                                Icons.circle,
+                                color: Colors.blue,
+                                size: 10,
+                              ),
+                            if (ResponsiveHelper.isMobile(context))
+                              Dismissible(
+                                key: Key(notification['_id']),
+                                direction: DismissDirection.endToStart,
+                                background: Container(
+                                  alignment: Alignment.centerRight,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20),
+                                  color: Colors.red,
+                                  child: const Icon(
+                                    Icons.delete,
+                                    color: Colors.white,
+                                  ),
                                 ),
+                                confirmDismiss: (_) async {
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text("تأكيد الحذف"),
+                                      content: const Text(
+                                          "هل تريد حذف هذا الإشعار؟"),
+                                      actions: [
+                                        TextButton(
+                                          child: const Text("إلغاء"),
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
+                                        ),
+                                        TextButton(
+                                          child: const Text("حذف"),
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+
+                                  if (confirmed == true) {
+                                    await ref
+                                        .read(notificationsProvider.notifier)
+                                        .deleteNotification(
+                                            notification['_id']);
+
+                                    ref
+                                        .read(notificationsProvider.notifier)
+                                        .fetchNotifications(adminId: userId);
+                                  }
+
+                                  return confirmed ?? false;
+                                },
+                                child: const SizedBox(),
                               ),
-                              confirmDismiss: (_) async {
-                                final confirmed = await showDialog<bool>(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: const Text("تأكيد الحذف"),
-                                    content:
-                                        const Text("هل تريد حذف هذا الإشعار؟"),
-                                    actions: [
-                                      TextButton(
-                                        child: const Text("إلغاء"),
-                                        onPressed: () =>
-                                            Navigator.pop(context, false),
-                                      ),
-                                      TextButton(
-                                        child: const Text("حذف"),
-                                        onPressed: () =>
-                                            Navigator.pop(context, true),
-                                      ),
-                                    ],
-                                  ),
-                                );
+                            if (ResponsiveHelper.isDesktop(context))
+                              IconButton(
+                                icon:
+                                    const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () async {
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text("تأكيد الحذف"),
+                                      content: const Text(
+                                          "هل تريد حذف هذا الإشعار؟"),
+                                      actions: [
+                                        TextButton(
+                                          child: const Text("إلغاء"),
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
+                                        ),
+                                        TextButton(
+                                          child: const Text("حذف"),
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                        ),
+                                      ],
+                                    ),
+                                  );
 
-                                if (confirmed == true) {
-                                  await ref
-                                      .read(notificationsProvider.notifier)
-                                      .deleteNotification(notification['_id']);
+                                  if (confirmed == true) {
+                                    await ref
+                                        .read(notificationsProvider.notifier)
+                                        .deleteNotification(
+                                            notification['_id']);
 
-                                  ref
-                                      .read(notificationsProvider.notifier)
-                                      .fetchNotifications(adminId: userId);
-                                }
-
-                                return confirmed ?? false;
-                              },
-                              child: const SizedBox(),
-                            ),
-                          if (ResponsiveHelper.isDesktop(context))
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () async {
-                                final confirmed = await showDialog<bool>(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: const Text("تأكيد الحذف"),
-                                    content:
-                                        const Text("هل تريد حذف هذا الإشعار؟"),
-                                    actions: [
-                                      TextButton(
-                                        child: const Text("إلغاء"),
-                                        onPressed: () =>
-                                            Navigator.pop(context, false),
-                                      ),
-                                      TextButton(
-                                        child: const Text("حذف"),
-                                        onPressed: () =>
-                                            Navigator.pop(context, true),
-                                      ),
-                                    ],
-                                  ),
-                                );
-
-                                if (confirmed == true) {
-                                  await ref
-                                      .read(notificationsProvider.notifier)
-                                      .deleteNotification(notification['_id']);
-
-                                  ref
-                                      .read(notificationsProvider.notifier)
-                                      .fetchNotifications(adminId: userId);
-                                }
-                              },
-                            ),
-                        ],
-                      ),
-                      onTap: () async {
-                        final reportId = notification['reportId'];
-
-                        if (!isRead) {
-                          await ref
-                              .read(notificationsProvider.notifier)
-                              .markNotificationAsRead(notification['_id']);
-                        }
-                        print("🚀 Report ID: $reportId");
-                        if (reportId != null) {
-                          final report = await ref
-                              .read(reportsProvider.notifier)
-                              .fetchReportById(reportId);
-
-                          if (report != null) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    ReportDetailsPage(report: report),
+                                    ref
+                                        .read(notificationsProvider.notifier)
+                                        .fetchNotifications(adminId: userId);
+                                  }
+                                },
                               ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text('التقرير غير موجود')),
-                            );
+                          ],
+                        ),
+                        onTap: () async {
+                          final reportId = notification['reportId'];
+                          final newsId = notification['newsId'];
+                          if (!isRead) {
+                            await ref
+                                .read(notificationsProvider.notifier)
+                                .markNotificationAsRead(notification['_id']);
                           }
-                        }
-                      },
-                    ),
+                          print("🚀 Report ID: $reportId");
+                          if (reportId != null) {
+                            final report = await ref
+                                .read(reportsProvider.notifier)
+                                .fetchReportById(reportId);
+
+                            if (notification['type'] == 'report' &&
+                                report != null) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ReportDetailsPage(report: report),
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('التقرير غير موجود')),
+                              );
+                            }
+                          } else if (newsId != null) {
+                            ref.read(selectedIndexProvider.notifier).state = 0;
+                          }
+                        }),
                   );
 
-                  // إذا كان الجهاز موبايل، لف الكرت بـ Dismissible
                   if (ResponsiveHelper.isMobile(context)) {
                     return Dismissible(
                       key: Key(notification['_id']),

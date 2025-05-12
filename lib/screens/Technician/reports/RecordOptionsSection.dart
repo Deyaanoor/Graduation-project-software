@@ -82,7 +82,7 @@ class _RecordOptionsSectionState extends ConsumerState<RecordOptionsSection> {
   void _handleResultSelection(Map<String, dynamic> report) {
     ref.read(selectedReportProvider.notifier).state = report;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(selectedIndexProvider.notifier).state = 5;
+      ref.read(selectedIndexProvider.notifier).state = 3;
     });
   }
 
@@ -181,7 +181,7 @@ class _RecordOptionsSectionState extends ConsumerState<RecordOptionsSection> {
       child: FloatingActionButton.extended(
         onPressed: () {
           ref.read(selectedReportProvider.notifier).state = null;
-          ref.read(selectedIndexProvider.notifier).state = 5;
+          ref.read(selectedIndexProvider.notifier).state = 3;
         },
         label: Text(
           'Add new report',

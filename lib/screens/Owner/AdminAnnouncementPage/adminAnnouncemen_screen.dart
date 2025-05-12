@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/news_provider.dart';
+import 'package:flutter_provider/providers/notifications_provider.dart';
 import 'package:flutter_provider/widgets/top_snackbar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -56,11 +57,19 @@ class _AdminAnnouncementPageState extends ConsumerState<AdminAnnouncementPage> {
     setState(() => _isLoading = true);
 
     try {
-      await ref.read(newsProvider.notifier).addNews(
+      final newsId = await ref.read(newsProvider.notifier).addNews(
             title: title,
             content: message,
             admin: 'Owner',
             userId: userId,
+          );
+
+      await ref.read(notificationsProvider.notifier).sendNotification(
+            adminId: userId,
+            newsId: newsId,
+            newsTitle: title,
+            senderName: "Owner",
+            type: 'news',
           );
 
       TopSnackBar.show(

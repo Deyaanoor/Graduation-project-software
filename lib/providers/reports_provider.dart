@@ -1,25 +1,28 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
 final reportsProvider = StateNotifierProvider<ReportsNotifier,
     AsyncValue<List<Map<String, dynamic>>>>((ref) {
-  return ReportsNotifier();
+  return ReportsNotifier(ref);
 });
 
 class ReportsNotifier
     extends StateNotifier<AsyncValue<List<Map<String, dynamic>>>> {
-  ReportsNotifier() : super(const AsyncValue.loading());
+  final Ref ref;
+
+  ReportsNotifier(this.ref) : super(const AsyncValue.loading());
 
   static const String _baseUrl = 'http://localhost:5000/reports';
-//http://localhost:5000/reports/updateReport/68051c64f2fe665d734479e2
+
   Future<void> fetchReports({required String userId}) async {
     try {
       state = const AsyncValue.loading();
       final response = await http.get(
-        Uri.parse('$_baseUrl/$userId'), // أضف userId هنا
+        Uri.parse('$_baseUrl/$userId'),
         headers: {
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache',

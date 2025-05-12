@@ -20,19 +20,38 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
   int? _sortColumnIndex;
   bool _sortAscending = true;
 
+  void _loadData() {
+    final userId = ref.read(userIdProvider).value;
+    if (userId != null) {
+      ref.read(reportsProvider.notifier).fetchReports(userId: userId);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final userId = ref.read(userIdProvider).value;
+      if (userId != null) {
+        ref.read(reportsProvider.notifier).fetchReports(userId: userId);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final reportsAsync = ref.watch(reportsProvider);
     final userId = ref.watch(userIdProvider).value;
-    print('User ID: $userId');
+
     final userInfo =
         userId != null ? ref.watch(getUserInfoProvider(userId)).value : null;
     final userRole =
         userInfo != null ? userInfo['role'] ?? 'بدون اسم' : 'جاري التحميل...';
-    print('User Role: $userRole');
+
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        onPressed: () => ref.read(selectedIndexProvider.notifier).state = 4,
+        onPressed: () => ref.read(selectedIndexProvider.notifier).state = 2,
         backgroundColor: Colors.orange,
         child: const Icon(Icons.add, color: Colors.white),
       ),
@@ -107,44 +126,32 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
 
   Widget _buildMobileTable(
       List<Map<String, dynamic>> reports, String userRole) {
-    final isOwner = userRole == 'owner';
-
     final columns = [
       _buildDataColumn('Plate', Icons.directions_car, 0),
       _buildDataColumn('Owner', Icons.person, 1),
-      _buildDataColumn('Date', Icons.calendar_today, 4),
+      _buildDataColumn('Date', Icons.calendar_today, 2),
     ];
 
-    if (isOwner) {
-      columns.add(_buildDataColumn('Mechanic', Icons.build, 5));
-    }
-
-    return Expanded(
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable2(
-          columnSpacing: 12,
-          horizontalMargin: 16,
-          showCheckboxColumn: false,
-          columns: columns,
-          rows: reports
-              .map((report) => _buildMobileRow(report, isOwner))
-              .toList(),
-        ),
+    return SizedBox(
+      width: double.infinity,
+      height: MediaQuery.of(context).size.height * 0.6,
+      child: DataTable2(
+        columnSpacing: 0,
+        horizontalMargin: 8,
+        minWidth: 0,
+        showCheckboxColumn: false,
+        columns: columns,
+        rows: reports.map((report) => _buildMobileRow(report)).toList(),
       ),
     );
   }
 
-  DataRow _buildMobileRow(Map<String, dynamic> report, [bool isOwner = false]) {
+  DataRow _buildMobileRow(Map<String, dynamic> report) {
     final cells = [
       _buildDataCell(report['plateNumber'] ?? '-', Icons.directions_car),
       _buildDataCell(report['owner'] ?? '-', Icons.person),
       _buildDataCell(_formatDate(report['date']), Icons.calendar_today),
     ];
-
-    if (isOwner) {
-      cells.add(_buildDataCell(report['mechanicName'] ?? '-', Icons.build));
-    }
 
     return DataRow(
       color: _getRowColor(),
@@ -160,21 +167,21 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
   DataColumn2 _buildDataColumn(String label, IconData icon, int columnIndex,
       [bool isNumeric = false]) {
     return DataColumn2(
-      size: columnIndex == 3 ? ColumnSize.S : ColumnSize.L,
+      size: ColumnSize.M,
       label: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: Colors.orange),
-          const SizedBox(width: 8),
+          Icon(icon, size: 16, color: Colors.orange),
+          const SizedBox(width: 4),
           Text(label,
-              style: TextStyle(
-                  color: Colors.orange,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14)),
+              style: const TextStyle(
+                color: Colors.orange,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              )),
           if (_sortColumnIndex == columnIndex)
             Icon(
               _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
-              size: 16,
+              size: 12,
               color: Colors.orange,
             ),
         ],

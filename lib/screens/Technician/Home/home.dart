@@ -4,10 +4,15 @@ import 'package:flutter_provider/providers/home_provider.dart';
 import 'package:flutter_provider/providers/news_provider.dart';
 import 'package:flutter_provider/providers/reports_provider.dart';
 import 'package:flutter_provider/screens/Admin/Garage/garage_page.dart';
+import 'package:flutter_provider/screens/Client/ClientGaragesPage.dart';
+import 'package:flutter_provider/screens/Client/GarageRequestsPage.dart';
+import 'package:flutter_provider/screens/Client/RequestDetailsPage.dart';
+import 'package:flutter_provider/screens/Client/client_screen.dart';
 import 'package:flutter_provider/screens/Owner/Employee/employee_screen.dart';
 import 'package:flutter_provider/screens/Owner/OverviewPage.dart';
 import 'package:flutter_provider/screens/Technician/Home/mobile_appbar.dart';
 import 'package:flutter_provider/screens/Technician/reports/RecordOptionsSection.dart';
+import 'package:flutter_provider/screens/Client/roboflow_screen.dart';
 import 'package:flutter_provider/widgets/UserProfileCard.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
@@ -92,21 +97,31 @@ class Home extends ConsumerWidget {
         ];
       case 'owner':
         return [
-          OverviewPage(),
-          ReportsPageList(),
-          EmployeeListScreen(key: UniqueKey()),
-          NewsPage(),
+          OverviewPage(key: UniqueKey()),
+          ReportsPageList(key: UniqueKey()),
           RecordOptionsSection(),
           ReportPage(key: UniqueKey()),
+          NewsPage(),
+          EmployeeListScreen(key: UniqueKey()),
+          ClientListScreen(key: UniqueKey()),
+          GarageRequestsPage(key: UniqueKey()),
+          RequestDetailsPage(key: UniqueKey()),
         ];
       case 'employee':
         return [
           NewsPage(),
-          ReportsPageList(),
-          ChatBotPage(),
-          SparePartsApp(),
+          ReportsPageList(key: UniqueKey()),
           RecordOptionsSection(),
           ReportPage(key: UniqueKey()),
+        ];
+      case 'client':
+        return [
+          ClientGaragesPage(),
+          RoboflowScreen(),
+          ChatBotPage(),
+          SettingsPage(),
+          RequestDetailsPage(key: UniqueKey()),
+          GarageRequestsPage(key: UniqueKey()),
         ];
       default:
         return [];
@@ -122,20 +137,22 @@ class Home extends ConsumerWidget {
     Map<String, dynamic> userInfo,
   ) {
     return Scaffold(
-      backgroundColor:
-          const Color.fromARGB(255, 248, 149, 36), // لون الخلفية الأساسي
+      backgroundColor: const Color.fromARGB(255, 248, 149, 36),
       appBar: CustomAppBar(userInfo: userInfo),
       body: Container(
-        color: const Color.fromARGB(255, 248, 149, 36), // نفس لون الخلفية
-        padding: EdgeInsets.only(top: 10), // تأكد إنه ما فيه padding من فوق
+        color: const Color.fromARGB(255, 248, 149, 36),
+        padding: const EdgeInsets.only(top: 10),
         child: IndexedStack(
           index: selectedIndex,
           children: pages,
         ),
       ),
-      bottomNavigationBar:
-          _buildBottomNavBar(lang, selectedIndex, ref, userInfo['role']),
-      drawer: _buildDrawer(context, lang, userInfo),
+      bottomNavigationBar: userInfo['role'].toLowerCase() == 'client'
+          ? _buildClientBottomNavBar(lang, selectedIndex, ref)
+          : _buildBottomNavBar(lang, selectedIndex, ref, userInfo['role']),
+      drawer: userInfo['role'].toLowerCase() == 'client'
+          ? null
+          : _buildDrawer(context, lang, userInfo),
     );
   }
 
@@ -150,27 +167,30 @@ class Home extends ConsumerWidget {
         color: const Color(0xFFFF8F00),
         backgroundColor: Colors.grey[200]!,
         items: <Widget>[
-          buildNavItem(
-              Icons.auto_awesome, lang['car_Ai'] ?? 'Car AI', 3, selectedIndex),
+          buildNavItem(Icons.auto_awesome, lang['dashboard'] ?? 'Dashboard', 3,
+              selectedIndex),
         ],
         onTap: (index) =>
             ref.read(selectedIndexProvider.notifier).state = index,
       );
     } else if (userRole.toLowerCase() == 'owner') {
       return CurvedNavigationBar(
-        color: const Color(0xFFFF8F00),
-        backgroundColor: Colors.grey[200]!,
-        items: <Widget>[
-          buildNavItem(Icons.dashboard, lang['dashboard'] ?? 'Dashboard', 0,
-              selectedIndex),
-          buildNavItem(Icons.calendar_today, lang['report'] ?? 'Report', 1,
-              selectedIndex),
-          buildNavItem(
-              Icons.article, lang['Employee'] ?? 'Employee', 2, selectedIndex),
-        ],
-        onTap: (index) =>
-            ref.read(selectedIndexProvider.notifier).state = index,
-      );
+          color: const Color(0xFFFF8F00),
+          backgroundColor: Colors.grey[200]!,
+          items: <Widget>[
+            buildNavItem(Icons.dashboard, lang['dashboard'] ?? 'Dashboard', 0,
+                selectedIndex),
+            buildNavItem(Icons.calendar_today, lang['report'] ?? 'Report', 1,
+                selectedIndex),
+            buildNavItem(
+                Icons.article, lang['News'] ?? 'News', 4, selectedIndex),
+          ],
+          onTap: (index) {
+            if (index == 2) {
+              index = 4;
+            }
+            ref.read(selectedIndexProvider.notifier).state = index;
+          });
     } else if (userRole.toLowerCase() == 'employee') {
       return CurvedNavigationBar(
         color: const Color(0xFFFF8F00),
@@ -179,14 +199,46 @@ class Home extends ConsumerWidget {
           buildNavItem(Icons.article, lang['news'] ?? 'News', 0, selectedIndex),
           buildNavItem(Icons.calendar_today, lang['report'] ?? 'Report', 1,
               selectedIndex),
-          buildNavItem(
-              Icons.auto_awesome, lang['car_Ai'] ?? 'Car AI', 2, selectedIndex),
         ],
         onTap: (index) =>
             ref.read(selectedIndexProvider.notifier).state = index,
       );
     }
     throw Exception('Unsupported user role: $userRole');
+  }
+
+  Widget _buildClientBottomNavBar(
+    Map<String, String> lang,
+    int selectedIndex,
+    WidgetRef ref,
+  ) {
+    if (selectedIndex >= 4) {
+      selectedIndex = 0;
+    }
+    return BottomNavigationBar(
+      currentIndex: selectedIndex,
+      selectedItemColor: const Color(0xFFFF8F00),
+      unselectedItemColor: Colors.grey,
+      onTap: (index) => ref.read(selectedIndexProvider.notifier).state = index,
+      items: [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.article),
+          label: lang['img'] ?? 'garages',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.article),
+          label: lang['img'] ?? 'img',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.garage),
+          label: lang['carAI'] ?? 'Car AI',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.garage),
+          label: lang['settings'] ?? 'Settings',
+        ),
+      ],
+    );
   }
 
   Widget _buildDesktopLayout(
@@ -257,8 +309,10 @@ class Home extends ConsumerWidget {
         children: [
           _buildMainNavSection(
               context, lang, selectedIndex, ref, isExpanded, userInfo['role']),
-          _buildSecondaryNavSection(
-              context, lang, selectedIndex, ref, isExpanded, userInfo['role']),
+          userInfo['role'].toLowerCase() == 'client'
+              ? const SizedBox()
+              : _buildSecondaryNavSection(context, lang, selectedIndex, ref,
+                  isExpanded, userInfo['role']),
           _buildSettingsSection(context, lang, isExpanded),
         ],
       ),
@@ -325,40 +379,37 @@ class Home extends ConsumerWidget {
               icon: Icons.article,
               label: lang['news'] ?? 'News',
               isSelected: userRole.toLowerCase() == 'owner'
-                  ? selectedIndex == 1
+                  ? selectedIndex == 4
                   : selectedIndex == 0,
               onTap: () => ref.read(selectedIndexProvider.notifier).state =
-                  userRole.toLowerCase() == 'owner' ? 1 : 0,
+                  userRole.toLowerCase() == 'owner' ? 4 : 0,
               isExpanded: isExpanded,
             ),
-          if (userRole.toLowerCase() == 'owner' ||
-              userRole.toLowerCase() == 'employee')
+          if (userRole.toLowerCase() == 'client')
             _buildNavButton(
               context: context,
-              icon: Icons.calendar_today,
-              label: lang['report'] ?? 'Reports',
-              isSelected: userRole.toLowerCase() == 'owner'
-                  ? selectedIndex == 2
-                  : selectedIndex == 1,
-              onTap: () => ref.read(selectedIndexProvider.notifier).state =
-                  userRole.toLowerCase() == 'owner' ? 2 : 1,
+              icon: Icons.garage,
+              label: lang['garage'] ?? 'Garage',
+              isSelected: selectedIndex == 0,
+              onTap: () => ref.read(selectedIndexProvider.notifier).state = 0,
               isExpanded: isExpanded,
             ),
-          if (userRole.toLowerCase() == 'owner' ||
-              userRole.toLowerCase() == 'employee')
+          if (userRole.toLowerCase() == 'client')
             _buildNavButton(
               context: context,
-              icon: Icons.auto_awesome,
-              label: lang['car_Ai'] ?? 'Car AI',
-              isSelected: userRole.toLowerCase() == 'employee' ||
-                      userRole.toLowerCase() == 'owner'
-                  ? selectedIndex == 3
-                  : selectedIndex == 2,
-              onTap: () => ref.read(selectedIndexProvider.notifier).state =
-                  userRole.toLowerCase() == 'employee' ||
-                          userRole.toLowerCase() == 'owner'
-                      ? 3
-                      : 2,
+              icon: Icons.garage,
+              label: lang['plateScan'] ?? 'PlateScan',
+              isSelected: selectedIndex == 1,
+              onTap: () => ref.read(selectedIndexProvider.notifier).state = 1,
+              isExpanded: isExpanded,
+            ),
+          if (userRole.toLowerCase() == 'client')
+            _buildNavButton(
+              context: context,
+              icon: Icons.garage,
+              label: lang['AutoCheck'] ?? 'AutoCheck',
+              isSelected: selectedIndex == 2,
+              onTap: () => ref.read(selectedIndexProvider.notifier).state = 2,
               isExpanded: isExpanded,
             ),
         ],
@@ -394,39 +445,37 @@ class Home extends ConsumerWidget {
               userRole.toLowerCase() == 'employee')
             _buildNavButton(
               context: context,
-              icon: Icons.build,
-              label: lang['spare_parts'] ?? 'Spare Parts',
-              isSelected: userRole.toLowerCase() == 'employee' ||
-                      userRole.toLowerCase() == 'owner'
-                  ? selectedIndex == 4
-                  : selectedIndex == 3,
-              onTap: () => ref.read(selectedIndexProvider.notifier).state =
-                  userRole.toLowerCase() == 'admin' ||
-                          userRole.toLowerCase() == 'owner'
-                      ? 4
-                      : 3,
+              icon: Icons.calendar_today,
+              label: lang['report'] ?? 'Reports',
+              isSelected: selectedIndex == 1,
+              onTap: () => ref.read(selectedIndexProvider.notifier).state = 1,
               isExpanded: isExpanded,
             ),
-          if (userRole.toLowerCase() == 'owner' ||
-              userRole.toLowerCase() == 'employee')
+          if (userRole.toLowerCase() == 'owner')
             _buildNavButton(
               context: context,
-              icon: Icons.assignment,
-              label: lang['attendance'] ?? 'Attendance',
-              isSelected: userRole.toLowerCase() == 'admin' ||
-                      userRole.toLowerCase() == 'owner'
-                  ? selectedIndex == 6
-                  : selectedIndex == 5,
-              onTap: () {
-                ref.read(isEditModeProvider.notifier).state = false;
-
-                ref.read(selectedReportProvider.notifier).state = null;
-                ref.read(selectedIndexProvider.notifier).state =
-                    userRole.toLowerCase() == 'admin' ||
-                            userRole.toLowerCase() == 'owner'
-                        ? 6
-                        : 5;
-              },
+              icon: Icons.auto_awesome,
+              label: lang['Employee'] ?? 'Employee',
+              isSelected: selectedIndex == 5,
+              onTap: () => ref.read(selectedIndexProvider.notifier).state = 5,
+              isExpanded: isExpanded,
+            ),
+          if (userRole.toLowerCase() == 'owner')
+            _buildNavButton(
+              context: context,
+              icon: Icons.auto_awesome,
+              label: lang['Clients'] ?? 'Clients',
+              isSelected: selectedIndex == 6,
+              onTap: () => ref.read(selectedIndexProvider.notifier).state = 6,
+              isExpanded: isExpanded,
+            ),
+          if (userRole.toLowerCase() == 'owner')
+            _buildNavButton(
+              context: context,
+              icon: Icons.auto_awesome,
+              label: lang['Request'] ?? 'Request',
+              isSelected: selectedIndex == 7,
+              onTap: () => ref.read(selectedIndexProvider.notifier).state = 7,
               isExpanded: isExpanded,
             ),
         ],
@@ -547,49 +596,22 @@ class Home extends ConsumerWidget {
               isMobile: true,
               userInfo: userInfo,
             ),
-            if (userInfo['role'].toLowerCase() == 'owner' ||
-                userInfo['role'].toLowerCase() == 'admin')
-              buildDrawerItem(context, lang['dashboard'] ?? 'Dashboard',
-                  Icons.dashboard, NewsPage()),
-            if (userInfo['role'].toLowerCase() == 'owner' ||
-                userInfo['role'].toLowerCase() == 'employee')
+            if (userInfo['role'].toLowerCase() == 'owner')
+              buildDrawerItem(context, lang['Employees'] ?? 'Employees',
+                  Icons.people_outline, EmployeeListScreen()),
+            if (userInfo['role'].toLowerCase() == 'owner')
               buildDrawerItem(
                 context,
-                lang['news'] ?? 'News',
-                Icons.article,
-                NewsPage(),
+                lang['Client'] ?? 'Client',
+                Icons.people,
+                ClientListScreen(),
               ),
-            if (userInfo['role'].toLowerCase() == 'owner' ||
-                userInfo['role'].toLowerCase() == 'employee')
+            if (userInfo['role'].toLowerCase() == 'owner')
               buildDrawerItem(
                 context,
-                lang['report'] ?? 'Reports',
-                Icons.assignment,
-                ReportsPageList(),
-              ),
-            if (userInfo['role'].toLowerCase() == 'owner' ||
-                userInfo['role'].toLowerCase() == 'employee')
-              buildDrawerItem(
-                context,
-                lang['car_Ai'] ?? 'Car AI',
-                Icons.auto_awesome,
-                ChatBotPage(),
-              ),
-            if (userInfo['role'].toLowerCase() == 'owner' ||
-                userInfo['role'].toLowerCase() == 'employee')
-              buildDrawerItem(
-                context,
-                lang['spare_parts'] ?? 'Spare Parts',
-                Icons.build,
-                SparePartsApp(),
-              ),
-            if (userInfo['role'].toLowerCase() == 'owner' ||
-                userInfo['role'].toLowerCase() == 'employee')
-              buildDrawerItem(
-                context,
-                lang['attendance'] ?? 'Attendance',
-                Icons.calendar_today,
-                AttendanceSalaryPage(),
+                lang['request'] ?? 'Request',
+                Icons.request_quote_sharp,
+                GarageRequestsPage(),
               ),
             buildDrawerItem(
               context,

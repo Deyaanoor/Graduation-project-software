@@ -17,6 +17,7 @@ class _EmployeeListScreenState extends ConsumerState<EmployeeListScreen> {
   String _searchQuery = '';
   int? _sortColumnIndex;
   bool _sortAscending = true;
+  bool _isInitialized = false;
 
   String get userId {
     final userIdValue = ref.watch(userIdProvider).value;
@@ -28,7 +29,6 @@ class _EmployeeListScreenState extends ConsumerState<EmployeeListScreen> {
     setState(() {
       _sortColumnIndex = columnIndex;
       _sortAscending = !_sortAscending;
-
       employees.sort((a, b) {
         final aValue = a[key];
         final bValue = b[key];
@@ -46,19 +46,18 @@ class _EmployeeListScreenState extends ConsumerState<EmployeeListScreen> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    Future.microtask(() {
-      if (userId.isNotEmpty) {
-        ref.refresh(employeesProvider(userId));
-      }
-    });
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final uid = ref.read(userIdProvider).value;
+    if (uid != null && uid.isNotEmpty) {
+      ref.invalidate(employeesProvider(uid));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final employeesAsync =
-        ref.watch(employeesProvider(userId)); // Use userId here
+    final employeesAsync = ref.watch(employeesProvider(userId));
 
     return Scaffold(
       appBar: AppBar(
@@ -89,47 +88,53 @@ class _EmployeeListScreenState extends ConsumerState<EmployeeListScreen> {
                     return name.contains(_searchQuery);
                   }).toList();
 
+                  final isMobile = ResponsiveHelper.isMobile(context);
+
                   return SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: DataTable(
                       sortAscending: _sortAscending,
                       sortColumnIndex: _sortColumnIndex,
                       columns: [
-                        const DataColumn(label: Text('رقم')),
+                        if (!isMobile) const DataColumn(label: Text('رقم')),
                         DataColumn(
                           label: const Text('الاسم'),
                           onSort: (i, _) => _sortData(filtered, i, 'name'),
                         ),
-                        DataColumn(
-                          label: const Text('الإيميل'),
-                          onSort: (i, _) => _sortData(filtered, i, 'email'),
-                        ),
+                        if (!isMobile)
+                          DataColumn(
+                            label: const Text('الإيميل'),
+                            onSort: (i, _) => _sortData(filtered, i, 'email'),
+                          ),
                         DataColumn(
                           label: const Text('رقم الهاتف'),
                           onSort: (i, _) => _sortData(filtered, i, 'phone'),
                         ),
-                        DataColumn(
-                          label: const Text('الراتب'),
-                          numeric: true,
-                          onSort: (i, _) => _sortData(filtered, i, 'salary'),
-                        ),
+                        if (!isMobile)
+                          DataColumn(
+                            label: const Text('الراتب'),
+                            numeric: true,
+                            onSort: (i, _) => _sortData(filtered, i, 'salary'),
+                          ),
                         const DataColumn(label: Text('إجراءات')),
                       ],
                       rows: List.generate(filtered.length, (index) {
                         final employee = filtered[index];
                         return DataRow(cells: [
-                          DataCell(Text('${index + 1}')),
+                          if (!isMobile) DataCell(Text('${index + 1}')),
                           DataCell(Text(employee['name'] ?? '')),
-                          DataCell(Text(employee['email'] ?? '')),
+                          if (!isMobile)
+                            DataCell(Text(employee['email'] ?? '')),
                           DataCell(Text(employee['phoneNumber'] ?? '')),
-                          DataCell(Text(employee['salary'].toString())),
+                          if (!isMobile)
+                            DataCell(Text(employee['salary'].toString())),
                           DataCell(Row(
                             children: [
                               IconButton(
                                 icon:
                                     const Icon(Icons.edit, color: Colors.blue),
                                 onPressed: () {
-                                  if (ResponsiveHelper.isMobile(context)) {
+                                  if (isMobile) {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(

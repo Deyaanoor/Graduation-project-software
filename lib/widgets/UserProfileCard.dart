@@ -47,7 +47,7 @@ class UserProfileCard extends StatelessWidget {
           child: Text(
             userInfo['name'] ?? 'User Name',
             style: const TextStyle(
-              fontSize: 20,
+              fontSize: 14,
               color: Colors.black87,
               fontWeight: FontWeight.w600,
             ),
@@ -56,7 +56,7 @@ class UserProfileCard extends StatelessWidget {
         accountEmail: Text(
           userInfo['email'] ?? '',
           style: const TextStyle(
-            fontSize: 14,
+            fontSize: 12,
             color: Colors.black87,
           ),
         ),
@@ -99,7 +99,7 @@ class UserProfileCard extends StatelessWidget {
                     Text(
                       userInfo['email'] ?? '',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 12,
                         color: Colors.grey[600],
                       ),
                     ),

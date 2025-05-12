@@ -8,8 +8,16 @@ class ForgotPassword extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
       alignment: Alignment.centerRight,
-      child: const Text('Forgot Password ?',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.pushNamed(context, '/forgot-password');
+        },
+        child: const Text(
+          'Forgot Password ?',
+          style: TextStyle(
+              fontSize: 14, fontWeight: FontWeight.w500, color: Colors.orange),
+        ),
+      ),
     );
   }
 }

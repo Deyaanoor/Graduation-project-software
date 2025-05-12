@@ -1,27 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_provider/providers/auth/auth_provider.dart';
+import 'package:flutter_provider/providers/notifications_provider.dart';
 import 'package:flutter_provider/screens/Owner/notifications/notifications_screen.dart';
 import 'package:flutter_provider/screens/Technician/Home/home.dart';
 import 'package:flutter_provider/screens/auth/welcomePage.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class DesktopCustomAppBar extends StatefulWidget
+class DesktopCustomAppBar extends ConsumerStatefulWidget
     implements PreferredSizeWidget {
   const DesktopCustomAppBar({Key? key, required this.userInfo})
       : super(key: key);
   final Map<String, dynamic> userInfo;
 
   @override
-  _DesktopCustomAppBarState createState() => _DesktopCustomAppBarState();
+  Size get preferredSize => const Size.fromHeight(130.0);
 
   @override
-  Size get preferredSize => const Size.fromHeight(130.0);
+  ConsumerState<DesktopCustomAppBar> createState() =>
+      _DesktopCustomAppBarState();
 }
 
-class _DesktopCustomAppBarState extends State<DesktopCustomAppBar> {
+class _DesktopCustomAppBarState extends ConsumerState<DesktopCustomAppBar> {
   bool showNotifications = false;
   OverlayEntry? _overlayEntry;
 
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      final userId = ref.read(userIdProvider).value;
+
+      if (userId != null) {
+        ref
+            .read(notificationsProvider.notifier)
+            .fetchUnreadCount(adminId: userId, ref: ref);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final unreadCount = ref.watch(unreadCountStateProvider);
     final screenWidth = MediaQuery.of(context).size.width;
 
     return AppBar(
@@ -152,7 +171,7 @@ class _DesktopCustomAppBarState extends State<DesktopCustomAppBar> {
                     ),
                   const Spacer(),
                   if (screenWidth > 600)
-                    _buildDesktopActions(context, widget.userInfo)
+                    _buildDesktopActions(context, widget.userInfo, unreadCount)
                   else
                     _buildMobileMenu(context),
                 ],
@@ -185,7 +204,7 @@ class _DesktopCustomAppBarState extends State<DesktopCustomAppBar> {
   }
 
   Widget _buildDesktopActions(
-      BuildContext context, Map<String, dynamic> userInfo) {
+      BuildContext context, Map<String, dynamic> userInfo, int unreadCount) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -208,14 +227,20 @@ class _DesktopCustomAppBarState extends State<DesktopCustomAppBar> {
               onPressed: () {},
             ),
             const SizedBox(width: 10),
-            if (userInfo['role'] == 'owner')
+            if (userInfo['role'] == 'owner' || userInfo['role'] == 'employee')
               IconButton(
-                icon: Badge(
-                  label: const Text('3', style: TextStyle(color: Colors.white)),
-                  backgroundColor: Colors.red,
-                  child: const Icon(Icons.notifications,
-                      color: Colors.white, size: 30),
-                ),
+                icon: unreadCount > 0
+                    ? Badge(
+                        label: Text(
+                          unreadCount.toString(),
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        backgroundColor: Colors.red,
+                        child: const Icon(Icons.notifications,
+                            color: Colors.white, size: 30),
+                      )
+                    : const Icon(Icons.notifications,
+                        color: Colors.white, size: 30),
                 onPressed: () {
                   if (_overlayEntry == null) {
                     _showNotifications(context);

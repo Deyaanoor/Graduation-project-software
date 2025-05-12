@@ -13,7 +13,8 @@ final avatarFileProvider = StateProvider<File?>((ref) => null);
 
 Future<void> saveToken(String token) async {
   final prefs = await SharedPreferences.getInstance();
-  prefs.setString('auth_token', token);
+  await prefs.setString('auth_token', token);
+  print("Token saved: $token");
 }
 
 Future<String?> getToken() async {
@@ -58,6 +59,21 @@ final loginUserProvider = FutureProvider.autoDispose
     };
   } else {
     throw Exception('failed to login user');
+  }
+});
+
+final forgotPasswordProvider =
+    FutureProvider.autoDispose.family<String, String>((ref, email) async {
+  final response = await http.post(
+    Uri.parse('$apiUrl/forgot-password'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({'email': email}),
+  );
+
+  if (response.statusCode == 200) {
+    return 'Password reset link sent successfully';
+  } else {
+    throw Exception('Failed to send password reset link');
   }
 });
 
@@ -191,3 +207,14 @@ final userIdProvider = FutureProvider<String?>((ref) async {
   }
   return null;
 });
+
+final logoutProvider = Provider((ref) => () async {
+      await removeToken();
+      ref.refresh(userIdProvider); // إعادة تحميل التوكن الجديد بعد logout
+    });
+
+Future<void> removeToken() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.remove('auth_token');
+  print("Token removed");
+}

@@ -75,7 +75,13 @@ dependencies:
   cloud_firestore: ^5.6.6
   firebase_messaging: ^15.2.5
   firebase_messaging_web: ^3.5.18
-
+  flutter_map: ^8.1.1
+  latlong2: ^0.9.1
+  geolocator: ^14.0.0
+  
+  
+  
+  
   
   
 

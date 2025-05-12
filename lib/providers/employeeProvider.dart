@@ -11,8 +11,7 @@ final employeesProvider = FutureProvider.autoDispose
 
   if (response.statusCode == 200) {
     final List<dynamic> data = json.decode(response.body);
-    return data
-        .cast<Map<String, dynamic>>(); // Cast dynamic data to list of maps
+    return data.cast<Map<String, dynamic>>();
   } else {
     throw Exception('Failed to load employees');
   }

@@ -669,7 +669,6 @@ class _ReportPageState extends ConsumerState<ReportPage> {
     if (selectedReport == null) return;
 
     try {
-      // تحديد الحقول التي تغيرت فقط
       final updatedFields = <String, dynamic>{};
 
       if (_ownerController.text != selectedReport['owner']) {
@@ -700,14 +699,12 @@ class _ReportPageState extends ConsumerState<ReportPage> {
         updatedFields['symptoms'] = _symptomsController.text;
       }
 
-      // تحديث الأجزاء إذا تغيرت
       final originalParts =
           List<String>.from(selectedReport['usedParts'] ?? []);
       if (!const ListEquality().equals(_selectedParts, originalParts)) {
         updatedFields['usedParts'] = _selectedParts;
       }
 
-      // تحديث الصور إذا تمت إضافة صور جديدة
       List<Uint8List>? imageBytesList;
       List<String>? fileNames;
 

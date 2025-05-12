@@ -77,7 +77,7 @@ class _EmployeeDetailScreenState extends ConsumerState<EmployeeDetailScreen> {
         updatedData,
         userId!,
       );
-      ref.watch(employeesProvider(userId));
+      ref.invalidate(employeesProvider(userId));
 
       setState(() => isEditing = false);
       ScaffoldMessenger.of(context).showSnackBar(

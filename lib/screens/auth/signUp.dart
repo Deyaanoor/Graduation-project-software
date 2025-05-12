@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
+import 'package:flutter_provider/screens/auth/forgot_password.dart';
 import 'package:flutter_provider/widgets/custom_snackbar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_provider/widgets/custom_button.dart';
 import 'package:flutter_provider/widgets/custom_text_field.dart';
 import 'package:flutter_provider/screens/auth/logIn.dart';
 import 'package:flutter_provider/screens/auth/Title_Project.dart';
-import 'package:flutter_provider/widgets/back_button.dart';
 import 'package:flutter_provider/widgets/bezierContainer.dart';
 import 'package:flutter_provider/screens/auth/divider_widget.dart';
 import 'package:flutter_provider/screens/auth/register_label.dart';
@@ -91,6 +91,9 @@ class SignUpPage extends ConsumerWidget {
                           return null;
                         },
                       ),
+                      SizedBox(
+                        height: 10,
+                      ),
                       CustomTextField(
                         label: "Email",
                         hint: "Enter your email",
@@ -108,6 +111,24 @@ class SignUpPage extends ConsumerWidget {
                           return null;
                         },
                       ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      CustomTextField(
+                        label: "Phone Number",
+                        hint: "Enter Phone Number",
+                        icon: Icons.phone,
+                        controller: phoneController,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your phone number';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
                       CustomTextField(
                         label: "Password",
                         hint: "Enter your password",
@@ -123,6 +144,16 @@ class SignUpPage extends ConsumerWidget {
                           }
                           return null;
                         },
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          SizedBox(),
+                          ForgotPassword(),
+                        ],
                       ),
                       const SizedBox(height: 20),
                       CustomButton(
@@ -140,14 +171,15 @@ class SignUpPage extends ConsumerWidget {
                         },
                         isGradient: true,
                       ),
+                      const SizedBox(height: 10),
+                      DividerWidget(),
+                      LoginLabel(),
                       const SizedBox(height: 20),
-                      _loginAccountLabel(context),
                     ],
                   ),
                 ),
               ),
             ),
-            const Positioned(top: 40, left: 0, child: BackButtonWidget()),
           ],
         ),
       ),
@@ -291,6 +323,16 @@ class SignUpPage extends ConsumerWidget {
                             }
                             return null;
                           },
+                        ),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            SizedBox(),
+                            ForgotPassword(),
+                          ],
                         ),
                         SizedBox(height: 20),
                         CustomButton(

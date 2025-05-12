@@ -6,7 +6,6 @@ import 'package:flutter_provider/screens/auth/Title_Project.dart';
 import 'package:flutter_provider/screens/auth/divider_widget.dart';
 import 'package:flutter_provider/screens/auth/forgot_password.dart';
 import 'package:flutter_provider/screens/auth/register_label.dart';
-import 'package:flutter_provider/widgets/back_button.dart';
 import 'package:flutter_provider/widgets/bezierContainer.dart';
 import 'package:flutter_provider/widgets/custom_button.dart';
 import 'package:flutter_provider/widgets/custom_snackbar.dart';
@@ -99,6 +98,14 @@ class LoginPage extends ConsumerWidget {
                       return null;
                     },
                   ),
+                  SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      SizedBox(),
+                      ForgotPassword(),
+                    ],
+                  ),
                   const SizedBox(height: 20),
                   CustomButton(
                     text: 'Login',
@@ -117,7 +124,6 @@ class LoginPage extends ConsumerWidget {
             ),
           ),
         ),
-        const Positioned(top: 40, left: 0, child: BackButtonWidget()),
       ],
     );
   }
@@ -191,7 +197,7 @@ class LoginPage extends ConsumerWidget {
                 child: SingleChildScrollView(
                   padding: EdgeInsets.symmetric(horizontal: 50, vertical: 40),
                   child: Form(
-                    key: _formKey, // إضافة الـ GlobalKey هنا
+                    key: _formKey,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -235,22 +241,7 @@ class LoginPage extends ConsumerWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                Checkbox(
-                                  value: true,
-                                  onChanged: (v) {},
-                                  activeColor: Colors.orange.shade700,
-                                ),
-                                Text(
-                                  'Remember me',
-                                  style: TextStyle(
-                                    color: Colors.grey.shade600,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
+                            SizedBox(),
                             ForgotPassword(),
                           ],
                         ),
@@ -293,18 +284,10 @@ class LoginPage extends ConsumerWidget {
         final role = result['role'];
         print(role);
 
-        CustomSnackBar.showSuccessSnackBar(
-          context,
-          'Login successful',
-        );
+        // بعد حفظ التوكن داخل loginUserProvider، نعيد تهيئة الـ userIdProvider
+        ref.invalidate(userIdProvider);
 
-        if (role == 'admin') {
-          Navigator.pushNamed(context, '/home');
-        } else if (role == 'owner') {
-          Navigator.pushNamed(context, '/home');
-        } else if (role == 'employee') {
-          Navigator.pushNamed(context, '/home');
-        }
+        Navigator.pushNamed(context, '/home');
       } catch (e) {
         CustomSnackBar.showErrorSnackBar(
           context,

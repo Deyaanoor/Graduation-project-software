@@ -42,6 +42,7 @@ class _AddEmployeeScreenState extends ConsumerState<AddEmployeeScreen> {
 
     try {
       await ref.read(addEmployeeProvider)(newEmployee, userId!);
+      ref.invalidate(employeesProvider(userId));
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("✅ تمت إضافة الموظف بنجاح")),
       );

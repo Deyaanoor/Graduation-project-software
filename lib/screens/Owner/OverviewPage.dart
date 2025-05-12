@@ -8,11 +8,338 @@ import 'package:flutter_provider/providers/overviewProvider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-class OverviewPage extends ConsumerWidget {
+class OverviewPage extends ConsumerStatefulWidget {
   const OverviewPage({Key? key}) : super(key: key);
 
+  @override
+  ConsumerState<OverviewPage> createState() => _OverviewPageState();
+}
+
+class _OverviewPageState extends ConsumerState<OverviewPage> {
   final Color _mainColor = Colors.orange;
   final double _cardElevation = 6;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final userId = ref.read(userIdProvider).value;
+    if (userId != null) {
+      ref.invalidate(monthlyReportsCountProvider(userId));
+      ref.invalidate(employeeCountProvider(userId));
+      ref.invalidate(employeeSalaryProvider(userId));
+      ref.invalidate(monthlySummaryProvider(userId));
+      ref.invalidate(modelsSummaryProvider(userId));
+      ref.invalidate(topEmployeesProvider(userId));
+      ref.invalidate(reportsProvider(userId));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final userIdAsync = ref.watch(userIdProvider);
+
+    return userIdAsync.when(
+      data: (userId) {
+        if (userId != null) {
+          final monthlyReportsCount =
+              ref.watch(monthlyReportsCountProvider(userId));
+          final employeeCount = ref.watch(employeeCountProvider(userId));
+          final employeeSalary = ref.watch(employeeSalaryProvider(userId));
+          final monthlySummary = ref.watch(monthlySummaryProvider(userId));
+          final modelsSummaryAsync = ref.watch(modelsSummaryProvider(userId));
+          final topEmployeesAsync = ref.watch(topEmployeesProvider(userId));
+          final reports = ref.watch(reportsProvider(userId));
+
+          return Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            body: SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    // Summary Cards
+                    Wrap(
+                      spacing: 16,
+                      runSpacing: 16,
+                      children: [
+                        _buildSummaryCard(
+                          'عدد التصليحات هذا الشهر',
+                          Icons.build,
+                          monthlyReportsCount.value?.toString() ?? '-',
+                          context,
+                        ),
+                        _buildSummaryCard(
+                          'عدد الموظفين',
+                          Icons.engineering,
+                          employeeCount.value?.toString() ?? '-',
+                          context,
+                        ),
+                        _buildSummaryCard(
+                          'مجموع الرواتب',
+                          Icons.attach_money,
+                          '${employeeSalary.value?.toString() ?? '-'} \$',
+                          context,
+                        ),
+                        _buildSummaryCard(
+                          'الإجمالي الشهري',
+                          Icons.bar_chart,
+                          '${monthlySummary.value?.toString() ?? '-'} \$',
+                          context,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Charts
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        if (constraints.maxWidth > 600) {
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: modelsSummaryAsync.when(
+                                  data: (modelsSummary) => _buildChartCard(
+                                    'موديلات السيارات',
+                                    _buildPieChart(modelsSummary),
+                                    context,
+                                  ),
+                                  loading: () => const Center(
+                                      child: CircularProgressIndicator()),
+                                  error: (err, stack) => Center(
+                                      child: Text(
+                                          'خطأ في تحميل بيانات الموديلات: $err')),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: topEmployeesAsync.when(
+                                  data: (topEmployees) {
+                                    return _buildChartCard(
+                                      'نشاط الموظفين',
+                                      _buildBarChart(topEmployees),
+                                      context,
+                                    );
+                                  },
+                                  loading: () => const Center(
+                                      child: CircularProgressIndicator()),
+                                  error: (err, stack) => Center(
+                                      child: Text(
+                                          'خطأ في تحميل نشاط الموظفين: $err')),
+                                ),
+                              ),
+                            ],
+                          );
+                        } else {
+                          return Column(
+                            children: [
+                              modelsSummaryAsync.when(
+                                data: (modelsSummary) => _buildChartCard(
+                                  'موديلات السيارات',
+                                  _buildPieChart(modelsSummary),
+                                  context,
+                                ),
+                                loading: () => const Center(
+                                    child: CircularProgressIndicator()),
+                                error: (err, stack) => Center(
+                                    child: Text(
+                                        'خطأ في تحميل بيانات الموديلات: $err')),
+                              ),
+                              const SizedBox(height: 16),
+                              _buildChartCard(
+                                'الإيرادات آخر 6 شهور',
+                                _buildLineChart(),
+                                context,
+                              ),
+                              const SizedBox(height: 16),
+                              topEmployeesAsync.when(
+                                data: (topEmployees) {
+                                  return _buildChartCard(
+                                    'نشاط الموظفين',
+                                    _buildBarChart(topEmployees),
+                                    context,
+                                  );
+                                },
+                                loading: () => const Center(
+                                    child: CircularProgressIndicator()),
+                                error: (err, stack) => Center(
+                                    child: Text(
+                                        'خطأ في تحميل نشاط الموظفين: $err')),
+                              ),
+                            ],
+                          );
+                        }
+                      },
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Repairs Table
+                    reports.when(
+                      data: (report) => _buildRepairTable(context, report),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (err, stack) => Center(
+                          child: Text('خطأ في تحميل بيانات الموديلات: $err')),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          );
+        } else {
+          return const Center(child: Text('لم يتم العثور على المستخدم.'));
+        }
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, stack) =>
+          Center(child: Text('خطأ في تحميل معرف المستخدم: $err')),
+    );
+  }
+
+  Widget _buildPieChart(List<Map<String, dynamic>> modelsSummary) {
+    if (modelsSummary.isEmpty) {
+      return const Center(child: Text('لا توجد بيانات لعرضها.'));
+    }
+    return PieChart(
+      PieChartData(
+        sections: modelsSummary.map((model) {
+          return PieChartSectionData(
+            value: (model['value'] as num).toDouble(),
+            color: _getRandomColor(),
+            title: model['title'],
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Color _getRandomColor() {
+    final random = Random();
+    double hue = random.nextDouble() * 30 + 15;
+    double saturation = random.nextDouble() * 0.5 + 0.5;
+    double brightness = random.nextDouble() * 0.4 + 0.6;
+
+    return HSVColor.fromAHSV(1.0, hue, saturation, brightness).toColor();
+  }
+
+  Widget _buildLineChart() {
+    return LineChart(
+      LineChartData(
+        gridData: FlGridData(show: true),
+        titlesData: FlTitlesData(show: false),
+        borderData: FlBorderData(show: true),
+        lineBarsData: [
+          LineChartBarData(
+            spots: [
+              FlSpot(0, 3),
+              FlSpot(1, 4),
+              FlSpot(2, 2),
+              FlSpot(3, 5),
+              FlSpot(4, 6),
+              FlSpot(5, 7),
+            ],
+            isCurved: true,
+            barWidth: 3,
+            color: Colors.orange,
+            belowBarData: BarAreaData(show: false),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBarChart(List<Map<String, dynamic>> data) {
+    if (data.isEmpty) {
+      return const Center(child: Text('لا توجد بيانات لعرضها.'));
+    }
+    final maxValue = data
+        .map((e) => e['value'] as num)
+        .reduce((a, b) => a > b ? a : b)
+        .toDouble();
+
+    return AspectRatio(
+      aspectRatio: 1.5,
+      child: BarChart(
+        BarChartData(
+          alignment: BarChartAlignment.spaceAround,
+          maxY: maxValue * 1.2, // عشان يكون في مساحة فوق الأعمدة
+          titlesData: FlTitlesData(
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  final index = value.toInt();
+                  if (index >= 0 && index < data.length) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        data[index]['label'], // اسم الموظف تحت العمود
+                        style: const TextStyle(
+                          fontSize: 12,
+
+                          fontWeight: FontWeight.w600, // تحسين النص
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+                reservedSize: 40, // زيادة المسافة
+              ),
+            ),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: Text(
+                      value.toStringAsFixed(0), // عرض القيم على اليسار
+                      style: const TextStyle(
+                        fontSize: 12,
+                      ),
+                    ),
+                  );
+                },
+                reservedSize: 30,
+              ),
+            ),
+            rightTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          ),
+          gridData: FlGridData(show: true, drawVerticalLine: false),
+          borderData: FlBorderData(
+            show: true,
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          barTouchData: BarTouchData(enabled: false),
+          barGroups: data.asMap().entries.map((entry) {
+            final index = entry.key;
+            final value = (entry.value['value'] as num).toDouble();
+
+            return BarChartGroupData(
+              x: index,
+              barsSpace: 16,
+              barRods: [
+                BarChartRodData(
+                  toY: value,
+                  color: Colors.orange, // اللون البرتقالي للأعمدة
+                  width: 30,
+                  borderRadius: BorderRadius.circular(6),
+                  backDrawRodData: BackgroundBarChartRodData(show: false),
+                ),
+              ],
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
 
   Widget _buildSummaryCard(
       String title, IconData icon, String value, BuildContext context) {
@@ -100,6 +427,9 @@ class OverviewPage extends ConsumerWidget {
 
   Widget _buildRepairTable(
       BuildContext context, List<Map<String, dynamic>> repairs) {
+    if (repairs.isEmpty) {
+      return const Center(child: Text('لا توجد تصليحات لعرضها.'));
+    }
     return Card(
       elevation: _cardElevation,
       shape: RoundedRectangleBorder(
@@ -197,313 +527,6 @@ class OverviewPage extends ConsumerWidget {
               },
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final userIdAsync = ref.watch(userIdProvider);
-
-    return userIdAsync.when(
-      data: (userId) {
-        if (userId != null) {
-          final monthlyReportsCount =
-              ref.watch(monthlyReportsCountProvider(userId));
-          final employeeCount = ref.watch(employeeCountProvider(userId));
-          final employeeSalary = ref.watch(employeeSalaryProvider(userId));
-          final monthlySummary = ref.watch(monthlySummaryProvider(userId));
-          final modelsSummaryAsync = ref.watch(modelsSummaryProvider(userId));
-          final topEmployeesAsync = ref.watch(topEmployeesProvider(userId));
-          final reports = ref.watch(reportsProvider(userId));
-
-          return Scaffold(
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            body: SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    // Summary Cards
-                    Wrap(
-                      spacing: 16,
-                      runSpacing: 16,
-                      children: [
-                        _buildSummaryCard(
-                          'عدد التصليحات هذا الشهر',
-                          Icons.build,
-                          monthlyReportsCount.value?.toString() ?? '-',
-                          context,
-                        ),
-                        _buildSummaryCard(
-                          'عدد الموظفين',
-                          Icons.engineering,
-                          employeeCount.value?.toString() ?? '-',
-                          context,
-                        ),
-                        _buildSummaryCard(
-                          'مجموع الرواتب',
-                          Icons.attach_money,
-                          '${employeeSalary.value?.toString() ?? '-'} \$',
-                          context,
-                        ),
-                        _buildSummaryCard(
-                          'الإجمالي الشهري',
-                          Icons.bar_chart,
-                          '${monthlySummary.value?.toString() ?? '-'} \$',
-                          context,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Charts
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        if (constraints.maxWidth > 600) {
-                          return Row(
-                            children: [
-                              Expanded(
-                                child: modelsSummaryAsync.when(
-                                  data: (modelsSummary) => _buildChartCard(
-                                    'موديلات السيارات',
-                                    _buildPieChart(modelsSummary),
-                                    context,
-                                  ),
-                                  loading: () => const Center(
-                                      child: CircularProgressIndicator()),
-                                  error: (err, stack) => Center(
-                                      child: Text(
-                                          'خطأ في تحميل بيانات الموديلات: $err')),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              // Expanded(
-                              //   child: _buildChartCard(
-                              //     ' آخر 6 شهور ايرادات',
-                              //     _buildLineChart(),
-                              //     context,
-                              //   ),
-                              // ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: topEmployeesAsync.when(
-                                  data: (topEmployees) {
-                                    return _buildChartCard(
-                                      'نشاط الموظفين',
-                                      _buildBarChart(topEmployees),
-                                      context,
-                                    );
-                                  },
-                                  loading: () => const Center(
-                                      child: CircularProgressIndicator()),
-                                  error: (err, stack) => Center(
-                                      child: Text(
-                                          'خطأ في تحميل نشاط الموظفين: $err')),
-                                ),
-                              ),
-                            ],
-                          );
-                        } else {
-                          return Column(
-                            children: [
-                              modelsSummaryAsync.when(
-                                data: (modelsSummary) => _buildChartCard(
-                                  'موديلات السيارات',
-                                  _buildPieChart(modelsSummary),
-                                  context,
-                                ),
-                                loading: () => const Center(
-                                    child: CircularProgressIndicator()),
-                                error: (err, stack) => Center(
-                                    child: Text(
-                                        'خطأ في تحميل بيانات الموديلات: $err')),
-                              ),
-                              const SizedBox(height: 16),
-                              _buildChartCard(
-                                'الإيرادات آخر 6 شهور',
-                                _buildLineChart(),
-                                context,
-                              ),
-                              const SizedBox(height: 16),
-                              topEmployeesAsync.when(
-                                data: (topEmployees) {
-                                  return _buildChartCard(
-                                    'نشاط الموظفين',
-                                    _buildBarChart(topEmployees),
-                                    context,
-                                  );
-                                },
-                                loading: () => const Center(
-                                    child: CircularProgressIndicator()),
-                                error: (err, stack) => Center(
-                                    child: Text(
-                                        'خطأ في تحميل نشاط الموظفين: $err')),
-                              ),
-                            ],
-                          );
-                        }
-                      },
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Repairs Table
-                    reports.when(
-                      data: (report) => _buildRepairTable(context, report),
-                      loading: () =>
-                          const Center(child: CircularProgressIndicator()),
-                      error: (err, stack) => Center(
-                          child: Text('خطأ في تحميل بيانات الموديلات: $err')),
-                    )
-                  ],
-                ),
-              ),
-            ),
-          );
-        } else {
-          return const Center(child: Text('لم يتم العثور على المستخدم.'));
-        }
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) =>
-          Center(child: Text('خطأ في تحميل معرف المستخدم: $err')),
-    );
-  }
-
-  Widget _buildPieChart(List<Map<String, dynamic>> modelsSummary) {
-    return PieChart(
-      PieChartData(
-        sections: modelsSummary.map((model) {
-          return PieChartSectionData(
-            value: (model['value'] as num).toDouble(),
-            color: _getRandomColor(),
-            title: model['title'],
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Color _getRandomColor() {
-    final random = Random();
-    double hue = random.nextDouble() * 30 + 15;
-    double saturation = random.nextDouble() * 0.5 + 0.5;
-    double brightness = random.nextDouble() * 0.4 + 0.6;
-
-    return HSVColor.fromAHSV(1.0, hue, saturation, brightness).toColor();
-  }
-
-  Widget _buildLineChart() {
-    return LineChart(
-      LineChartData(
-        gridData: FlGridData(show: true),
-        titlesData: FlTitlesData(show: false),
-        borderData: FlBorderData(show: true),
-        lineBarsData: [
-          LineChartBarData(
-            spots: [
-              FlSpot(0, 3),
-              FlSpot(1, 4),
-              FlSpot(2, 2),
-              FlSpot(3, 5),
-              FlSpot(4, 6),
-              FlSpot(5, 7),
-            ],
-            isCurved: true,
-            barWidth: 3,
-            color: Colors.orange,
-            belowBarData: BarAreaData(show: false),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBarChart(List<Map<String, dynamic>> data) {
-    final maxValue = data
-        .map((e) => e['value'] as num)
-        .reduce((a, b) => a > b ? a : b)
-        .toDouble();
-
-    return AspectRatio(
-      aspectRatio: 1.5,
-      child: BarChart(
-        BarChartData(
-          alignment: BarChartAlignment.spaceAround,
-          maxY: maxValue * 1.2, // عشان يكون في مساحة فوق الأعمدة
-          titlesData: FlTitlesData(
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  final index = value.toInt();
-                  if (index >= 0 && index < data.length) {
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
-                        data[index]['label'], // اسم الموظف تحت العمود
-                        style: const TextStyle(
-                          fontSize: 12,
-
-                          fontWeight: FontWeight.w600, // تحسين النص
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-                reservedSize: 40, // زيادة المسافة
-              ),
-            ),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: Text(
-                      value.toStringAsFixed(0), // عرض القيم على اليسار
-                      style: const TextStyle(
-                        fontSize: 12,
-                      ),
-                    ),
-                  );
-                },
-                reservedSize: 30,
-              ),
-            ),
-            rightTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          ),
-          gridData: FlGridData(show: true, drawVerticalLine: false),
-          borderData: FlBorderData(
-            show: true,
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          barTouchData: BarTouchData(enabled: false),
-          barGroups: data.asMap().entries.map((entry) {
-            final index = entry.key;
-            final value = (entry.value['value'] as num).toDouble();
-
-            return BarChartGroupData(
-              x: index,
-              barsSpace: 16,
-              barRods: [
-                BarChartRodData(
-                  toY: value,
-                  color: Colors.orange, // اللون البرتقالي للأعمدة
-                  width: 30,
-                  borderRadius: BorderRadius.circular(6),
-                  backDrawRodData: BackgroundBarChartRodData(show: false),
-                ),
-              ],
-            );
-          }).toList(),
         ),
       ),
     );
