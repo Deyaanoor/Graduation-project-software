@@ -1,6 +1,9 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
+import 'package:flutter_provider/providers/home_provider.dart';
 import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/screens/auth/Title_Project.dart';
 import 'package:flutter_provider/screens/auth/divider_widget.dart';
@@ -115,7 +118,6 @@ class LoginPage extends ConsumerWidget {
                     },
                     isGradient: true,
                   ),
-                  ForgotPassword(),
                   DividerWidget(),
                   SizedBox(height: height * .055),
                   RegisterLabel(),
@@ -271,24 +273,106 @@ class LoginPage extends ConsumerWidget {
     );
   }
 
-  void handleLogin(BuildContext context, TextEditingController emailController,
-      TextEditingController passwordController, WidgetRef ref) async {
-    if (_formKey.currentState?.validate() ?? false) {
-      final credentials = {
-        'email': emailController.text,
-        'password': passwordController.text,
-      };
+  // void handleLogin(
+  //   BuildContext context,
+  //   TextEditingController emailController,
+  //   TextEditingController passwordController,
+  //   WidgetRef ref,
+  // ) async {
+  //   if (_formKey.currentState?.validate() ?? false) {
+  //     try {
+  //       ref.read(selectedIndexProvider.notifier).state = 0;
+  //       // 🔑 طلب إذن الإشعارات
+  //       NotificationSettings settings =
+  //           await FirebaseMessaging.instance.requestPermission();
 
+  //       String? fcmToken;
+
+  //       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+  //         fcmToken = await FirebaseMessaging.instance.getToken(
+  //           vapidKey:
+  //               "BGZEIrp8Oc46VWd92gmyEdP3UnQkfOOmAMVpRKSey09EkKn66cKNPnApwTMA7j49E2y-0QggAzx1J2qhiY418xE",
+  //         );
+  //         print("✅ FCM Token in Login: $fcmToken");
+  //       } else {
+  //         print("❌ Notification permission not granted");
+  //         fcmToken = "";
+  //       }
+
+  //       final credentials = {
+  //         'email': emailController.text,
+  //         'password': passwordController.text,
+  //         'fcmToken': fcmToken ?? "",
+  //       };
+
+  //       final result = await ref.read(loginUserProvider(credentials).future);
+  //       final role = result['role'];
+  //       print(role);
+
+  //       ref.invalidate(userIdProvider);
+
+  //       Navigator.pushNamed(context, '/home');
+  //     } catch (e) {
+  //       print("❌ Login error: $e");
+  //       CustomSnackBar.showErrorSnackBar(
+  //         context,
+  //         'Login failed',
+  //       );
+  //     }
+  //   }
+  // }
+
+  void handleLogin(
+    BuildContext context,
+    TextEditingController emailController,
+    TextEditingController passwordController,
+    WidgetRef ref,
+  ) async {
+    if (_formKey.currentState?.validate() ?? false) {
       try {
+        ref.read(selectedIndexProvider.notifier).state = 0;
+
+        String? fcmToken;
+
+        // ✅ طلب إذن الإشعارات وتوليد التوكن
+        NotificationSettings settings =
+            await FirebaseMessaging.instance.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+
+        if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+          if (kIsWeb) {
+            fcmToken = await FirebaseMessaging.instance.getToken(
+              vapidKey:
+                  "BGZEIrp8Oc46VWd92gmyEdP3UnQkfOOmAMVpRKSey09EkKn66cKNPnApwTMA7j49E2y-0QggAzx1J2qhiY418xE",
+            );
+          } else {
+            fcmToken = await FirebaseMessaging.instance.getToken();
+          }
+
+          print("✅ FCM Token: $fcmToken");
+        } else {
+          print("❌ Notification permission not granted");
+          fcmToken = "";
+        }
+
+        final credentials = {
+          'email': emailController.text,
+          'password': passwordController.text,
+          'fcmToken': fcmToken ?? "",
+        };
+
         final result = await ref.read(loginUserProvider(credentials).future);
         final role = result['role'];
         print(role);
 
-        // بعد حفظ التوكن داخل loginUserProvider، نعيد تهيئة الـ userIdProvider
         ref.invalidate(userIdProvider);
 
         Navigator.pushNamed(context, '/home');
       } catch (e) {
+        print("❌ Login error: $e");
         CustomSnackBar.showErrorSnackBar(
           context,
           'Login failed',

@@ -68,6 +68,7 @@ class _AdminAnnouncementPageState extends ConsumerState<AdminAnnouncementPage> {
             adminId: userId,
             newsId: newsId,
             newsTitle: title,
+            newsbody: message,
             senderName: "Owner",
             type: 'news',
           );

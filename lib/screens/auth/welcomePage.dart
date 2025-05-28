@@ -1,3 +1,4 @@
+// ignore: file_names
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -6,7 +7,7 @@ import 'package:flutter_provider/widgets/custom_button.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class WelcomePage extends ConsumerWidget {
-  WelcomePage();
+  const WelcomePage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -213,7 +214,7 @@ class WelcomePage extends ConsumerWidget {
           color: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.9),
           image: DecorationImage(
             image: NetworkImage(
-              'https://i.postimg.cc/65vkqwg3/cleaned-image-3-removebg-preview.png',
+              'https://i.postimg.cc/3wy0RfzK/Management-Application-for-Mechanic-Workshop-removebg-preview.png',
             ),
             fit: BoxFit.contain,
             alignment: Alignment.center,
@@ -225,25 +226,21 @@ class WelcomePage extends ConsumerWidget {
 
   Widget _label() {
     return Container(
-        margin: const EdgeInsets.only(top: 40, bottom: 20),
-        child: Column(
-          children: <Widget>[
-            const Text(
-              'Quick login with Touch ID',
-              style: TextStyle(color: Colors.white, fontSize: 17),
-            ),
-            const SizedBox(height: 20),
-            const Icon(Icons.fingerprint, size: 90, color: Colors.white),
-            const SizedBox(height: 20),
-            const Text(
-              'Touch ID',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                decoration: TextDecoration.underline,
-              ),
-            ),
-          ],
-        ));
+      margin: const EdgeInsets.only(top: 40, bottom: 20),
+      child: Column(
+        children: <Widget>[
+          const Text(
+            'Smart Solutions for Your Workshop',
+            style: TextStyle(color: Colors.white, fontSize: 17),
+          ),
+          const SizedBox(height: 20),
+          Image.network(
+            'https://i.postimg.cc/prZL3jYb/edit-the-uploaded-image-to-make-it-suitable-for-an-app-icon-removebg-preview.png',
+            height: 180,
+            width: 160,
+          ),
+        ],
+      ),
+    );
   }
 }

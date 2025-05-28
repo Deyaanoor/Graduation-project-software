@@ -1,10 +1,10 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer';
 
-const String _baseUrl = 'http://localhost:5000/news';
-// http://localhost:5000/news/addNew
+String _baseUrl = '${dotenv.env['API_URL']}/news';
 final newsProvider = StateNotifierProvider.autoDispose<NewsNotifier,
     AsyncValue<List<Map<String, dynamic>>>>((ref) {
   final link = ref.keepAlive();

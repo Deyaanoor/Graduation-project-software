@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
+import 'package:flutter_provider/providers/garage_provider.dart';
 import 'package:flutter_provider/providers/home_provider.dart';
 import 'package:flutter_provider/providers/requestProvider.dart';
 import 'package:flutter_provider/screens/Client/RequestDetailsPage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/foundation.dart';
-import 'package:intl/intl.dart';
-
-final garageIdProvider = StateProvider<String?>((ref) => null);
 
 class GarageRequestsPage extends ConsumerStatefulWidget {
   const GarageRequestsPage({super.key});
@@ -74,11 +72,8 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final List<String> statusOptions = ['pending', 'success'];
-
     final userId = ref.watch(userIdProvider).value;
     final garageId = ref.watch(garageIdProvider);
-
     final userInfo =
         userId != null ? ref.watch(getUserInfoProvider(userId)).value : null;
 
@@ -136,10 +131,13 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
                           child: Row(
                             children: [
                               Expanded(
-                                  flex: 2,
-                                  child: Text('Name',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold))),
+                                flex: 2,
+                                child: Text(
+                                  userRole == 'owner' ? 'Name' : 'رقم الطلب',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
                               Expanded(
                                   flex: 3,
                                   child: Text('Date',
@@ -171,20 +169,26 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
                                 vertical: 10, horizontal: 8),
                             color: bgColor,
                             child: InkWell(
-                              onTap: () =>
-                                  _navigateToDetails(request, userRole),
+                              onTap: () => _navigateToDetails(
+                                  request, userRole, garageId!),
                               child: Row(
                                 children: [
                                   Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                          request['userName'] ?? 'مجهول',
-                                          style: TextStyle(color: textColor))),
+                                    flex: 2,
+                                    child: Text(
+                                      userRole == 'owner'
+                                          ? (request['userName'] ?? 'مجهول')
+                                          : (index).toString(),
+                                      style: TextStyle(color: textColor),
+                                    ),
+                                  ),
                                   Expanded(
-                                      flex: 3,
-                                      child: Text(
-                                          _formatDate(request['timestamp']),
-                                          style: TextStyle(color: textColor))),
+                                    flex: 3,
+                                    child: Text(
+                                      _formatDate(request['timestamp']),
+                                      style: TextStyle(color: textColor),
+                                    ),
+                                  ),
                                   Expanded(
                                     flex: 2,
                                     child: Container(
@@ -195,76 +199,33 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
                                             _getStatusColor(request['status']),
                                         borderRadius: BorderRadius.circular(10),
                                       ),
-                                      child: Text(request['status'],
-                                          style: const TextStyle(
-                                              color: Colors.white)),
+                                      child: Text(
+                                        request['status'],
+                                        style: const TextStyle(
+                                            color: Colors.white),
+                                      ),
                                     ),
                                   ),
-                                  userRole == 'owner'
-                                      ? Expanded(
-                                          flex: 2,
-                                          child: IconButton(
-                                            onPressed: () async {
-                                              final newStatus =
-                                                  await showDialog<String>(
-                                                context: context,
-                                                builder: (context) {
-                                                  return AlertDialog(
-                                                    title: Text('تحديث الحالة'),
-                                                    content: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: statusOptions
-                                                          .map((status) {
-                                                        return ListTile(
-                                                          title: Text(status),
-                                                          onTap: () {
-                                                            Navigator.pop(
-                                                                context,
-                                                                status);
-                                                          },
-                                                        );
-                                                      }).toList(),
-                                                    ),
-                                                  );
-                                                },
-                                              );
-
-                                              if (newStatus != null &&
-                                                  newStatus !=
-                                                      request['status']) {
-                                                try {
-                                                  await ref.read(
-                                                          updateRequestStatusProvider)(
-                                                      request['_id'],
-                                                      newStatus);
-
-                                                  setState(() {
-                                                    request['status'] =
-                                                        newStatus;
-                                                  });
-
-                                                  ScaffoldMessenger.of(context)
-                                                      .showSnackBar(
-                                                    SnackBar(
-                                                        content: Text(
-                                                            'تم تحديث الحالة بنجاح')),
-                                                  );
-                                                } catch (e) {
-                                                  ScaffoldMessenger.of(context)
-                                                      .showSnackBar(
-                                                    SnackBar(
-                                                        content: Text(
-                                                            'فشل في تحديث الحالة')),
-                                                  );
-                                                }
-                                              }
-                                            },
-                                            icon: Icon(Icons.edit,
-                                                color: Colors.orange),
-                                          ),
-                                        )
-                                      : const SizedBox(),
+                                  Expanded(
+                                    flex: 3,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        IconButton(
+                                          icon: Icon(Icons.edit,
+                                              color: Colors.orange),
+                                          onPressed: () =>
+                                              _handleAction('edit', request),
+                                        ),
+                                        IconButton(
+                                          icon: Icon(Icons.delete,
+                                              color: Colors.red),
+                                          onPressed: () =>
+                                              _handleAction('delete', request),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -457,6 +418,13 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
                         ),
                       ),
                       onPressed: () async {
+                        final userInfo = userId != null
+                            ? ref.watch(getUserInfoProvider(userId)).value
+                            : null;
+
+                        final userRole = userInfo != null
+                            ? userInfo['role'] ?? 'بدون اسم'
+                            : 'جاري التحميل...';
                         if (messageController.text.isNotEmpty) {
                           final newRequest = {
                             'userId': userId,
@@ -468,7 +436,6 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
                           };
 
                           try {
-                            await ref.read(addRequestProvider).call(newRequest);
                             Navigator.pop(context);
                             messageController.clear();
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -503,6 +470,7 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
   List<Map<String, dynamic>> _filterRequests(
       List<Map<String, dynamic>> requests) {
     return requests.where((request) {
+      final garageId = request['garageId'];
       final userName = request['userName']?.toString().toLowerCase() ?? '';
       final status = request['status']?.toString();
       final timestamp = request['timestamp'] != null
@@ -554,13 +522,92 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
-  void _navigateToDetails(Map<String, dynamic> request, String userRole) {
-    ref.read(selectedRequestProvider.notifier).state = request;
+  void _navigateToDetails(
+      Map<String, dynamic> request, String userRole, String garageId) {
+    ref.read(selectedRequestProvider.notifier).state = {
+      ...request,
+      'garageId': garageId,
+    };
     userRole == 'owner'
         ? ref.read(selectedIndexProvider.notifier).state = 8
         : (ResponsiveHelper.isMobile(context))
             ? Navigator.push(context,
                 MaterialPageRoute(builder: (context) => RequestDetailsPage()))
             : ref.read(selectedIndexProvider.notifier).state = 4;
+  }
+
+  void _handleAction(String action, Map<String, dynamic> request) async {
+    final List<String> statusOptions = ['pending', 'success'];
+    final userId = ref.watch(userIdProvider).value;
+    if (action == 'edit') {
+      final newStatus = await showDialog<String>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('تحديث الحالة'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: statusOptions.map((status) {
+                return ListTile(
+                  title: Text(status),
+                  onTap: () => Navigator.pop(context, status),
+                );
+              }).toList(),
+            ),
+          );
+        },
+      );
+
+      if (newStatus != null && newStatus != request['status']) {
+        try {
+          await ref.read(updateRequestStatusProvider)(
+              request['_id'], newStatus);
+
+          setState(() {
+            request['status'] = newStatus;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('تم تحديث الحالة بنجاح')),
+          );
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('فشل في تحديث الحالة')),
+          );
+        }
+      }
+    } else if (action == 'delete') {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('تأكيد الحذف'),
+          content: Text('هل أنت متأكد من حذف هذا الطلب؟'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text('إلغاء')),
+            TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text('حذف')),
+          ],
+        ),
+      );
+
+      if (confirm == true) {
+        try {
+          await ref.read(deleteRequestProvider)(request['_id']);
+
+          ref.invalidate(getRequestsProvider(userId!));
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('تم الحذف بنجاح')),
+          );
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('فشل في الحذف')),
+          );
+        }
+      }
+    }
   }
 }

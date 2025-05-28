@@ -602,39 +602,39 @@ class _ReportPageState extends ConsumerState<ReportPage> {
   void _submitReport(String userName) async {
     final lang = ref.read(languageProvider);
     final reportsNotifier = ref.read(reportsProvider.notifier);
+
     if (_formKey.currentState!.validate()) {
       try {
-        if (_images.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(lang['upload_image_warning'] ??
-                    'Please upload at least one image')),
+        // ✅ جهّز متغيرات الصور فقط إذا فيه صور
+        List<Uint8List>? imageBytesList;
+        List<String>? fileNames;
+
+        if (_images.isNotEmpty) {
+          imageBytesList = await Future.wait(
+            _images.map((image) async => await image.readAsBytes()),
           );
-          return;
+          fileNames = _images.map((image) => image.name).toList();
         }
 
-        final imageBytesList = await Future.wait(
-          _images.map((image) async => await image.readAsBytes()),
-        );
-
-        final fileNames = _images.map((image) => image.name).toList();
         final userId = ref.watch(userIdProvider).value;
+
         final reportId = await reportsNotifier.addReport(
-            owner: _ownerController.text,
-            cost: _costController.text,
-            plateNumber: _plateController.text,
-            issue: _problemTitleController.text,
-            make: _makeController.text,
-            model: _modelController.text,
-            year: _yearController.text,
-            symptoms: _symptomsController.text,
-            repairDescription: _repairDescController.text,
-            usedParts: _selectedParts,
-            imageBytesList: imageBytesList,
-            fileNames: fileNames,
-            status: 'Pending',
-            mechanicName: userName,
-            userId: userId!);
+          owner: _ownerController.text,
+          cost: _costController.text,
+          plateNumber: _plateController.text,
+          issue: _problemTitleController.text,
+          make: _makeController.text,
+          model: _modelController.text,
+          year: _yearController.text,
+          symptoms: _symptomsController.text,
+          repairDescription: _repairDescController.text,
+          usedParts: _selectedParts,
+          imageBytesList: imageBytesList, // ممكن تكون null
+          fileNames: fileNames, // ممكن تكون null
+          status: 'Pending',
+          mechanicName: userName,
+          userId: userId!,
+        );
 
         await ref.read(notificationsProvider.notifier).sendNotification(
               adminId: userId,

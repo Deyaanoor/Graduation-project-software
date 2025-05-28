@@ -5,6 +5,10 @@ const connectDB = require('../config/db');
 const addRequest = async (req, res) => {
   const { userId, garageId, message, location } = req.body;
 
+  if (!ObjectId.isValid(userId) || !ObjectId.isValid(garageId)) {
+    return res.status(400).json({ message: 'userId أو garageId غير صالح' });
+  }
+
   try {
     const db = await connectDB();
     const clientsCollection = db.collection('clients');
@@ -18,13 +22,19 @@ const addRequest = async (req, res) => {
     if (!garage) return res.status(404).json({ message: 'Garage not found' });
 
     const newRequest = {
-      userId,
-      userName: user.name, 
-      garageId,
-      message,
+      userId: new ObjectId(userId),
+      userName: user.name,
+      garageId: new ObjectId(garageId),
       location,
       timestamp: new Date(),
       status: 'pending',
+      messages: [
+        {
+          sender: 'user',
+          message,
+          timestamp: new Date(),
+        },
+      ],
     };
 
     await requestsCollection.insertOne(newRequest);
@@ -34,6 +44,65 @@ const addRequest = async (req, res) => {
     res.status(500).json({ message: 'Error adding request' });
   }
 };
+
+
+const addMessageToRequest = async (req, res) => {
+  const { requestId } = req.params;
+  const { sender, message } = req.body;
+
+  if (!["user", "owner"].includes(sender)) {
+    return res.status(400).json({ message: 'Invalid sender type' });
+  }
+
+  try {
+    const db = await connectDB();
+    const requestsCollection = db.collection('requests');
+
+    const result = await requestsCollection.updateOne(
+      { _id: new ObjectId(requestId) },
+      {
+        $push: {
+          messages: {
+            sender,
+            message,
+            timestamp: new Date()
+          }
+        }
+      }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ message: 'Request not found or message not added' });
+    }
+
+    res.status(200).json({ message: 'Message added successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error adding message to request' });
+  }
+};
+
+const getRequestMessages = async (req, res) => {
+  const { requestId } = req.params;
+
+  try {
+    const db = await connectDB();
+    const requestsCollection = db.collection('requests');
+
+    const request = await requestsCollection.findOne(
+      { _id: new ObjectId(requestId) },
+      { projection: { messages: 1 } }
+    );
+
+    if (!request) return res.status(404).json({ message: 'Request not found' });
+
+    res.status(200).json(request.messages);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching messages' });
+  }
+};
+
 // ✅ Get requests by user ID
 const getRequestsByUserAndGarageId = async (req, res) => {
     const { userId, garageId } = req.params;
@@ -42,7 +111,6 @@ const getRequestsByUserAndGarageId = async (req, res) => {
         const db = await connectDB();
         const requestsCollection = db.collection('requests');
         
-        // نحدد الحقول التي نريد إرجاعها فقط باستخدام projection
         const requests = await requestsCollection.find(
             { userId: userId, garageId: garageId },
             {
@@ -75,17 +143,11 @@ const getRequests = async (req, res) => {
     const ownersCollection = db.collection('owners');
     const requestsCollection = db.collection('requests');
 
-    // البحث عن مالك الورشة
     const owner = await ownersCollection.findOne({ _id: new ObjectId(ownerId) });
-
     if (!owner || !owner.garage_id) {
       return res.status(404).json({ message: 'Owner or garage not found' });
     }
-
-    // تحويل الـ garage_id إلى String قبل استخدامه في البحث
     const garageId = owner.garage_id.toString();
-
-    // البحث عن الطلبات المرتبطة بالـ garageId
     const requests = await requestsCollection.find({ garageId: garageId }).toArray();
 
     if (requests.length === 0) {
@@ -141,4 +203,26 @@ const updateRequestStatus = async (req, res) => {
   }
 };
 
-module.exports = { addRequest, getRequests, getRequestById, updateRequestStatus , getRequestsByUserAndGarageId };
+const deleteRequest = async (req, res) => {
+  const { requestId } = req.params;
+
+  try {
+    const db = await connectDB();
+    const requestsCollection = db.collection('requests');
+
+    const result = await requestsCollection.deleteOne({ _id: new ObjectId(requestId) });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: 'الطلب غير موجود أو لم يتم حذفه' });
+    }
+
+    res.status(200).json({ message: 'تم حذف الطلب بنجاح' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'حدث خطأ أثناء حذف الطلب' });
+  }
+};
+
+module.exports = { addRequest, getRequests, getRequestById, updateRequestStatus ,
+   getRequestsByUserAndGarageId,addMessageToRequest,
+  getRequestMessages, deleteRequest };

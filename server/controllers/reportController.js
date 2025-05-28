@@ -54,14 +54,55 @@ const getReports = async (req, res) => {
   }
 };
 
+// const getReportsToClient = async (req, res) => {
+//   try {
+//     const { id, name } = req.params;
 
+//     const db = await connectDB();
+//     const reportsCollection = db.collection('reports');
+
+//     const reports = await reportsCollection.find({
+//       garageId: new ObjectId(id),
+//       owner: name
+//     }).toArray();
+
+//     const filteredReports = reports.map(report => ({
+//       mechanicName: report.mechanicName,
+//       make: report.make,
+//       cost: report.cost,
+//       date: report.date
+//     }));
+
+//     res.status(200).json(filteredReports);
+//   } catch (error) {
+//     console.error("❌ Error fetching reports:", error);
+//     res.status(500).json({ message: "An error occurred while fetching reports" });
+//   }
+// };
+
+
+const getReportsToClient = async (req, res) => {
+  try {
+    const { id, name } = req.params;
+
+    const db = await connectDB();
+    const reportsCollection = db.collection('reports');
+
+    const reports = await reportsCollection.find({
+      garageId: new ObjectId(id),
+      owner: name
+    }).toArray();
+
+    res.status(200).json(reports);
+
+  } catch (error) {
+    console.error("❌ Error fetching reports:", error);
+    res.status(500).json({ message: "An error occurred while fetching reports" });
+  }
+};
 const addReport = async (req, res) => {
   try {
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ message: "No images uploaded" });
-    }
-
-    const {owner,  cost, plateNumber, date, issue, make, model, year, symptoms, repairDescription, usedParts, status, mechanicName ,user_id} = req.body;
+    const { owner, cost, plateNumber, date, issue, make, model, year, symptoms, repairDescription, usedParts, status, mechanicName, user_id } = req.body;
 
     const db = await connectDB();
     const employeesCollection = db.collection('employees');
@@ -82,7 +123,6 @@ const addReport = async (req, res) => {
     }
 
     const newReport = {
-      
       owner,
       cost,
       plateNumber,
@@ -94,7 +134,7 @@ const addReport = async (req, res) => {
       symptoms,
       repairDescription,
       usedParts,
-      imageUrls: req.files.map(file => file.path),
+      imageUrls: req.files?.map(file => file.path) || [], // ✅ يقبل بدون صور
       status: "pending",
       mechanicName,
       garageId 
@@ -102,6 +142,19 @@ const addReport = async (req, res) => {
 
     const reportsCollection = db.collection('reports');
     const result = await reportsCollection.insertOne(newReport);
+
+    const fs = require("fs");
+    const path = require("path");
+
+    const csvFilePath = path.join(__dirname, "../data/reports.csv");
+
+    if (!fs.existsSync(csvFilePath)) {
+      const headers = "Make,Model,Year,Problem,Symptoms,Solution\n";
+      fs.writeFileSync(csvFilePath, headers);
+    }
+
+    const row = `${make},${model},${year},${issue},${symptoms},${repairDescription}\n`;
+    fs.appendFileSync(csvFilePath, row);
 
     res.status(201).json({
       message: "Report added successfully",
@@ -220,4 +273,4 @@ const deleteReport=async (req,res)=>{
 
 
 
-module.exports = { getReports, getReportDetails, addReport, upload ,updateReport, deleteReport};
+module.exports = { getReports, getReportDetails, addReport, upload ,updateReport, deleteReport,getReportsToClient};

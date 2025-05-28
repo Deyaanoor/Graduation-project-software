@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class CustomTextField extends StatelessWidget {
+class CustomTextField extends StatefulWidget {
   final String label;
   final String? hint;
   final IconData? icon;
@@ -11,7 +11,6 @@ class CustomTextField extends StatelessWidget {
   final bool showBorder;
   final Color? backgroundColor;
   final Color? iconColor;
-
   final String? Function(String?)? validator;
 
   const CustomTextField({
@@ -30,12 +29,25 @@ class CustomTextField extends StatelessWidget {
   });
 
   @override
+  State<CustomTextField> createState() => _CustomTextFieldState();
+}
+
+class _CustomTextFieldState extends State<CustomTextField> {
+  late bool _obscureText;
+
+  @override
+  void initState() {
+    super.initState();
+    _obscureText = widget.isPassword;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
+          widget.label,
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 15,
@@ -43,56 +55,69 @@ class CustomTextField extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         TextFormField(
-          controller: controller,
-          obscureText: isPassword,
-          keyboardType: inputType,
-          validator: validator,
+          controller: widget.controller,
+          obscureText: _obscureText,
+          keyboardType: widget.inputType,
+          validator: widget.validator,
           style: const TextStyle(
             fontSize: 14,
             color: Colors.black,
           ),
           decoration: InputDecoration(
-            hintText: hint,
-            prefixIcon: icon != null
-                ? Icon(icon, color: iconColor ?? Colors.orange)
+            hintText: widget.hint,
+            prefixIcon: widget.icon != null
+                ? Icon(widget.icon, color: widget.iconColor ?? Colors.orange)
                 : null,
-            enabledBorder: showBorder
+            suffixIcon: widget.isPassword
+                ? IconButton(
+                    icon: Icon(
+                      _obscureText ? Icons.visibility_off : Icons.visibility,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscureText = !_obscureText;
+                      });
+                    },
+                  )
+                : null,
+            enabledBorder: widget.showBorder
                 ? OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(
-                      color: borderColor ?? Colors.orange,
+                      color: widget.borderColor ?? Colors.orange,
                       width: 2,
                     ),
                   )
                 : InputBorder.none,
-            focusedBorder: showBorder
+            focusedBorder: widget.showBorder
                 ? OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(
-                      color: borderColor ?? Colors.orange,
+                      color: widget.borderColor ?? Colors.orange,
                       width: 2,
                     ),
                   )
                 : InputBorder.none,
-            errorBorder: showBorder
+            errorBorder: widget.showBorder
                 ? OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
+                    borderSide: const BorderSide(
                       color: Colors.red,
                       width: 2,
                     ),
                   )
                 : InputBorder.none,
-            focusedErrorBorder: showBorder
+            focusedErrorBorder: widget.showBorder
                 ? OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color: Colors.red, // تغيير اللون عند التركيز ووجود خطأ
+                    borderSide: const BorderSide(
+                      color: Colors.red,
                       width: 2,
                     ),
                   )
                 : InputBorder.none,
-            fillColor: backgroundColor ?? const Color(0xfff3f3f4),
+            fillColor: widget.backgroundColor ?? const Color(0xfff3f3f4),
             filled: true,
             contentPadding: const EdgeInsets.symmetric(
               vertical: 15,

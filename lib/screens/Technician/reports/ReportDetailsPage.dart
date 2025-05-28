@@ -323,63 +323,75 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
                 ],
               ),
               const Divider(color: Colors.grey),
-              const SizedBox(height: 12),
+              const SizedBox(height: 5),
               images.isEmpty
                   ? _buildEmptyState('لا توجد صور مرفقة', Icons.photo_camera)
-                  : GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: isDesktop ? 3 : 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 1,
+                  : ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: isDesktop ? 200 : 200, // حد أقصى للارتفاع
                       ),
-                      itemCount: images.length,
-                      itemBuilder: (context, index) => GestureDetector(
-                        onTap: () =>
-                            _showFullScreenImage(context, images[index]),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: CachedNetworkImage(
-                            imageUrl: images[index],
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              color: Colors.grey[200],
-                              child: const Center(
-                                  child: CircularProgressIndicator()),
+                      child: GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: isDesktop ? 3 : 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 1,
+                        ),
+                        itemCount: images.length,
+                        itemBuilder: (context, index) => GestureDetector(
+                          onTap: () =>
+                              _showFullScreenImage(context, images[index]),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: CachedNetworkImage(
+                              imageUrl: images[index],
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
+                                color: Colors.grey[200],
+                                child: const Center(
+                                    child: CircularProgressIndicator()),
+                              ),
+                              errorWidget: (context, url, error) =>
+                                  const Icon(Icons.broken_image),
                             ),
-                            errorWidget: (context, url, error) =>
-                                const Icon(Icons.broken_image),
                           ),
                         ),
                       ),
                     ),
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Expanded(
-                  flex: 1,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: CustomButton(
-                      onPressed: () => _deleteReport(),
-                      text: "حذف",
-                      backgroundColor: Colors.red,
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Wrap(
+                  spacing: 12, // المسافة بين الأزرار أفقياً
+                  runSpacing: 8, // المسافة بين الأسطر لو التف الأزرار
+                  children: [
+                    SizedBox(
+                      width: isDesktop
+                          ? 200
+                          : double
+                              .infinity, // عرض ثابت للدسكتوب وعرض كامل للموبايل
+                      height: 60,
+                      child: CustomButton(
+                        key: UniqueKey(),
+                        onPressed: _deleteReport,
+                        text: "حذف",
+                        backgroundColor: Colors.red,
+                      ),
                     ),
-                  ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: CustomButton(
-                      onPressed: () => _navigateToEditReport(
-                          context, report), // ← تمرير التقرير
-                      text: "تعديل",
-                      backgroundColor: Colors.orange,
+                    SizedBox(
+                      width: isDesktop ? 200 : double.infinity,
+                      height: 60,
+                      child: CustomButton(
+                        key: UniqueKey(),
+                        onPressed: () => _navigateToEditReport(context, report),
+                        text: "تعديل",
+                        backgroundColor: Colors.orange,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ]),
+              ),
             ]),
       ),
     );
@@ -387,7 +399,7 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
 
   Widget _buildEmptyState(String text, IconData icon) {
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       child: Column(
         children: [
           Icon(icon, size: 48, color: Colors.grey[400]),

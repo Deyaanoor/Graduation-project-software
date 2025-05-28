@@ -158,7 +158,7 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
               context,
               label: 'Password',
               key: 'password',
-              value: userData['password'] ?? 'غير متوفر',
+              value: '',
               icon: Icons.password_outlined,
               isMobile: isMobile,
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
+import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/screens/Admin/Garage/theamDark_mode.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_provider/screens/Technician/settings/navigation_helper.dart';
@@ -17,15 +18,20 @@ class SettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final lang = ref.watch(languageProvider);
-
+    final userId = ref.watch(userIdProvider).value;
+    final userInfo =
+        userId != null ? ref.watch(getUserInfoProvider(userId)).value : null;
+    final userRole =
+        userInfo != null ? userInfo['role'] ?? 'بدون اسم' : 'جاري التحميل...';
     if (ResponsiveHelper.isMobile(context)) {
-      return _buildMobileLayout(lang, context, ref);
+      return _buildMobileLayout(lang, context, ref, userRole);
     } else {
-      return _buildDesktopLayout(lang, ref, context);
+      return _buildDesktopLayout(lang, ref, context, userRole);
     }
   }
 
-  Widget _buildMobileLayout(lang, BuildContext context, WidgetRef ref) {
+  Widget _buildMobileLayout(
+      lang, BuildContext context, WidgetRef ref, String userRole) {
     return Scaffold(
       appBar: AppBar(
         title: Text(lang['settings'] ?? ''),
@@ -55,14 +61,15 @@ class SettingsPage extends ConsumerWidget {
                 color: Colors.green.shade600,
                 onTap: () => _navigateToLanguagePage(context, ref),
               ),
-              SettingsCard(
-                icon: Icons.contact_support,
-                title: lang['contact_info'] ?? '',
-                subtitle: lang['support_contact'] ?? '',
-                color: Colors.red.shade600,
-                onTap: () =>
-                    NavigationHelper.navigateTo(context, ContactInfoPage()),
-              ),
+              if (userRole == 'owner' || userRole == 'employee')
+                SettingsCard(
+                    icon: Icons.contact_support,
+                    title: lang['contact_info'] ?? '',
+                    subtitle: lang['support_contact'] ?? '',
+                    color: Colors.red.shade600,
+                    onTap: () {
+                      NavigationHelper.navigateTo(context, ContactInfoPage());
+                    }),
             ],
           ),
         ),
@@ -70,7 +77,8 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildDesktopLayout(lang, WidgetRef ref, BuildContext context) {
+  Widget _buildDesktopLayout(
+      lang, WidgetRef ref, BuildContext context, String userRole) {
     final selectedIndex = ref.watch(selectedIndexProviderSitting);
     final currentLangCode =
         ref.read(languageProvider.notifier).currentLanguageCode;
@@ -173,7 +181,8 @@ class SettingsPage extends ConsumerWidget {
                       );
                     },
                   ),
-                  ContactInfoPage(),
+                  if (userRole == 'owner' || userRole == 'employee')
+                    ContactInfoPage(),
                 ],
               ),
             ),

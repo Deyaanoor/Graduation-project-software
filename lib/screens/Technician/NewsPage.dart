@@ -20,7 +20,6 @@ class NewsPage extends ConsumerWidget {
         userInfo != null ? userInfo['role'] ?? 'بدون اسم' : 'جاري التحميل...';
     bool isUpdate = false;
 
-    // تأجيل جلب البيانات بعد بناء الواجهة
     if (userId != null && newsAsync.isLoading) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(newsProvider.notifier).fetchNews(userId: userId);

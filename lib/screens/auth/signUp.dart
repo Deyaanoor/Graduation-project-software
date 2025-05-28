@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/screens/auth/forgot_password.dart';
@@ -385,14 +386,14 @@ class SignUpPage extends ConsumerWidget {
     );
   }
 
-  void handleSignUp(
+  Future<void> handleSignUp(
     BuildContext context,
     WidgetRef ref,
     TextEditingController nameController,
     TextEditingController emailController,
     TextEditingController passwordController,
     TextEditingController phoneController,
-  ) {
+  ) async {
     if (nameController.text.isEmpty ||
         emailController.text.isEmpty ||
         passwordController.text.isEmpty ||
@@ -401,18 +402,21 @@ class SignUpPage extends ConsumerWidget {
       return;
     }
 
-    final userData = {
-      'name': nameController.text,
-      'email': emailController.text,
-      'password': passwordController.text,
-      'phoneNumber': phoneController.text,
-    };
-
     try {
-      final result = ref.read(registerUserProvider(userData).future);
+      final userData = {
+        'name': nameController.text,
+        'email': emailController.text,
+        'password': passwordController.text,
+        'phoneNumber': phoneController.text,
+        'fcmToken': "",
+      };
+
+      final result = await ref.read(registerUserProvider(userData).future);
+
       CustomSnackBar.showSuccessSnackBar(context, "Registration successful.");
       Navigator.pushNamed(context, '/login');
     } catch (e) {
+      print("❌ Error during signup: $e");
       CustomSnackBar.showErrorSnackBar(context, "Registration failed.");
     }
   }

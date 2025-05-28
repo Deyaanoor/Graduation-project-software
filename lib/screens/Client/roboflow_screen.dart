@@ -258,8 +258,6 @@ class _RoboflowScreenState extends State<RoboflowScreen> {
     final isDesktop = ResponsiveHelper.isDesktop(context);
 
     return Scaffold(
-      appBar:
-          !isDesktop ? AppBar(title: const Text('Roboflow Detection')) : null,
       body: isDesktop ? _buildDesktopLayout(context) : _buildMobileLayout(),
     );
   }

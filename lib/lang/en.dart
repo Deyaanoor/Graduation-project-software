@@ -1,7 +1,7 @@
 // en.dart
 final Map<String, String> english = {
   'language_name': 'English',
-  'app_title': 'Technician App',
+  'app_title': 'MechPro',
   'welcome': 'Welcome',
   'home': 'Home',
   'settings': 'Settings',

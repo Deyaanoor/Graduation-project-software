@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_provider/providers/home_provider.dart';
+import 'package:flutter_provider/screens/Technician/settings/SettingsPage.dart';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 Widget buildDrawerItem(
-    BuildContext context, String title, IconData icon, Widget page) {
+  BuildContext context,
+  WidgetRef ref,
+  String title,
+  IconData icon,
+  int selectedIndex,
+) {
   return Container(
     margin: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
     decoration: BoxDecoration(
@@ -22,10 +31,13 @@ Widget buildDrawerItem(
         style: TextStyle(fontSize: 18.0, color: Colors.black87),
       ),
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => page),
-        );
+        if (selectedIndex == -1) {
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => SettingsPage()));
+        } else {
+          ref.read(selectedIndexProvider.notifier).state = selectedIndex;
+          Navigator.pop(context);
+        }
       },
     ),
   );

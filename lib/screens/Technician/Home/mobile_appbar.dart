@@ -119,7 +119,6 @@ class _CustomAppBarState extends ConsumerState<CustomAppBar> {
     );
   }
 
-  @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight + 12);
 }
 

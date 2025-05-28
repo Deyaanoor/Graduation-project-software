@@ -77,7 +77,7 @@ class _DesktopCustomAppBarState extends ConsumerState<DesktopCustomAppBar> {
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(),
                       child: Image.network(
-                        'https://i.postimg.cc/65vkqwg3/cleaned-image-3-removebg-preview.png',
+                        'https://i.postimg.cc/3wy0RfzK/Management-Application-for-Mechanic-Workshop-removebg-preview.png',
                         fit: BoxFit.contain,
                         alignment: Alignment.center,
                       ),

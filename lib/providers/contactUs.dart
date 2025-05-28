@@ -1,9 +1,10 @@
 import 'dart:convert';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
-const baseUrl = "http://localhost:5000";
+final baseUrl = '${dotenv.env['API_URL']}';
 final contactMessagesProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final response = await http.get(Uri.parse('$baseUrl/contactMessages'));

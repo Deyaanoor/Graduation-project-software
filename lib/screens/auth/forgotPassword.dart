@@ -85,7 +85,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   ),
                   const SizedBox(height: 20),
                   CustomButton(
-                    text: 'Login',
+                    text: 'Send Reset Link',
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
                         setState(() {
@@ -228,7 +228,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                         ),
                         SizedBox(height: 20),
                         CustomButton(
-                          text: 'Forgot Password',
+                          text: 'Send Reset Link',
                           onPressed: () async {
                             if (_formKey.currentState!.validate()) {
                               setState(() {

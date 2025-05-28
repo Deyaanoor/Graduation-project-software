@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
@@ -12,7 +13,7 @@ class NotificationsNotifier
     extends StateNotifier<AsyncValue<List<Map<String, dynamic>>>> {
   NotificationsNotifier() : super(const AsyncValue.loading());
 
-  static const String _baseUrl = 'http://localhost:5000/notifications';
+  static String _baseUrl = '${dotenv.env['API_URL']}/notifications';
   int _unreadCount = 0;
   int get unreadCount => _unreadCount;
   Future<void> fetchNotifications({required String adminId}) async {
@@ -40,10 +41,13 @@ class NotificationsNotifier
     String? reportId,
     String? newsId,
     String? newsTitle,
-    String type = 'report', // القيمة الافتراضية "report"
+    String? messageTitle,
+    String? newsbody,
+    String? messageBody,
+    String? garageId,
+    String type = 'report',
   }) async {
     if (adminId.length != 24) {
-      print('❌ adminId is not a valid ObjectId: $adminId');
       return null;
     }
 
@@ -56,9 +60,15 @@ class NotificationsNotifier
 
       if (type == 'report') {
         body['reportId'] = reportId;
+        body['newsbody'] = 'تقرير جديد من $senderName';
       } else if (type == 'news') {
         body['newsId'] = newsId;
         body['newsTitle'] = newsTitle;
+        body['newsbody'] = newsbody;
+      } else if (type == 'message') {
+        body['messageTitle'] = messageTitle;
+        body['messageBody'] = messageBody;
+        body['garageId'] = garageId;
       }
 
       final response = await http.post(
@@ -66,58 +76,10 @@ class NotificationsNotifier
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
       );
-
-      if (response.statusCode == 201) {
-        await sendFCMNotification(
-            adminId, reportId ?? newsId ?? '', senderName);
-
-        // ✅ يرجع القيمة المطلوبة حسب النوع
-        return type == 'report' ? reportId : newsId;
-      } else {
-        throw Exception('Failed to send notification: ${response.statusCode}');
-      }
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
       rethrow;
     }
-  }
-
-  Future<void> sendFCMNotification(
-      String adminId, String reportId, String senderName) async {
-    try {
-      String adminToken = await getAdminToken(adminId);
-
-      final response = await http.post(
-        Uri.parse('https://fcm.googleapis.com/fcm/send'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'key=YOUR_SERVER_KEY',
-        },
-        body: jsonEncode({
-          'to': adminToken,
-          'notification': {
-            'title': 'New Report Submitted',
-            'body': 'A new report has been submitted by $senderName.',
-          },
-          'data': {
-            'reportId': reportId,
-            'senderName': senderName,
-          },
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        print("FCM notification sent successfully!");
-      } else {
-        print("Failed to send FCM notification: ${response.statusCode}");
-      }
-    } catch (e) {
-      print("Failed to send FCM notification: $e");
-    }
-  }
-
-  Future<String> getAdminToken(String adminId) async {
-    return 'ADMIN_FCM_TOKEN';
   }
 
   Future<void> markNotificationAsRead(String notificationId) async {

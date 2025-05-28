@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -16,7 +17,7 @@ class ReportsNotifier
 
   ReportsNotifier(this.ref) : super(const AsyncValue.loading());
 
-  static const String _baseUrl = 'http://localhost:5000/reports';
+  static String _baseUrl = '${dotenv.env['API_URL']}/reports';
 
   Future<void> fetchReports({required String userId}) async {
     try {
@@ -44,6 +45,44 @@ class ReportsNotifier
         throw Exception('Failed to load reports: ${response.statusCode}');
       }
     } on Exception catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+    }
+  }
+
+  Future<void> fetchReportsToClient({
+    required String garageId,
+    required String ownerName,
+  }) async {
+    try {
+      state = const AsyncValue.loading();
+
+      final encodedOwnerName = Uri.encodeComponent(ownerName);
+      final url = '$_baseUrl/reports/$garageId/$ownerName';
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+
+        final List<Map<String, dynamic>> reports = data
+            .map((item) => _parseReportItem(item))
+            .where((item) => item.isNotEmpty)
+            .toList()
+          ..sort((a, b) =>
+              (b['date'] as DateTime).compareTo(a['date'] as DateTime));
+
+        // **هنا تأكد انك حتى لو الفهرس فاضي بترجع حالة data مش loading**
+        state = AsyncValue.data(reports);
+      } else {
+        throw Exception('Failed to load reports: ${response.statusCode}');
+      }
+    } catch (e, stack) {
       state = AsyncValue.error(e, stack);
     }
   }
@@ -130,8 +169,8 @@ class ReportsNotifier
     required String symptoms,
     required String repairDescription,
     required List<String> usedParts,
-    required List<Uint8List> imageBytesList,
-    required List<String> fileNames,
+    List<Uint8List>? imageBytesList, // صارت اختيارية
+    List<String>? fileNames, // صارت اختيارية
     required String status,
     required String mechanicName,
     required String userId,
@@ -157,14 +196,19 @@ class ReportsNotifier
           'user_id': userId,
         });
 
-      for (int i = 0; i < imageBytesList.length; i++) {
-        request.files.add(http.MultipartFile.fromBytes(
-          'images',
-          imageBytesList[i],
-          filename: fileNames[i],
-          contentType: MediaType(
-              'image', ReportsNotifier._getFileExtension(fileNames[i])),
-        ));
+      // تحميل الصور إذا وُجدت
+      if (imageBytesList != null && fileNames != null) {
+        for (int i = 0; i < imageBytesList.length; i++) {
+          request.files.add(http.MultipartFile.fromBytes(
+            'images',
+            imageBytesList[i],
+            filename: fileNames[i],
+            contentType: MediaType(
+              'image',
+              ReportsNotifier._getFileExtension(fileNames[i]),
+            ),
+          ));
+        }
       }
 
       final response = await request.send();
@@ -173,10 +217,9 @@ class ReportsNotifier
         final responseBody = await response.stream.bytesToString();
         final jsonResponse = jsonDecode(responseBody);
         final reportId = jsonResponse['reportId'];
-
         return reportId;
       } else {
-        throw Exception('Failed to add report: ${response.statusCode}');
+        throw Exception('فشل في إرسال التقرير: ${response.statusCode}');
       }
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);

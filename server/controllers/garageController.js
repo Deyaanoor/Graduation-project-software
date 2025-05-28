@@ -184,6 +184,74 @@ const updateGarage = async (req, res) => {
   }
 };
 
+const getGarageLocations = async (req, res) => {
+  try {
+    const db = await connectDB();
+    const garagesCollection = db.collection('garages');
+
+    const locations = await garagesCollection
+      .find({}, { projection: { name: 1, location: 1 } }) 
+      .toArray();
+
+    const parsedLocations = locations.map(garage => ({
+      garageId: garage._id.toString(), 
+      name: garage.name,
+      location: JSON.parse(garage.location) 
+    }));
+
+    res.status(200).json(parsedLocations);
+  } catch (error) {
+    console.error('❌ Error fetching garage locations:', error);
+    res.status(500).json({ message: 'An error occurred while fetching locations' });
+  }
+};
 
 
-module.exports = { addGarage, getGarages, getGarageById, deleteGarage, updateGarage};
+const getGarageInfo = async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const db = await connectDB();
+
+    const employeesCollection = db.collection('employees');
+    const ownersCollection = db.collection('owners');
+    const garagesCollection = db.collection('garages');
+
+    let employee = await employeesCollection.findOne({_id: new ObjectId(userId) });
+
+    let garageId;
+
+    if (employee) {
+      garageId = employee.garage_id;
+    } else {
+      const owner = await ownersCollection.findOne({_id: new ObjectId(userId) });
+      if (owner) {
+        garageId = owner.garage_id;
+      } else {
+        return res.status(404).json({ message: 'User not found in employees or owners' });
+      }
+    }
+
+    const garage = await garagesCollection.findOne({_id: new ObjectId(garageId) });
+
+    if (!garage) {
+      return res.status(404).json({ message: 'Garage not found' });
+    }
+
+    res.status(200).json({
+      name: garage.name,
+      ownerName: garage.ownerName,
+      ownerEmail: garage.ownerEmail,
+      location: garage.location,
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to fetch garage data' });
+  }
+};
+
+
+
+
+module.exports = { addGarage, getGarages, getGarageById, deleteGarage, updateGarage, getGarageLocations,getGarageInfo};

@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
+import 'package:flutter_provider/providers/auth/auth_provider.dart';
+import 'package:flutter_provider/providers/garage_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
+import 'dart:convert';
 
-class ContactInfoPage extends StatelessWidget {
-  final String email = 'support@example.com';
-  final String phone = '0595352667';
-  final String website = 'https://example.com';
-  final String address = 'غزة، شارع عمر المختار';
-
+class ContactInfoPage extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userId = ref.watch(userIdProvider).value;
+    final garageInfoAsync = ref.watch(garageInfoByUserIdProvider(userId!));
+
     final bool isMobile = ResponsiveHelper.isMobile(context);
     final bool isDesktop = ResponsiveHelper.isDesktop(context);
 
@@ -25,168 +27,95 @@ class ContactInfoPage extends StatelessWidget {
               elevation: 5,
             )
           : null,
-      body: Padding(
-        padding: EdgeInsets.all(isMobile ? 20.0 : 40.0),
-        child: isDesktop
-            ? GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 20,
-                mainAxisSpacing: 20,
-                childAspectRatio: 2,
-                children: [
-                  _buildContactCard(
-                    context,
-                    icon: Icons.email_rounded,
-                    title: 'البريد الإلكتروني',
-                    subtitle: email,
-                    iconColor: Colors.blue.shade800,
-                    actions: [
-                      _buildActionButton(
-                        icon: Icons.content_copy_rounded,
-                        onPressed: () => _copyToClipboard(context, email),
-                      ),
-                    ],
-                    onTap: () => _launchEmail(context, email),
-                    isMobile: isMobile,
+      body: garageInfoAsync.when(
+        loading: () => Center(child: CircularProgressIndicator()),
+        error: (error, _) => Center(child: Text('حدث خطأ: $error')),
+        data: (garageInfo) {
+          final String email = garageInfo['ownerEmail'] ?? 'غير متوفر';
+          final String phone = 'غير متوفر';
+          final Map<String, dynamic> address =
+              jsonDecode(garageInfo['location']);
+
+          print('Address: $address');
+
+          final children = [
+            _buildContactCard(
+              context,
+              icon: Icons.email_rounded,
+              title: 'البريد الإلكتروني',
+              subtitle: email,
+              iconColor: Colors.blue.shade800,
+              actions: [
+                _buildActionButton(
+                  icon: Icons.content_copy_rounded,
+                  onPressed: () => _copyToClipboard(context, email),
+                ),
+              ],
+              onTap: () => _launchEmail(context, email),
+              isMobile: isMobile,
+            ),
+            _buildContactCard(
+              context,
+              icon: Icons.phone_rounded,
+              title: 'رقم الهاتف',
+              subtitle: phone,
+              iconColor: Colors.green.shade800,
+              actions: [
+                _buildActionButton(
+                  icon: Icons.content_copy_rounded,
+                  onPressed: () => _copyToClipboard(context, phone),
+                ),
+                _buildActionButton(
+                  icon: Icons.call_rounded,
+                  onPressed: () => _launchPhone(context, phone),
+                ),
+                _buildActionButton(
+                  icon: Icons.sms_rounded,
+                  onPressed: () => _launchSMS(context, phone),
+                ),
+              ],
+              onTap: () => _launchPhone(context, phone),
+              isMobile: isMobile,
+            ),
+            _buildContactCard(
+              context,
+              icon: Icons.location_on_rounded,
+              title: 'العنوان',
+              subtitle: 'العنوان',
+              iconColor: Colors.purple.shade800,
+              actions: [
+                _buildActionButton(
+                  icon: Icons.content_copy_rounded,
+                  onPressed: () => {},
+                ),
+                _buildActionButton(
+                  icon: Icons.map_rounded,
+                  onPressed: () => _launchMaps(context, address),
+                ),
+              ],
+              onTap: () => _launchMaps(context, address),
+              isMobile: isMobile,
+            ),
+          ];
+
+          return Padding(
+            padding: EdgeInsets.all(isMobile ? 20.0 : 40.0),
+            child: isDesktop
+                ? GridView.count(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 20,
+                    mainAxisSpacing: 20,
+                    childAspectRatio: 2,
+                    children: children,
+                  )
+                : ListView.separated(
+                    itemBuilder: (_, index) => children[index],
+                    separatorBuilder: (_, __) =>
+                        SizedBox(height: isMobile ? 15 : 20),
+                    itemCount: children.length,
                   ),
-                  _buildContactCard(
-                    context,
-                    icon: Icons.phone_rounded,
-                    title: 'رقم الهاتف',
-                    subtitle: phone,
-                    iconColor: Colors.green.shade800,
-                    actions: [
-                      _buildActionButton(
-                        icon: Icons.content_copy_rounded,
-                        onPressed: () => _copyToClipboard(context, phone),
-                      ),
-                      _buildActionButton(
-                        icon: Icons.call_rounded,
-                        onPressed: () => _launchPhone(context, phone),
-                      ),
-                      _buildActionButton(
-                        icon: Icons.sms_rounded,
-                        onPressed: () => _launchSMS(context, phone),
-                      ),
-                    ],
-                    onTap: () => _launchPhone(context, phone),
-                    isMobile: isMobile,
-                  ),
-                  _buildContactCard(
-                    context,
-                    icon: Icons.language_rounded,
-                    title: 'الموقع الإلكتروني',
-                    subtitle: website,
-                    iconColor: Colors.orange.shade800,
-                    actions: [
-                      _buildActionButton(
-                        icon: Icons.content_copy_rounded,
-                        onPressed: () => _copyToClipboard(context, website),
-                      ),
-                    ],
-                    onTap: () => _launchWebsite(context, website),
-                    isMobile: isMobile,
-                  ),
-                  _buildContactCard(
-                    context,
-                    icon: Icons.location_on_rounded,
-                    title: 'العنوان',
-                    subtitle: address,
-                    iconColor: Colors.purple.shade800,
-                    actions: [
-                      _buildActionButton(
-                        icon: Icons.content_copy_rounded,
-                        onPressed: () => _copyToClipboard(context, address),
-                      ),
-                      _buildActionButton(
-                        icon: Icons.map_rounded,
-                        onPressed: () => _launchMaps(context, address),
-                      ),
-                    ],
-                    onTap: () => _launchMaps(context, address),
-                    isMobile: isMobile,
-                  ),
-                ],
-              )
-            : ListView(
-                children: [
-                  _buildContactCard(
-                    context,
-                    icon: Icons.email_rounded,
-                    title: 'البريد الإلكتروني',
-                    subtitle: email,
-                    iconColor: Colors.blue.shade800,
-                    actions: [
-                      _buildActionButton(
-                        icon: Icons.content_copy_rounded,
-                        onPressed: () => _copyToClipboard(context, email),
-                      ),
-                    ],
-                    onTap: () => _launchEmail(context, email),
-                    isMobile: isMobile,
-                  ),
-                  SizedBox(height: isMobile ? 15 : 20),
-                  _buildContactCard(
-                    context,
-                    icon: Icons.phone_rounded,
-                    title: 'رقم الهاتف',
-                    subtitle: phone,
-                    iconColor: Colors.green.shade800,
-                    actions: [
-                      _buildActionButton(
-                        icon: Icons.content_copy_rounded,
-                        onPressed: () => _copyToClipboard(context, phone),
-                      ),
-                      _buildActionButton(
-                        icon: Icons.call_rounded,
-                        onPressed: () => _launchPhone(context, phone),
-                      ),
-                      _buildActionButton(
-                        icon: Icons.sms_rounded,
-                        onPressed: () => _launchSMS(context, phone),
-                      ),
-                    ],
-                    onTap: () => _launchPhone(context, phone),
-                    isMobile: isMobile,
-                  ),
-                  SizedBox(height: isMobile ? 15 : 20),
-                  _buildContactCard(
-                    context,
-                    icon: Icons.language_rounded,
-                    title: 'الموقع الإلكتروني',
-                    subtitle: website,
-                    iconColor: Colors.orange.shade800,
-                    actions: [
-                      _buildActionButton(
-                        icon: Icons.content_copy_rounded,
-                        onPressed: () => _copyToClipboard(context, website),
-                      ),
-                    ],
-                    onTap: () => _launchWebsite(context, website),
-                    isMobile: isMobile,
-                  ),
-                  SizedBox(height: isMobile ? 15 : 20),
-                  _buildContactCard(
-                    context,
-                    icon: Icons.location_on_rounded,
-                    title: 'العنوان',
-                    subtitle: address,
-                    iconColor: Colors.purple.shade800,
-                    actions: [
-                      _buildActionButton(
-                        icon: Icons.content_copy_rounded,
-                        onPressed: () => _copyToClipboard(context, address),
-                      ),
-                      _buildActionButton(
-                        icon: Icons.map_rounded,
-                        onPressed: () => _launchMaps(context, address),
-                      ),
-                    ],
-                    onTap: () => _launchMaps(context, address),
-                    isMobile: isMobile,
-                  ),
-                ],
-              ),
+          );
+        },
       ),
     );
   }
@@ -328,11 +257,29 @@ class ContactInfoPage extends StatelessWidget {
     }
   }
 
-  Future<void> _launchMaps(BuildContext context, String address) async {
+  Future<void> _launchMaps(BuildContext context, dynamic location) async {
     try {
-      final encodedAddress = Uri.encodeComponent(address);
-      final Uri uri = Uri.parse(
-          'https://www.google.com/maps/search/?api=1&query=$encodedAddress');
+      Uri uri;
+
+      if (location is String) {
+        final encodedAddress = Uri.encodeComponent(location);
+        uri = Uri.parse(
+            'https://www.google.com/maps/search/?api=1&query=$encodedAddress&hl=ar');
+      } else if (location is Map<String, dynamic>) {
+        final latitude = location['latitude'];
+        final longitude = location['longitude'];
+
+        if (latitude == null || longitude == null) {
+          _showErrorSnackBar(context, 'الإحداثيات غير متوفرة');
+          return;
+        }
+
+        uri = Uri.parse(
+            'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude&hl=ar');
+      } else {
+        _showErrorSnackBar(context, 'تنسيق الموقع غير مدعوم');
+        return;
+      }
 
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
@@ -341,24 +288,6 @@ class ContactInfoPage extends StatelessWidget {
       }
     } catch (e) {
       _showErrorSnackBar(context, 'خطأ في فتح الخرائط: ${e.toString()}');
-    }
-  }
-
-  Future<void> _launchWebsite(BuildContext context, String url) async {
-    try {
-      if (!url.startsWith('http')) {
-        url = 'https://$url';
-      }
-
-      final Uri uri = Uri.parse(url);
-
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri);
-      } else {
-        _showErrorSnackBar(context, 'تعذر فتح المتصفح');
-      }
-    } catch (e) {
-      _showErrorSnackBar(context, 'خطأ في فتح الموقع: ${e.toString()}');
     }
   }
 

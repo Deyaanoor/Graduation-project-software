@@ -34,7 +34,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const registerUser = async (req, res) => {
-  const { name, email, password, phoneNumber } = req.body;
+  const { name, email, password, phoneNumber,fcmToken } = req.body;
 
   try {
     const db = await connectDB();
@@ -50,7 +50,7 @@ const registerUser = async (req, res) => {
     let newUser = null;
     let role = null;
 
-    const owner = await ownersCollection.findOne({ email, name });
+    const owner = await ownersCollection.findOne({ email, name});
     if (owner) {
       role = 'owner';
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -60,13 +60,14 @@ const registerUser = async (req, res) => {
         email,
         password: hashedPassword,
         phoneNumber,
+        fcmToken,
         role,
         avatar: null,
         isVerified: false,
       };
     }
 
-    const employee = await employeesCollection.findOne({ email, name, phoneNumber });
+    const employee = await employeesCollection.findOne({ email, name, phoneNumber});
     if (employee) {
       role = 'employee';
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -76,13 +77,14 @@ const registerUser = async (req, res) => {
         email,
         password: hashedPassword,
         phoneNumber,
+        fcmToken,
         role,
         avatar: null,
         isVerified: false,
       };
     }
 
-    const client = await clientCollection.findOne({ email, name, phoneNumber });
+    const client = await clientCollection.findOne({ email, name, phoneNumber});
     if (client) {
       role = 'client';
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -92,6 +94,7 @@ const registerUser = async (req, res) => {
         email,
         password: hashedPassword,
         phoneNumber,
+        fcmToken,
         role,
         avatar: null,
         isVerified: false,
@@ -377,9 +380,8 @@ const resetPassword = async (req, res) => {
 };
 
 
-//loginUser
 const loginUser = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, fcmToken } = req.body;
 
   try {
     const db = await connectDB();
@@ -394,10 +396,26 @@ const loginUser = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(400).json({ message: 'Invalid password' });
     }
+
     if (!user.isVerified) {
-      return res.status(403).json({ message: 'Email is not verified. Please verify your email before logging in.' });
+      return res.status(403).json({
+        message: 'Email is not verified. Please verify your email before logging in.',
+      });
     }
-    const token = jwt.sign({ userId: user._id, role: user.role }, 'your_jwt_secret', { expiresIn: '1h' });
+
+    // ✅ تحديث fcmToken إذا كان موجود
+    if (fcmToken) {
+      await usersCollection.updateOne(
+        { _id: user._id },
+        { $set: { fcmToken: fcmToken } }
+      );
+    }
+
+    const token = jwt.sign(
+      { userId: user._id, role: user.role },
+      'your_jwt_secret',
+      { expiresIn: '1h' }
+    );
 
     res.status(200).json({
       message: 'Login successful',

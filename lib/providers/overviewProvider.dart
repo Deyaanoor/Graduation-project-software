@@ -1,8 +1,9 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-final String _apiUrl = 'http://localhost:5000/overview';
+final String _apiUrl = '${dotenv.env['API_URL']}/overview';
 
 final monthlyReportsCountProvider =
     FutureProvider.family.autoDispose<int, String>((ref, userId) async {

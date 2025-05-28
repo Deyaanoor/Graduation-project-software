@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_provider/Responsive/responsive_helper.dart';
+import 'package:flutter_provider/providers/garage_provider.dart';
 import 'package:flutter_provider/providers/home_provider.dart';
-import 'package:flutter_provider/screens/Client/GarageRequestsPage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/clientProvider.dart';
 
@@ -15,6 +15,9 @@ class ClientGaragesPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final userIdValue = ref.watch(userIdProvider).value;
     final searchQuery = ref.watch(searchQueryProvider);
+    final isMobile = (ResponsiveHelper.isMobile(context));
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     if (userIdValue == null) {
       return const Center(child: Text('No user ID available.'));
@@ -23,9 +26,7 @@ class ClientGaragesPage extends ConsumerWidget {
     final garagesAsync = ref.watch(clientGaragesProvider(userIdValue));
 
     return Scaffold(
-      appBar: ResponsiveHelper.isMobile(context)
-          ? AppBar(title: const Text('Client Garages'))
-          : null,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: garagesAsync.when(
         data: (garages) {
           final filteredGarages = garages
@@ -34,220 +35,148 @@ class ClientGaragesPage extends ConsumerWidget {
                   .contains(searchQuery.toLowerCase()))
               .toList();
 
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: TextField(
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                // 🔍 Search box
+                TextField(
                   decoration: InputDecoration(
                     hintText: 'ابحث عن كراج...',
-                    prefixIcon: const Icon(Icons.search),
+                    prefixIcon: const Icon(Icons.search, color: Colors.orange),
                     suffixIcon: searchQuery.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear),
+                            icon: const Icon(Icons.clear, color: Colors.grey),
                             onPressed: () => ref
                                 .read(searchQueryProvider.notifier)
                                 .state = '',
                           )
                         : null,
                     filled: true,
+                    fillColor: isDark ? Colors.grey[900] : Colors.grey.shade200,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(30),
                       borderSide: BorderSide.none,
                     ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
                   ),
                   onChanged: (value) =>
                       ref.read(searchQueryProvider.notifier).state = value,
                 ),
-              ),
-              Expanded(
-                child: filteredGarages.isEmpty
-                    ? const Center(child: Text('لا توجد كراجات تطابق البحث.'))
-                    : ListView.builder(
-                        itemCount: filteredGarages.length,
-                        itemBuilder: (context, index) {
-                          final garage = filteredGarages[index];
-                          final garageId = garage['garageId'];
+                const SizedBox(height: 16),
+                Expanded(
+                  child: filteredGarages.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'لا توجد كراجات تطابق البحث.',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        )
+                      : GridView.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 420, // العرض الأقصى للكرت
+                            mainAxisExtent: 150, // الطول الثابت للكرت
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                          ),
+                          itemCount: filteredGarages.length,
+                          itemBuilder: (context, index) {
+                            final garage = filteredGarages[index];
+                            final garageId = garage['garageId'];
 
-                          return Card(
-                            color: Theme.of(context).cardColor,
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            elevation: 3,
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: ResponsiveHelper.isMobile(context)
-                                  ? Column(
-                                      // شكل الموبايل
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            const Icon(Icons.garage,
-                                                color: Colors.orange, size: 20),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Text(
-                                                garage['name'] ?? 'No name',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .titleSmall
-                                                    ?.copyWith(
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Row(
-                                          children: [
-                                            const Icon(Icons.location_on,
-                                                color: Colors.orange, size: 18),
-                                            const SizedBox(width: 6),
-                                            Expanded(
-                                              child: Text(
-                                                garage['location'] ??
-                                                    'No location',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodySmall,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Row(
-                                          children: [
-                                            const Icon(Icons.person,
-                                                color: Colors.orange, size: 18),
-                                            const SizedBox(width: 6),
-                                            Expanded(
-                                              child: Text(
-                                                garage['ownerName'] ??
-                                                    'No owner',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodySmall,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Row(
-                                          children: [
-                                            const Icon(Icons.email,
-                                                color: Colors.orange, size: 18),
-                                            const SizedBox(width: 6),
-                                            Expanded(
-                                              child: Text(
-                                                garage['ownerEmail'] ??
-                                                    'No email',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodySmall,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 10),
-                                        Align(
-                                          alignment: Alignment.centerRight,
-                                          child: TextButton.icon(
-                                            onPressed: () {
-                                              ref
-                                                  .read(
-                                                      garageIdProvider.notifier)
-                                                  .state = garageId;
-                                              ref
-                                                  .read(selectedIndexProvider
-                                                      .notifier)
-                                                  .state = 5;
-                                            },
-                                            icon: const Icon(
-                                                Icons.arrow_forward_ios,
-                                                size: 16,
-                                                color: Colors.orange),
-                                            label: const Text('عرض التفاصيل',
-                                                style: TextStyle(
-                                                    color: Colors.orange)),
-                                          ),
-                                        ),
-                                      ],
+                            return Container(
+                              decoration: BoxDecoration(
+                                color: isDark ? Colors.grey[850] : Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  if (!isDark)
+                                    const BoxShadow(
+                                      color: Colors.black12,
+                                      blurRadius: 6,
+                                      offset: Offset(0, 2),
                                     )
-                                  : Row(
-                                      // شكل الدسكتوب
-                                      children: [
-                                        Expanded(
-                                          flex: 2,
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(garage['name'] ?? 'No name',
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .titleMedium
-                                                      ?.copyWith(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      )),
-                                              const SizedBox(height: 6),
-                                              Text(
-                                                  'الموقع: ${garage['location'] ?? 'غير معروف'}'),
-                                            ],
-                                          ),
-                                        ),
-                                        Expanded(
-                                          flex: 2,
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                  'المالك: ${garage['ownerName'] ?? 'غير معروف'}'),
-                                              const SizedBox(height: 6),
-                                              Text(
-                                                  'الإيميل: ${garage['ownerEmail'] ?? 'غير معروف'}'),
-                                            ],
-                                          ),
-                                        ),
-                                        ElevatedButton(
-                                          onPressed: () {
-                                            ref
-                                                .read(garageIdProvider.notifier)
-                                                .state = garageId;
-                                            ref
-                                                .read(selectedIndexProvider
-                                                    .notifier)
-                                                .state = 5;
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.orange,
-                                            foregroundColor: Colors.white,
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 16, vertical: 10),
-                                            shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(10)),
-                                          ),
-                                          child: const Text('عرض التفاصيل'),
-                                        ),
-                                      ],
+                                ],
+                              ),
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    garage['name'] ?? 'اسم غير متوفر',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.onBackground,
                                     ),
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.person,
+                                          color: Colors.orange, size: 20),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        garage['ownerName'] ?? 'غير معروف',
+                                        style: const TextStyle(fontSize: 15),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.email,
+                                          color: Colors.orange, size: 20),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        garage['ownerEmail'] ?? 'غير معروف',
+                                        style: const TextStyle(fontSize: 15),
+                                      ),
+                                    ],
+                                  ),
+                                  const Spacer(),
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: ElevatedButton.icon(
+                                      onPressed: () {
+                                        print(
+                                            "GarageIdhhhhhhhhhhhhhhhh$garageId");
+                                        ref
+                                            .read(garageIdProvider.notifier)
+                                            .state = garageId;
+                                        ref
+                                            .read(
+                                                selectedIndexProvider.notifier)
+                                            .state = 5;
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.orange,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20, vertical: 10),
+                                      ),
+                                      icon: const Icon(Icons.arrow_forward_ios,
+                                          size: 18),
+                                      label: const Text('عرض التفاصيل'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text('حدث خطأ: $e')),
       ),
     );
   }

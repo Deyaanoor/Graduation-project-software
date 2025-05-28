@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,7 +9,7 @@ import 'package:http_parser/http_parser.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
-const String apiUrl = 'http://localhost:5000/users';
+String apiUrl = '${dotenv.env['API_URL']}/users';
 final avatarFileProvider = StateProvider<File?>((ref) => null);
 
 Future<void> saveToken(String token) async {

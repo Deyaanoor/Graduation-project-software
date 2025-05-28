@@ -6,9 +6,11 @@ import 'package:flutter_provider/providers/reports_provider.dart';
 import 'package:flutter_provider/screens/Admin/Garage/ContactUsInboxPage.dart';
 import 'package:flutter_provider/screens/Admin/Garage/garage_page.dart';
 import 'package:flutter_provider/screens/Client/ClientGaragesPage.dart';
+import 'package:flutter_provider/screens/Client/EmergencyRequestPage.dart';
 import 'package:flutter_provider/screens/Client/GarageRequestsPage.dart';
 import 'package:flutter_provider/screens/Client/RequestDetailsPage.dart';
 import 'package:flutter_provider/screens/Client/client_screen.dart';
+import 'package:flutter_provider/screens/Client/garageDetails.dart';
 import 'package:flutter_provider/screens/Owner/Employee/employee_screen.dart';
 import 'package:flutter_provider/screens/Owner/OverviewPage.dart';
 import 'package:flutter_provider/screens/Technician/Home/mobile_appbar.dart';
@@ -123,7 +125,8 @@ class Home extends ConsumerWidget {
           ChatBotPage(),
           SettingsPage(),
           RequestDetailsPage(key: UniqueKey()),
-          GarageRequestsPage(key: UniqueKey()),
+          LegendaryTabBar(key: UniqueKey()),
+          EmergencyRequestPage(key: UniqueKey()),
         ];
       default:
         return [];
@@ -152,9 +155,7 @@ class Home extends ConsumerWidget {
       bottomNavigationBar: userInfo['role'].toLowerCase() == 'client'
           ? _buildClientBottomNavBar(lang, selectedIndex, ref)
           : _buildBottomNavBar(lang, selectedIndex, ref, userInfo['role']),
-      drawer: userInfo['role'].toLowerCase() == 'client'
-          ? null
-          : _buildDrawer(context, lang, userInfo),
+      drawer: _buildDrawer(context, ref, lang, userInfo),
     );
   }
 
@@ -214,7 +215,7 @@ class Home extends ConsumerWidget {
     int selectedIndex,
     WidgetRef ref,
   ) {
-    if (selectedIndex >= 4) {
+    if (selectedIndex >= 3) {
       selectedIndex = 0;
     }
     return BottomNavigationBar(
@@ -234,10 +235,6 @@ class Home extends ConsumerWidget {
         BottomNavigationBarItem(
           icon: Icon(Icons.garage),
           label: lang['carAI'] ?? 'Car AI',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.garage),
-          label: lang['settings'] ?? 'Settings',
         ),
       ],
     );
@@ -423,6 +420,15 @@ class Home extends ConsumerWidget {
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 2,
               isExpanded: isExpanded,
             ),
+          if (userRole.toLowerCase() == 'client')
+            _buildNavButton(
+              context: context,
+              icon: Icons.garage,
+              label: lang['EmergencyRequest'] ?? 'EmergencyRequest',
+              isSelected: selectedIndex == 6,
+              onTap: () => ref.read(selectedIndexProvider.notifier).state = 6,
+              isExpanded: isExpanded,
+            ),
         ],
       ),
     );
@@ -594,6 +600,7 @@ class Home extends ConsumerWidget {
 
   Drawer _buildDrawer(
     BuildContext context,
+    WidgetRef ref,
     Map<String, String> lang,
     Map<String, dynamic> userInfo,
   ) {
@@ -608,27 +615,43 @@ class Home extends ConsumerWidget {
               userInfo: userInfo,
             ),
             if (userInfo['role'].toLowerCase() == 'owner')
-              buildDrawerItem(context, lang['Employees'] ?? 'Employees',
-                  Icons.people_outline, EmployeeListScreen()),
-            if (userInfo['role'].toLowerCase() == 'owner')
               buildDrawerItem(
                 context,
-                lang['Client'] ?? 'Client',
-                Icons.people,
-                ClientListScreen(),
+                ref,
+                lang['Employees'] ?? 'Employees',
+                Icons.people_outline,
+                5,
               ),
             if (userInfo['role'].toLowerCase() == 'owner')
               buildDrawerItem(
                 context,
+                ref,
+                lang['Client'] ?? 'Client',
+                Icons.people,
+                6,
+              ),
+            if (userInfo['role'].toLowerCase() == 'owner')
+              buildDrawerItem(
+                context,
+                ref,
                 lang['request'] ?? 'Request',
                 Icons.request_quote_sharp,
-                GarageRequestsPage(),
+                7,
+              ),
+            if (userInfo['role'].toLowerCase() == 'client')
+              buildDrawerItem(
+                context,
+                ref,
+                lang['EmergencyRequest'] ?? 'Emergency Request',
+                Icons.request_quote_sharp,
+                6,
               ),
             buildDrawerItem(
               context,
+              ref,
               lang['settings'] ?? 'Settings',
               Icons.settings,
-              SettingsPage(),
+              -1,
             ),
           ],
         ),

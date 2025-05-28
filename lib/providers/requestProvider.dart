@@ -1,8 +1,9 @@
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
-const String apiUrl = 'http://localhost:5000/requests';
+String apiUrl = '${dotenv.env['API_URL']}/requests';
 
 final requestsProvider = FutureProvider.autoDispose
     .family<List<Map<String, dynamic>>, String>((ref, garageId) async {
@@ -90,3 +91,53 @@ final updateRequestStatusProvider =
             throw Exception('Failed to update request status');
           }
         });
+final addMessageToRequestProvider = Provider(
+    (ref) => (String requestId, Map<String, dynamic> messageData) async {
+          final response = await http.post(
+            Uri.parse('$apiUrl/requests/$requestId/messages'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(messageData),
+          );
+
+          if (response.statusCode != 200) {
+            throw Exception('❌ Failed to add message');
+          }
+        });
+
+// ✅ Delete Request
+final deleteRequestProvider = Provider(
+  (ref) => (String requestId) async {
+    final response = await http.delete(
+      Uri.parse('$apiUrl/requests/$requestId'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('❌ Failed to delete request');
+    }
+  },
+);
+
+final messagesStreamProvider = StreamProvider.family<List<dynamic>, String>(
+    (ref, String requestId) async* {
+  while (true) {
+    try {
+      final response = await http.get(
+        Uri.parse('$apiUrl/requests/$requestId/messages'),
+      );
+
+      if (response.statusCode == 200) {
+        final messages = json.decode(response.body) as List;
+        yield messages;
+      } else {
+        throw Exception('❌ Failed to fetch messages');
+      }
+    } catch (e) {
+      print('❌ Error in stream: $e');
+      yield [];
+    }
+
+    // انتظر ثانية أو ثانيتين قبل إعادة الجلب
+    await Future.delayed(const Duration(seconds: 2));
+  }
+});

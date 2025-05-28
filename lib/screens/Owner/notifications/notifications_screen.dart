@@ -117,11 +117,16 @@ class NotificationsPage extends ConsumerWidget {
                         leading: CircleAvatar(
                           backgroundColor: notification['type'] == 'report'
                               ? Colors.blue
-                              : Color(0xFFFFA726),
+                              : notification['type'] == 'message'
+                                  ? Colors.green
+                                  : Color(
+                                      0xFFFFA726), // للـ news أو أي نوع ثاني
                           child: Icon(
                             notification['type'] == 'report'
                                 ? Icons.assignment
-                                : Icons.article,
+                                : notification['type'] == 'message'
+                                    ? Icons.message
+                                    : Icons.article,
                             color: Colors.white,
                           ),
                         ),

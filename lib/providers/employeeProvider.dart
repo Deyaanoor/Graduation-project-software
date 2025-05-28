@@ -1,8 +1,9 @@
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
-const String apiUrl = 'http://localhost:5000/employees';
+String apiUrl = '${dotenv.env['API_URL']}/employees';
 
 // ✅ Get All Employees
 final employeesProvider = FutureProvider.autoDispose

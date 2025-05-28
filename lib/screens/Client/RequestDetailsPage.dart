@@ -1,34 +1,66 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
+import 'package:flutter_provider/providers/auth/auth_provider.dart';
+import 'package:flutter_provider/providers/garage_provider.dart';
+import 'package:flutter_provider/providers/requestProvider.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final selectedRequestProvider =
     StateProvider<Map<String, dynamic>?>((ref) => null);
 
-class RequestDetailsPage extends ConsumerWidget {
+class RequestDetailsPage extends ConsumerStatefulWidget {
   const RequestDetailsPage({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<RequestDetailsPage> createState() => _RequestDetailsPageState();
+}
+
+class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
+  late TextEditingController _controller;
+  bool _showMessages = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final request = ref.watch(selectedRequestProvider);
-    final isMobile = ResponsiveHelper.isMobile(context);
 
     if (request == null) {
-      return Scaffold(
-        appBar: isMobile ? _buildAppBar() : null,
-        body: const Center(child: Text('لا توجد بيانات للعرض')),
+      return const Scaffold(
+        body: Center(child: Text('لا يوجد تفاصيل للطلب')),
       );
     }
 
-    final location = request['location']?.toString() ?? '';
-    final latLng = _extractLatLng(location);
+    final garageId = request['garageId'];
+    final garageAsync = ref.watch(garageByIdProvider(garageId));
 
-    return Scaffold(
-      appBar: isMobile ? _buildAppBar() : null,
-      body: _buildBody(context, latLng, request),
-      floatingActionButton: isMobile ? null : _buildDesktopFab(context),
+    final isMobile = ResponsiveHelper.isMobile(context);
+
+    return garageAsync.when(
+      data: (garageData) {
+        return Scaffold(
+          appBar: isMobile ? _buildAppBar() : null,
+          body: _buildBody(context, garageData, request, ref),
+        );
+      },
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (err, _) =>
+          Scaffold(body: Center(child: Text('فشل تحميل بيانات الكراج'))),
     );
   }
 
@@ -46,20 +78,8 @@ class RequestDetailsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildDesktopFab(BuildContext context) {
-    return FloatingActionButton(
-      onPressed: () => Navigator.pop(context),
-      backgroundColor: Colors.orange.shade600,
-      child: const Icon(Icons.arrow_back, color: Colors.white),
-    );
-  }
-
-  Widget _buildBody(
-      BuildContext context, LatLng latLng, Map<String, dynamic> request) {
-    if (latLng == const LatLng(0.0, 0.0)) {
-      return const Center(child: Text('الموقع غير صالح'));
-    }
-
+  Widget _buildBody(BuildContext context, Map<String, dynamic> garageData,
+      Map<String, dynamic> request, WidgetRef ref) {
     final isDesktop = ResponsiveHelper.isDesktop(context);
 
     return Container(
@@ -70,12 +90,13 @@ class RequestDetailsPage extends ConsumerWidget {
             colors: [Colors.blue.shade50, Colors.white]),
       ),
       child: isDesktop
-          ? _buildDesktopLayout(latLng, request)
-          : _buildMobileLayout(latLng, request),
+          ? _buildDesktopLayout(request, garageData, ref)
+          : _buildMobileLayout(request, garageData, ref),
     );
   }
 
-  Widget _buildDesktopLayout(LatLng latLng, Map<String, dynamic> request) {
+  Widget _buildDesktopLayout(Map<String, dynamic> request,
+      Map<String, dynamic> garageData, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Row(
@@ -84,34 +105,79 @@ class RequestDetailsPage extends ConsumerWidget {
             flex: 2,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(15),
-              child: _buildMap(latLng),
+              child: _buildMap(request, garageData),
             ),
           ),
           const SizedBox(width: 20),
-          Expanded(
-            flex: 1,
-            child: _buildMessage(request, true),
-          ),
+          Expanded(flex: 1, child: _buildMessage(request['_id'], true, ref)),
         ],
       ),
     );
   }
 
-  Widget _buildMobileLayout(LatLng latLng, Map<String, dynamic> request) {
-    return Column(
+  Widget _buildMobileLayout(Map<String, dynamic> request,
+      Map<String, dynamic> garageData, WidgetRef ref) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
       children: [
-        Expanded(
-          child: _buildMap(latLng),
+        SizedBox(
+          height: _showMessages ? 300 : 500,
+          child: _buildMap(request, garageData),
         ),
-        _buildMessage(request, false),
+        const SizedBox(height: 12),
+        ElevatedButton.icon(
+          onPressed: () {
+            setState(() {
+              _showMessages = !_showMessages;
+            });
+          },
+          icon: Icon(_showMessages ? Icons.visibility_off : Icons.visibility),
+          label: Text(_showMessages ? 'إخفاء الرسائل' : 'عرض الرسائل'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.orange,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (_showMessages) _buildMessage(request['_id'], false, ref),
       ],
     );
   }
 
-  Widget _buildMap(LatLng latLng) {
+  Widget _buildMap(
+      Map<String, dynamic> request, Map<String, dynamic> garageData) {
+    // طلب
+    Map<String, dynamic> requestLocation = {};
+    try {
+      requestLocation = json.decode(request['location']);
+    } catch (e) {
+      print('فشل فك تشفير موقع الطلب: $e');
+    }
+
+    double requestLat =
+        double.tryParse(requestLocation['latitude']?.toString() ?? '') ?? 0.0;
+    double requestLng =
+        double.tryParse(requestLocation['longitude']?.toString() ?? '') ?? 0.0;
+
+    // كراج
+    Map<String, dynamic> garageLocation = {};
+    try {
+      garageLocation = json.decode(garageData['location']);
+    } catch (e) {
+      print('فشل فك تشفير موقع الكراج: $e');
+    }
+
+    double garageLat =
+        double.tryParse(garageLocation['latitude']?.toString() ?? '') ?? 0.0;
+    double garageLng =
+        double.tryParse(garageLocation['longitude']?.toString() ?? '') ?? 0.0;
+
     return FlutterMap(
       options: MapOptions(
-        initialCenter: latLng,
+        initialCenter: LatLng(requestLat, requestLng),
         initialZoom: 14.0,
       ),
       children: [
@@ -122,14 +188,18 @@ class RequestDetailsPage extends ConsumerWidget {
         MarkerLayer(
           markers: [
             Marker(
-              point: latLng,
-              width: 50.0,
-              height: 50.0,
-              child: Icon(
-                Icons.location_pin,
-                color: Colors.red.shade700,
-                size: 50.0,
-              ),
+              point: LatLng(requestLat, requestLng),
+              width: 50,
+              height: 50,
+              child:
+                  const Icon(Icons.location_pin, color: Colors.red, size: 50),
+            ),
+            Marker(
+              point: LatLng(garageLat, garageLng),
+              width: 40,
+              height: 40,
+              child:
+                  const Icon(Icons.location_pin, color: Colors.blue, size: 40),
             ),
           ],
         ),
@@ -137,51 +207,146 @@ class RequestDetailsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildMessage(Map<String, dynamic> request, bool isDesktop) {
+  Widget _buildMessage(String requestId, bool isDesktop, WidgetRef ref) {
+    final userId = ref.watch(userIdProvider).value;
+    final userInfo =
+        userId != null ? ref.watch(getUserInfoProvider(userId)).value : null;
+
+    final messagesAsync = ref.watch(messagesStreamProvider(requestId));
+
+    if (messagesAsync.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (messagesAsync.hasError) {
+      return Center(child: Text('خطأ في جلب الرسائل'));
+    }
+
+    final messages = messagesAsync.value ?? [];
+
     return Container(
       margin: EdgeInsets.all(isDesktop ? 0 : 16),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Material(
         elevation: 5,
         borderRadius: BorderRadius.circular(15),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: Colors.grey.shade200),
-          ),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(isDesktop ? 24 : 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (isDesktop) ...[
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Text(
-                      'تفاصيل الطلب',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.orange.shade800,
+        child: Column(
+          children: [
+            SizedBox(
+              height: isDesktop ? 350 : 200,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(isDesktop ? 24 : 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (isDesktop)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Text(
+                          'تفاصيل الطلب',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange.shade800,
+                          ),
+                        ),
                       ),
+                    ListView.builder(
+                      itemCount: messages.length,
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      itemBuilder: (context, index) {
+                        final msg = messages[index];
+                        final isUser = msg['sender'] == 'user';
+
+                        return Container(
+                          alignment: isUser
+                              ? Alignment.centerRight
+                              : Alignment.centerLeft,
+                          margin: const EdgeInsets.symmetric(vertical: 6),
+                          child: Column(
+                            crossAxisAlignment: isUser
+                                ? CrossAxisAlignment.end
+                                : CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: isUser
+                                      ? const Color.fromARGB(255, 240, 160, 41)
+                                      : const Color.fromARGB(255, 245, 217, 63),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  msg['message'] ?? '',
+                                  style:
+                                      TextStyle(fontSize: isDesktop ? 16 : 14),
+                                  textDirection: TextDirection.rtl,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                msg['timestamp']
+                                        ?.toString()
+                                        ?.substring(0, 16) ??
+                                    '',
+                                style:
+                                    TextStyle(fontSize: 12, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      decoration: InputDecoration(
+                        hintText: 'اكتب ردك هنا...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                      ),
+                      textDirection: TextDirection.rtl,
                     ),
                   ),
-                ],
-                Text(
-                  request['message']?.toString() ?? 'لا يوجد رسالة',
-                  style: TextStyle(
-                    fontSize: isDesktop ? 18 : 16,
-                    height: 1.5,
-                    color: Colors.grey.shade800,
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: Icon(Icons.send, color: Colors.orange),
+                    onPressed: () async {
+                      final messageText = _controller.text.trim();
+                      if (messageText.isEmpty) return;
+
+                      final sender =
+                          (userInfo != null && userInfo['role'] == 'owner')
+                              ? "owner"
+                              : "user";
+
+                      await ref.read(addMessageToRequestProvider)(
+                        requestId,
+                        {
+                          "sender": sender,
+                          "message": messageText,
+                        },
+                      );
+
+                      _controller.clear();
+                    },
                   ),
-                  textAlign: TextAlign.right,
-                  textDirection: TextDirection.rtl,
-                ),
-                if (!isDesktop) const SizedBox(height: 10),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

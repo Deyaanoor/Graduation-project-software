@@ -1,48 +1,75 @@
+
 const connectDB = require('../config/db');
 const { ObjectId } = require('mongodb');
+const admin = require('../../firebase/firebase-config');
+
 
 const createNotification = async (req, res) => {
   try {
-    const { reportId, senderName, adminId, type = 'report', newsId, newsTitle } = req.body;
+    const { reportId, senderName, adminId, type = 'report', newsId, newsTitle,newsbody,messageTitle,messageBody,garageId} = req.body;
 
-    if (!senderName || !adminId || !type) {
-      return res.status(400).json({ message: 'senderName و adminId و type مطلوبة' });
-    }
+   if (!senderName || !adminId || !type) {
+  return res.status(400).json({ message: 'senderName و adminId و type مطلوبة' });
+}
 
-    if (!ObjectId.isValid(adminId)) {
-      return res.status(400).json({ message: 'adminId غير صالح' });
-    }
+if (!ObjectId.isValid(adminId)) {
+  return res.status(400).json({ message: 'adminId غير صالح' });
+}
 
-    const db = await connectDB();
-    let user = await db.collection('employees').findOne({ _id: new ObjectId(adminId) });
-    if (!user) {
-      user = await db.collection('owners').findOne({ _id: new ObjectId(adminId) });
-    }
-    if (!user) {
-      return res.status(404).json({ message: 'الموظف أو صاحب الجراج غير موجود' });
-    }
+const db = await connectDB();
 
-    const garageQuery = user.garage_id
-      ? { _id: user.garage_id }
-      : { owner_id: user._id };
+// 👤 البحث عن المستخدم وتحديد نوعه
+let userType = '';
+let user = await db.collection('employees').findOne({ _id: new ObjectId(adminId) });
+if (user) userType = 'employee';
 
-    const garage = await db.collection('garages').findOne(garageQuery);
+if (!user) {
+  user = await db.collection('owners').findOne({ _id: new ObjectId(adminId) });
+  if (user) userType = 'owner';
+}
 
-    if (!garage) {
-      return res.status(404).json({ message: 'لا يوجد جراج مرتبط بهذا المستخدم' });
-    }
+if (!user) {
+  user = await db.collection('clients').findOne({ _id: new ObjectId(adminId) });
+  if (user) userType = 'client';
+}
 
-    const notificationsCollection = db.collection('notifications');
+if (!user) {
+  return res.status(404).json({ message: 'الموظف أو المالك أو العميل غير موجود' });
+}
+
+// 🏠 تحديد الجراج
+let garage;
+
+if (userType === 'client') {
+  // ✅ تحويل garageId من String إلى ObjectId
+  if (!garageId || !ObjectId.isValid(garageId)) {
+    return res.status(400).json({ message: 'garageId غير صالح أو غير موجود للعميل' });
+  }
+
+  garage = await db.collection('garages').findOne({ _id: new ObjectId(garageId) });
+
+} else {
+  // 🔁 الطريقة القديمة للموظف أو المالك
+  const garageQuery = user.garage_id
+    ? { _id: user.garage_id }
+    : { owner_id: user._id };
+
+  garage = await db.collection('garages').findOne(garageQuery);
+}
+
+if (!garage) {
+  return res.status(404).json({ message: 'الجراج غير موجود' });
+}
+
+    // 🔔 تجهيز الإشعار
     let notification;
-
     if (type === 'report') {
       if (!reportId) {
         return res.status(400).json({ message: 'reportId مطلوب لإشعار التقرير' });
       }
-
       notification = {
-        title: 'تقرير جديد',
-        body: `تم إرسال تقرير من قبل ${senderName}`,
+        title: newsTitle,
+        body: newsbody,
         reportId,
         type: 'report',
         status: 'pending',
@@ -55,10 +82,9 @@ const createNotification = async (req, res) => {
       if (!newsId || !newsTitle) {
         return res.status(400).json({ message: 'newsId و newsTitle مطلوبين لإشعار الأخبار' });
       }
-
       notification = {
-        title: 'خبر جديد',
-        body: `تم نشر خبر: ${newsTitle}`,
+        title: newsTitle,
+        body: newsbody,
         newsId,
         type: 'news',
         timestamp: new Date(),
@@ -66,15 +92,78 @@ const createNotification = async (req, res) => {
         garageId: garage._id,
         senderName,
       };
-    } else {
+    }
+    else if (type === 'message') {
+      if (!messageTitle || !messageBody) {
+        return res.status(400).json({ message: 'newsId و newsTitle مطلوبين لإشعار الأخبار' });
+      }
+      notification = {
+        title: messageTitle,
+        body: messageBody,
+  
+        type: 'message',
+        timestamp: new Date(),
+        isRead: false,
+        garageId: garage._id,
+        senderName,
+      };
+    }
+    else {
       return res.status(400).json({ message: 'نوع الإشعار غير مدعوم' });
     }
 
-    const result = await notificationsCollection.insertOne(notification);
+    // 💾 حفظ الإشعار
+    const result = await db.collection('notifications').insertOne(notification);
+
+    // 🎯 تحديد المستلمين
+    let recipients = [];
+    if (type === 'news') {
+      recipients = await db.collection('employees').find({ garage_id: garage._id }).toArray();
+    } else if (type === 'report') {
+      const owner = await db.collection('owners').findOne({ _id: garage.owner_id });
+      if (owner) recipients = [owner];
+    }
+    else if (type === 'message') {
+      const owner = await db.collection('owners').findOne({ _id: garage.owner_id });
+      if (owner) recipients = [owner];
+    }
+
+    // 📡 جلب التوكنات من جدول users
+    const recipientEmails = recipients.map(r => r.email).filter(Boolean);
+    const usersWithTokens = await db.collection('users').find({
+      email: { $in: recipientEmails },
+      fcmToken: { $exists: true, $ne: null }
+    }).toArray();
+
+    const tokens = usersWithTokens
+  .flatMap(u => u.fcmToken.split(/\s+/).filter(Boolean));
+
+console.log("📱 Tokens:", tokens);
+
+if (tokens.length > 0) {
+  const response = await admin.messaging().sendEachForMulticast({
+    tokens,
+    notification: {
+      title: notification.title,
+      body: notification.body,
+    },
+  });
+
+  response.responses.forEach((resp, idx) => {
+    if (!resp.success) {
+      console.error(`❌ فشل إرسال الإشعار للتوكن ${tokens[idx]}:`, resp.error);
+    } else {
+      console.log(`✅ تم الإرسال بنجاح للتوكن ${tokens[idx]}`);
+    }
+  });
+
+  console.log("📡 Notification test response:", response);
+}
+
 
     res.status(201).json({
       message: 'تم إرسال الإشعار بنجاح',
-      newsId: result.insertedId, 
+      insertedId: result.insertedId,
       data: notification,
     });
 
@@ -83,6 +172,8 @@ const createNotification = async (req, res) => {
     res.status(500).json({ message: 'حدث خطأ أثناء إرسال الإشعار' });
   }
 };
+
+
 
 
 const getNotifications = async (req, res) => {
@@ -97,7 +188,7 @@ const getNotifications = async (req, res) => {
 
     // نحاول نلاقيه أولًا بالموظفين
     let user = await db.collection('employees').findOne({ _id: new ObjectId(adminId) });
-    let typeToFetch = 'news';
+    let typeToFetch = ['news']; // النوع المبدئي للموظف
     let garageQuery;
 
     if (user) {
@@ -112,7 +203,8 @@ const getNotifications = async (req, res) => {
       if (!user) {
         return res.status(404).json({ message: 'الموظف أو المالك غير موجود' });
       }
-      typeToFetch = 'report';
+      // ✅ المالك يشوف report + message
+      typeToFetch = ['report', 'message'];
       garageQuery = { owner_id: user._id };
     }
 
@@ -124,7 +216,7 @@ const getNotifications = async (req, res) => {
     const notificationsCollection = db.collection('notifications');
     const notifications = await notificationsCollection.find({
       garageId: garage._id,
-      type: typeToFetch
+      type: { $in: typeToFetch }
     }).toArray();
 
     res.status(200).json({ notifications });
@@ -200,7 +292,7 @@ const countUnreadNotifications = async (req, res) => {
     const db = await connectDB();
 
     let user = await db.collection('employees').findOne({ _id: new ObjectId(adminId) });
-    let typeToFetch = 'news';
+    let typeToFetch = ['news']; // الموظف يشوف news
     let garageQuery;
 
     if (user) {
@@ -213,7 +305,7 @@ const countUnreadNotifications = async (req, res) => {
       if (!user) {
         return res.status(404).json({ message: 'الموظف أو المالك غير موجود' });
       }
-      typeToFetch = 'report';
+      typeToFetch = ['report', 'message']; // المالك يشوف report و message
       garageQuery = { owner_id: user._id };
     }
 
@@ -225,7 +317,7 @@ const countUnreadNotifications = async (req, res) => {
     const count = await db.collection('notifications').countDocuments({
       garageId: garage._id,
       isRead: false,
-      type: typeToFetch
+      type: { $in: typeToFetch }
     });
 
     res.status(200).json({ unreadCount: count });
@@ -235,6 +327,7 @@ const countUnreadNotifications = async (req, res) => {
     res.status(500).json({ message: 'حدث خطأ أثناء حساب عدد الإشعارات' });
   }
 };
+
 
 
 module.exports = {

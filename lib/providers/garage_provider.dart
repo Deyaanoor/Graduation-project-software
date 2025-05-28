@@ -1,8 +1,9 @@
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
-const String baseUrl = 'http://localhost:5000/garages';
+String baseUrl = '${dotenv.env['API_URL']}/garages';
 
 // ✅ Get All Garages
 final garagesProvider =
@@ -117,3 +118,30 @@ final refreshGaragesProvider = Provider<void Function(WidgetRef)>((ref) {
     ref.invalidate(garagesProvider);
   };
 });
+
+// ✅ Provider for Garage Locations
+final garageLocationsProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  final response = await http.get(Uri.parse('$baseUrl/garage/locations'));
+
+  if (response.statusCode == 200) {
+    final List<dynamic> data = json.decode(response.body);
+    return data.cast<Map<String, dynamic>>();
+  } else {
+    throw Exception('Failed to fetch garage locations');
+  }
+});
+
+// ✅ Get Garage Info by User ID
+final garageInfoByUserIdProvider = FutureProvider.family
+    .autoDispose<Map<String, dynamic>, String>((ref, userId) async {
+  final response = await http.get(Uri.parse('$baseUrl/garage/info/$userId'));
+
+  if (response.statusCode == 200) {
+    return json.decode(response.body) as Map<String, dynamic>;
+  } else {
+    throw Exception('Failed to fetch garage info for user ID $userId');
+  }
+});
+
+final garageIdProvider = StateProvider<String?>((ref) => null);
