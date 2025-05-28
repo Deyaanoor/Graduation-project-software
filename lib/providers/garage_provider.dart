@@ -122,7 +122,7 @@ final refreshGaragesProvider = Provider<void Function(WidgetRef)>((ref) {
 // ✅ Provider for Garage Locations
 final garageLocationsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final response = await http.get(Uri.parse('$baseUrl/garage/locations'));
+  final response = await http.get(Uri.parse('$baseUrl/locations'));
 
   if (response.statusCode == 200) {
     final List<dynamic> data = json.decode(response.body);
