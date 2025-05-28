@@ -26,8 +26,7 @@ class LoginPage extends ConsumerWidget {
 
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
-    final lang =
-        ref.watch(languageProvider); // على حسب اللغة المختارة في التطبيق
+    final lang = ref.watch(languageProvider);
 
     return Scaffold(
       body: LayoutBuilder(
@@ -366,11 +365,14 @@ class LoginPage extends ConsumerWidget {
 
         final result = await ref.read(loginUserProvider(credentials).future);
         final role = result['role'];
-        print(role);
+        print("rooooole $role");
 
         ref.invalidate(userIdProvider);
-
-        Navigator.pushNamed(context, '/home');
+        if (role == "") {
+          Navigator.pushNamed(context, '/Apply_Request');
+        } else {
+          Navigator.pushNamed(context, '/home');
+        }
       } catch (e) {
         print("❌ Login error: $e");
         CustomSnackBar.showErrorSnackBar(

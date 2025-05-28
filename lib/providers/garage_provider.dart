@@ -17,7 +17,6 @@ final garagesProvider =
     throw Exception('Failed to load garages');
   }
 });
-
 // ✅ Add Garage (POST)
 final addGarageProvider = Provider<
     Future<void> Function(
@@ -111,6 +110,18 @@ final updateGarageProvider = Provider<
     }
   };
 });
+
+// To use this function, pass the WidgetRef as an argument.
+Future<void> updateGarageStatus(String garageId, String newStatus) async {
+  final response = await http.put(
+    Uri.parse('$baseUrl/$garageId/status'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({'status': newStatus}),
+  );
+  if (response.statusCode != 200) {
+    throw Exception('Failed to update garage status');
+  }
+}
 
 // ✅ Refresh Garages
 final refreshGaragesProvider = Provider<void Function(WidgetRef)>((ref) {

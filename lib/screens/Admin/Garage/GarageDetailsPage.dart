@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/garage_provider.dart';
+import 'package:flutter_provider/screens/map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 class GarageDetailsPage extends ConsumerWidget {
   final String garageId;
@@ -19,64 +21,78 @@ class GarageDetailsPage extends ConsumerWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: garageAsyncValue.when(
-          loading: () => Center(child: CircularProgressIndicator()),
-          error: (error, _) => Center(child: Text('Error: $error')),
-          data: (garage) {
-            final garageName = garage['name'] ?? 'غير متوفر';
-            final ownerName = garage['ownerName'] ?? 'غير متوفر';
-            final ownerEmail = garage['ownerEmail'] ?? 'غير متوفر';
-            final location = garage['location'] ?? 'غير متوفر';
-
-            print(
-                'Garage Details: $garageName, $ownerName, $ownerEmail, $location');
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSectionTitle('Garage Information'),
-                _buildInfoCard(
-                  icon: Icons.business,
-                  title: 'Garage Name',
-                  content: garageName,
-                ),
-                _buildInfoCard(
-                  icon: Icons.person,
-                  title: 'Owner Name',
-                  content: ownerName,
-                ),
-                _buildInfoCard(
-                  icon: Icons.email,
-                  title: 'Owner Email',
-                  content: ownerEmail,
-                ),
-                _buildInfoCard(
-                  icon: Icons.location_on,
-                  title: 'Location',
-                  content: location,
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 50, vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+        child: SingleChildScrollView(
+          child: garageAsyncValue.when(
+            loading: () => Center(child: CircularProgressIndicator()),
+            error: (error, _) => Center(child: Text('Error: $error')),
+            data: (garage) {
+              final garageName = garage['name'] ?? 'غير متوفر';
+              final ownerName = garage['owner']['name'] ?? 'غير متوفر';
+              final ownerEmail = garage['owner']['email'] ?? 'غير متوفر';
+              final location = garage['location'] ?? 'غير متوفر';
+              final ownerPhone = garage['owner']['phoneNumber'] ?? 'غير متوفر';
+              final startSub = garage['subscriptionStartDate'] ?? 'غير متوفر';
+              final endSub = garage['subscriptionEndDate'] ?? 'غير متوفر';
+              DateTime startDateTime = DateTime.parse(startSub);
+              String startformattedDate =
+                  DateFormat('dd/MM/yyyy').format(startDateTime);
+              DateTime EndDateTime = DateTime.parse(endSub);
+              String EndformattedDate =
+                  DateFormat('dd/MM/yyyy').format(EndDateTime);
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionTitle('Garage Information'),
+                  _buildInfoCard(
+                    icon: Icons.business,
+                    title: 'Garage Name',
+                    content: garageName,
                   ),
-                  child: Text(
-                    'Contact Owner',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                  _buildInfoCard(
+                    icon: Icons.person,
+                    title: 'Owner Name',
+                    content: ownerName,
                   ),
-                ),
-              ],
-            );
-          },
+                  _buildInfoCard(
+                    icon: Icons.email,
+                    title: 'Owner Email',
+                    content: ownerEmail,
+                  ),
+                  _buildInfoCard(
+                      icon: Icons.location_on,
+                      title: 'Location',
+                      content: location,
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) =>
+                                  FreeMapPickerPage(initialLocation: location)),
+                        );
+                      }),
+                  _buildInfoCard(
+                    icon: Icons.phone,
+                    title: 'phone number',
+                    content: ownerPhone,
+                  ),
+                  _buildInfoCard(
+                    icon: Icons.calendar_today,
+                    title: 'Subscription date',
+                    content: startformattedDate.isNotEmpty
+                        ? startformattedDate
+                        : 'غير متوفر',
+                  ),
+                  _buildInfoCard(
+                    icon: Icons.calendar_month,
+                    title: 'Subscription end date',
+                    content: EndformattedDate.isNotEmpty
+                        ? EndformattedDate
+                        : 'غير متوفر',
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -84,11 +100,11 @@ class GarageDetailsPage extends ConsumerWidget {
 
   Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 5),
       child: Text(
         title,
         style: TextStyle(
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.orange[800],
         ),
@@ -100,48 +116,52 @@ class GarageDetailsPage extends ConsumerWidget {
     required IconData icon,
     required String title,
     required String content,
+    VoidCallback? onTap, // <- optional onTap
   }) {
-    return Card(
-      elevation: 5,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.orange, width: 1.5),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: Colors.orange,
-              size: 30,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[800],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    content,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
+    return InkWell(
+      onTap: onTap,
+      child: Card(
+        elevation: 5,
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.orange, width: 1.5),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14.0),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: Colors.orange,
+                size: 30,
               ),
-            ),
-          ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      content,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

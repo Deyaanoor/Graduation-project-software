@@ -11,6 +11,15 @@ import 'package:flutter_provider/widgets/CustomDialog.dart';
 import 'package:flutter_provider/widgets/CustomPainter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_provider/providers/garage_provider.dart';
+import 'package:http/http.dart' as ref;
+
+// String extension to add capitalize method
+extension StringCasingExtension on String {
+  String capitalize() {
+    if (isEmpty) return this;
+    return '${this[0].toUpperCase()}${substring(1)}';
+  }
+}
 
 class GaragePage extends ConsumerWidget {
   GaragePage({super.key});
@@ -149,19 +158,13 @@ class GaragePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final garagesAsync = ref.watch(garagesProvider);
-    final searchQuery = ref.watch(searchQueryProvider); // ممتاز
+    final searchQuery = ref.watch(searchQueryProvider);
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDarkMode ? Colors.grey[900]! : Colors.white;
     final waveColor = Colors.orange;
 
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _openAddForm(context, ref),
-        backgroundColor: Colors.orange,
-        elevation: 8,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
       body: Stack(
         children: [
           CustomPaint(
@@ -180,17 +183,17 @@ class GaragePage extends ConsumerWidget {
                     final filteredGarages = garages.where((garage) {
                       final name =
                           garage['name']?.toString().toLowerCase() ?? '';
-                      final location =
-                          garage['location']?.toString().toLowerCase() ?? '';
+                      // final location =
+                      //     garage['location']?.toString().toLowerCase() ?? '';
                       final query = searchQuery.toLowerCase();
-                      return name.contains(query) || location.contains(query);
+                      return name.contains(query);
                     }).toList();
 
                     if (filteredGarages.isEmpty) {
                       return Center(child: Text('No results found.'));
                     }
 
-                    return _GarageTable(garages: filteredGarages);
+                    return _GarageTable(garages: filteredGarages, ref: ref);
                   },
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
@@ -229,8 +232,7 @@ class GaragePage extends ConsumerWidget {
           contentPadding:
               const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
         ),
-        style:
-            TextStyle(color: Colors.orange), // لون الكتابة داخل الـ TextField
+        style: TextStyle(color: Colors.orange),
       ),
     );
   }
@@ -238,8 +240,9 @@ class GaragePage extends ConsumerWidget {
 
 class _GarageTable extends StatelessWidget {
   final List<Map<String, dynamic>> garages;
+  final WidgetRef ref;
 
-  const _GarageTable({required this.garages});
+  const _GarageTable({required this.garages, required this.ref});
 
   @override
   Widget build(BuildContext context) {
@@ -288,11 +291,15 @@ class _GarageTable extends StatelessWidget {
                       size: ColumnSize.M,
                     ),
                     DataColumn2(
-                      label: _SimpleHeader('Location', headerColor),
+                      label: _SimpleHeader('Owner Name', headerColor),
                       size: ColumnSize.M,
                     ),
+                    // DataColumn2(
+                    //   label: _SimpleHeader('Actions', headerColor),
+                    //   size: ColumnSize.M,
+                    // ),
                     DataColumn2(
-                      label: _SimpleHeader('Actions', headerColor),
+                      label: _SimpleHeader('Status', headerColor),
                       size: ColumnSize.M,
                     ),
                   ],
@@ -331,32 +338,86 @@ class _GarageTable extends StatelessWidget {
                         ),
                         DataCell(
                           Text(
-                            garages[index]['location'] ?? 'No Location',
+                            garages[index]['ownerName'] ?? 'Unknown',
                             style: TextStyle(
-                              fontSize: 14,
-                              color: textColor?.withOpacity(0.8),
+                              fontSize: 16,
+                              color: textColor,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
                         DataCell(
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.edit_note,
-                                    color: Colors.blue.shade300, size: 28),
-                                onPressed: () =>
-                                    _editGarage(context, garages[index]),
+                          DropdownButton<String>(
+                            value: ['Active', 'Inactive'].contains(
+                                    garages[index]['status']
+                                        ?.toString()
+                                        .trim()
+                                        .toLowerCase()
+                                        .capitalize())
+                                ? garages[index]['status']
+                                    .toString()
+                                    .trim()
+                                    .toLowerCase()
+                                    .capitalize()
+                                : 'Active',
+                            underline: const SizedBox(),
+                            style: const TextStyle(fontSize: 14),
+                            onChanged: (value) async {
+                              if (value != null) {
+                                try {
+                                  print("garage is : $garages[$index]['id']");
+                                  await updateGarageStatus(
+                                      garages[index]['_id'], value);
+                                  garages[index]['status'] = value;
+                                  final refreshGarages =
+                                      ref.read(refreshGaragesProvider);
+                                  refreshGarages(ref);
+                                } catch (e) {
+                                  print('Error updating status: $e');
+                                }
+                              }
+                            },
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'Active',
+                                child: Text('فعال'),
                               ),
-                              IconButton(
-                                icon: Icon(Icons.delete_forever,
-                                    color: Colors.red.shade300, size: 28),
-                                onPressed: () =>
-                                    _deleteGarage(context, garages[index]),
+                              DropdownMenuItem(
+                                value: 'Inactive',
+                                child: Text('غير فعال'),
                               ),
                             ],
                           ),
                         ),
+
+                        // DataCell(
+                        //   Text(
+                        //     garages[index]['location'] ?? 'No Location',
+                        //     style: TextStyle(
+                        //       fontSize: 14,
+                        //       color: textColor?.withOpacity(0.8),
+                        //     ),
+                        //   ),
+                        // ),
+                        // DataCell(
+                        //   Row(
+                        //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        //     children: [
+                        //       IconButton(
+                        //         icon: Icon(Icons.edit_note,
+                        //             color: Colors.blue.shade300, size: 28),
+                        //         onPressed: () =>
+                        //             _editGarage(context, garages[index]),
+                        //       ),
+                        //       IconButton(
+                        //         icon: Icon(Icons.delete_forever,
+                        //             color: Colors.red.shade300, size: 28),
+                        //         onPressed: () =>
+                        //             _deleteGarage(context, garages[index]),
+                        //       ),
+                        //     ],
+                        //   ),
+                        // ),
                       ],
                     ),
                   ),

@@ -26,6 +26,8 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
   @override
   Widget build(BuildContext context) {
     final messagesAsync = ref.watch(contactMessagesProvider);
+    print("message    :$messagesAsync");
+
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final headerColor =
         isDarkMode ? Colors.orange.shade700 : Colors.orange.shade500;
@@ -92,10 +94,10 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
                           child: Scrollbar(
                             child: DataTable2(
                               showCheckboxColumn: false,
-                              columnSpacing: 20,
-                              horizontalMargin: 20,
+                              columnSpacing: 4,
+                              horizontalMargin: 4,
                               minWidth: constraints.maxWidth,
-                              dataRowHeight: 60,
+                              dataRowHeight: 70,
                               headingRowHeight: 70,
                               sortColumnIndex: sortColumnIndex,
                               sortAscending: sortAscending,
@@ -108,29 +110,39 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
                               ),
                               columns: [
                                 DataColumn2(
-                                  label: _buildSortableHeader(
-                                      'نوع المشكلة', headerColor, 0),
-                                  onSort: (columnIndex, ascending) =>
-                                      _onSort(columnIndex, ascending),
-                                  size: ColumnSize.M,
-                                ),
-                                DataColumn2(
-                                  label: _buildSortableHeader(
-                                      'نص المشكلة', headerColor, 1),
+                                  label: Center(
+                                    child: _buildSortableHeader(
+                                        'نوع المشكلة', headerColor, 0),
+                                  ),
                                   onSort: (columnIndex, ascending) =>
                                       _onSort(columnIndex, ascending),
                                   size: ColumnSize.L,
                                 ),
                                 DataColumn2(
-                                  label: _buildSortableHeader(
-                                      'الحالة', headerColor, 2),
+                                  label: Center(
+                                    child: _buildSortableHeader(
+                                        " إسم المستخدم", headerColor, 1),
+                                  ),
                                   onSort: (columnIndex, ascending) =>
                                       _onSort(columnIndex, ascending),
-                                  size: ColumnSize.S,
+                                  size: ColumnSize.M,
                                 ),
                                 DataColumn2(
-                                  label:
-                                      _SimpleHeader('الإجراءات', headerColor),
+                                  label: Center(
+                                    child: _buildSortableHeader(
+                                        'نص المشكلة', headerColor, 1),
+                                  ),
+                                  onSort: (columnIndex, ascending) =>
+                                      _onSort(columnIndex, ascending),
+                                  size: ColumnSize.L,
+                                ),
+                                DataColumn2(
+                                  label: Center(
+                                    child: _buildSortableHeader(
+                                        'الحالة', headerColor, 2),
+                                  ),
+                                  onSort: (columnIndex, ascending) =>
+                                      _onSort(columnIndex, ascending),
                                   size: ColumnSize.M,
                                 ),
                               ],
@@ -169,6 +181,15 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
                                       ),
                                       DataCell(
                                         Text(
+                                          msg['userName']?.toString() ?? '',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: textColor?.withOpacity(0.8),
+                                          ),
+                                        ),
+                                      ),
+                                      DataCell(
+                                        Text(
                                           msg['message'] ?? 'بدون محتوى',
                                           style: TextStyle(
                                             fontSize: 14,
@@ -177,57 +198,34 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
                                         ),
                                       ),
                                       DataCell(
-                                        DropdownButton<String>(
-                                          value: msg['status'] ?? 'pending',
-                                          underline: const SizedBox(),
-                                          style: const TextStyle(fontSize: 14),
-                                          onChanged: (value) {
-                                            if (value != null &&
-                                                msg['_id'] != null) {
-                                              _updateMessageStatus(
-                                                  msg['_id'], value);
-                                            }
-                                          },
-                                          items: const [
-                                            DropdownMenuItem(
-                                              value: 'pending',
-                                              child: Text('قيد الانتظار'),
-                                            ),
-                                            DropdownMenuItem(
-                                              value: 'in progress',
-                                              child: Text('قيد المعالجة'),
-                                            ),
-                                            DropdownMenuItem(
-                                              value: 'resolved',
-                                              child: Text('تم الحل'),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      DataCell(
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceEvenly,
-                                          children: [
-                                            IconButton(
-                                              icon: Icon(
-                                                Icons.reply,
-                                                color: Colors.blue.shade300,
-                                                size: 28,
+                                        Center(
+                                          child: DropdownButton<String>(
+                                            value: msg['status'] ?? 'pending',
+                                            underline: const SizedBox(),
+                                            style:
+                                                const TextStyle(fontSize: 14),
+                                            onChanged: (value) {
+                                              if (value != null &&
+                                                  msg['_id'] != null) {
+                                                _updateMessageStatus(
+                                                    msg['_id'], value);
+                                              }
+                                            },
+                                            items: const [
+                                              DropdownMenuItem(
+                                                value: 'pending',
+                                                child: Text('قيد الانتظار'),
                                               ),
-                                              onPressed: () =>
-                                                  _replyToMessage(context, msg),
-                                            ),
-                                            IconButton(
-                                              icon: Icon(
-                                                Icons.delete_forever,
-                                                color: Colors.red.shade300,
-                                                size: 28,
+                                              DropdownMenuItem(
+                                                value: 'in progress',
+                                                child: Text('قيد المعالجة'),
                                               ),
-                                              onPressed: () => _deleteMessage(
-                                                  context, msg['_id']),
-                                            ),
-                                          ],
+                                              DropdownMenuItem(
+                                                value: 'resolved',
+                                                child: Text('تم الحل'),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -257,6 +255,9 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
       final type = msg['type']?.toString() ?? '';
       final message = msg['message']?.toString() ?? '';
       final status = msg['status']?.toString() ?? 'pending';
+      final userName = msg['userName']?.toString() ?? '';
+      // Debug print for each message
+      print("userName    :$userName");
 
       final matchStatus =
           selectedFilterStatus == 'All' || status == selectedFilterStatus;
@@ -324,7 +325,7 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
                 dropdownColor: isDarkMode ? Colors.grey[900] : Colors.white,
                 style: TextStyle(
                   color: isDarkMode ? Colors.white : Colors.black,
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: FontWeight.w500,
                 ),
                 items: const [
@@ -355,7 +356,7 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
   Widget _SimpleHeader(String title, Color color) {
     return Text(
       title,
-      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
+      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color),
     );
   }
 
@@ -369,12 +370,16 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
       onTap: () => _onSort(
           columnIndex, sortColumnIndex == columnIndex ? !sortAscending : true),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(title,
-              style: TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.bold, color: color)),
-          const SizedBox(width: 6),
-          Icon(icon, size: 16, color: color),
+          Text(
+            title,
+            style: TextStyle(
+                fontSize: 14, fontWeight: FontWeight.bold, color: color),
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(width: 4),
+          Icon(icon, size: 14, color: color),
         ],
       ),
     );

@@ -1,6 +1,13 @@
 import 'dart:html' as html;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_provider/screens/map.dart';
+import 'package:flutter_provider/screens/Admin/Garage/apply_Request.dart';
+
+import 'package:flutter_provider/screens/Admin/Garage/garage_page.dart';
+import 'package:flutter_provider/screens/Owner/notifications/notifications_screen.dart';
+import 'package:flutter_provider/screens/auth/forgotPassword.dart';
+import 'package:flutter_provider/screens/Client/roboflow_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -198,13 +205,14 @@ class MyApp extends ConsumerWidget {
       routes: {
         '/welcome': (context) => const WelcomePage(),
         '/login': (context) => LoginPage(),
-        '/signup': (context) => const SignUpPage(),
-        '/home': (context) => const Home(),
-        '/report': (context) => const ReportPage(),
-        '/attendance': (context) => const AttendanceSalaryPage(),
-        '/SparePartsApp': (context) => const SparePartsApp(),
-        '/settings': (context) => const SettingsPage(),
-        '/profile': (context) => const AccountSettingsPage(),
+        '/signup': (context) => SignUpPage(),
+        '/Apply_Request': (context) => ApplyRequestPage(),
+        '/home': (context) => Home(),
+        '/report': (context) => ReportPage(),
+        '/attendance': (context) => AttendanceSalaryPage(),
+        '/SparePartsApp': (context) => SparePartsApp(),
+        '/settings': (context) => SettingsPage(),
+        '/profile': (context) => AccountSettingsPage(),
         '/garage': (context) => GaragePage(),
         '/notifications': (context) => const NotificationsPage(),
         '/forgot-password': (context) => const ForgotPasswordScreen(),

@@ -1,27 +1,26 @@
-const connectDB = require('../config/db');
-const { ObjectId } = require('mongodb');
+const connectDB = require("../config/db");
+const { ObjectId } = require("mongodb");
 
-const ADMIN_ID = '5f6f5b7b3e9a1b1c8cd7d2a2';
+const ADMIN_ID = "5f6f5b7b3e9a1b1c8cd7d2a2";
 
 const addGarage = async (req, res) => {
   try {
-    const { name, location, ownerName, ownerEmail ,cost } = req.body;
+    const { name, location, ownerName, ownerEmail, cost } = req.body;
 
     const db = await connectDB();
-    const garagesCollection = db.collection('garages');
-    const ownerCollection = db.collection('owners');
+    const garagesCollection = db.collection("garages");
+    const ownerCollection = db.collection("owners");
 
     let owner = await ownerCollection.findOne({ email: ownerEmail });
     if (!owner) {
       const newOwner = {
         name: ownerName,
         email: ownerEmail,
-        
       };
       const result = await ownerCollection.insertOne(newOwner);
       owner = {
         _id: result.insertedId,
-        ...newOwner
+        ...newOwner,
       };
     }
 
@@ -44,49 +43,156 @@ const addGarage = async (req, res) => {
     );
 
     res.status(201).json({
-      message: 'Garage added successfully',
+      message: "Garage added successfully",
       data: {
         ...newGarage,
-        _id: garageResult.insertedId
+        _id: garageResult.insertedId,
       },
     });
   } catch (error) {
-    console.error('❌ Error adding garage:', error);
-    res.status(500).json({ message: 'An error occurred while adding the garage' });
+    console.error("❌ Error adding garage:", error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while adding the garage" });
   }
 };
-
 
 const getGarages = async (req, res) => {
   try {
     const db = await connectDB();
-    const garagesCollection = db.collection('garages');
+    const garagesCollection = db.collection("garages");
 
-    const garages = await garagesCollection.find().toArray(); 
-    res.status(200).json(garages); 
+    const garages = await garagesCollection
+      .aggregate([
+        {
+          $addFields: {
+            // تحويل owner_id من string إلى ObjectId
+            ownerObjectId: { $toObjectId: "$owner_id" },
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "ownerObjectId", // استخدام الحقل المحول
+            foreignField: "_id",
+            as: "ownerDetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$ownerDetails",
+            preserveNullAndEmptyArrays: true, // للسماح بالجراجات بدون مالكين
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            location: 1,
+            status: 1,
+            cost: 1,
+            subscriptionStartDate: 1,
+            subscriptionEndDate: 1,
+            ownerName: "$ownerDetails.name",
+            ownerEmail: "$ownerDetails.email",
+            ownerPhone: "$ownerDetails.phoneNumber", // لاحظ أن الحقل في users هو phoneNumber وليس phone
+            ownerAvatar: "$ownerDetails.avatar",
+          },
+        },
+      ])
+      .toArray();
+
+    console.log(
+      "Garages with owner details:",
+      JSON.stringify(garages, null, 2)
+    );
+    res.status(200).json(garages);
   } catch (error) {
-    console.error('❌ Error fetching garages:', error);
-    res.status(500).json({ message: 'An error occurred while fetching garages' });
+    console.error("❌ Error fetching garages:", error);
+    res.status(500).json({
+      message: "An error occurred while fetching garages",
+      error: error.message,
+    });
   }
 };
 
 const getGarageById = async (req, res) => {
   try {
-    const { id } = req.params; 
-
+    const { id } = req.params; // الحصول على الـ ID من مسار الطلب
     const db = await connectDB();
-    const garagesCollection = db.collection('garages');
+    const garagesCollection = db.collection("garages");
 
-    const garage = await garagesCollection.findOne({ _id: new ObjectId(id) });
-
-    if (!garage) {
-      return res.status(404).json({ message: 'Garage not found' });
+    // التحقق من أن الـ ID صالح
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid garage ID" });
     }
 
-    res.status(200).json(garage); 
+    const garage = await garagesCollection
+      .aggregate([
+        {
+          $match: { _id: new ObjectId(id) }, // تصفية حسب الـ ID المطلوب
+        },
+        {
+          $addFields: {
+            ownerObjectId: { $toObjectId: "$owner_id" },
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "ownerObjectId",
+            foreignField: "_id",
+            as: "ownerDetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$ownerDetails",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            location: 1,
+            status: 1,
+            cost: 1,
+            subscriptionStartDate: 1,
+            subscriptionEndDate: 1,
+            createdAt: 1,
+            owner: {
+              $cond: {
+                if: { $ifNull: ["$ownerDetails", false] },
+                then: {
+                  _id: "$ownerDetails._id",
+                  name: "$ownerDetails.name",
+                  email: "$ownerDetails.email",
+                  phoneNumber: "$ownerDetails.phoneNumber",
+                  role: "$ownerDetails.role",
+                  avatar: "$ownerDetails.avatar",
+                  isVerified: "$ownerDetails.isVerified",
+                },
+                else: null,
+              },
+            },
+          },
+        },
+      ])
+      .next(); // استخدام next() بدلاً من toArray() لاسترجاع وثيقة واحدة
+
+    if (!garage) {
+      return res.status(404).json({ message: "Garage not found" });
+    }
+
+    console.log("Garage details:", JSON.stringify(garage, null, 2));
+    res.status(200).json(garage);
   } catch (error) {
-    console.error('❌ Error fetching garage by ID:', error);
-    res.status(500).json({ message: 'An error occurred while fetching the garage' });
+    console.error("❌ Error fetching garage:", error);
+    res.status(500).json({
+      message: "An error occurred while fetching the garage",
+      error: error.message,
+    });
   }
 };
 
@@ -95,27 +201,31 @@ const deleteGarage = async (req, res) => {
     const { id } = req.params;
 
     const db = await connectDB();
-    const garagesCollection = db.collection('garages');
-    const ownerCollection = db.collection('owners');
-    const reportsCollection = db.collection('reports');
-    const notificationsCollection = db.collection('notifications');
-    const employeesCollection = db.collection('employees');
-    const usersCollection = db.collection('users');
+    const garagesCollection = db.collection("garages");
+    const ownerCollection = db.collection("owners");
+    const reportsCollection = db.collection("reports");
+    const notificationsCollection = db.collection("notifications");
+    const employeesCollection = db.collection("employees");
+    const usersCollection = db.collection("users");
 
     const garage = await garagesCollection.findOne({ _id: new ObjectId(id) });
     if (!garage) {
-      return res.status(404).json({ message: 'Garage not found' });
+      return res.status(404).json({ message: "Garage not found" });
     }
 
-    const owner = await ownerCollection.findOne({ _id: new ObjectId(garage.owner_id) });
+    const owner = await ownerCollection.findOne({
+      _id: new ObjectId(garage.owner_id),
+    });
     const ownerEmail = owner?.email;
-    const employees = await employeesCollection.find({ garageId: new ObjectId(id) }).toArray();
-    const employeeEmails = employees.map(emp => emp.email);
+    const employees = await employeesCollection
+      .find({ garageId: new ObjectId(id) })
+      .toArray();
+    const employeeEmails = employees.map((emp) => emp.email);
     const allEmailsToDelete = [ownerEmail, ...employeeEmails];
 
     if (allEmailsToDelete.length > 0) {
       await usersCollection.deleteMany({
-        email: { $in: allEmailsToDelete }
+        email: { $in: allEmailsToDelete },
       });
     }
     if (ownerEmail) {
@@ -127,13 +237,16 @@ const deleteGarage = async (req, res) => {
     await ownerCollection.deleteOne({ _id: new ObjectId(garage.owner_id) });
     await garagesCollection.deleteOne({ _id: new ObjectId(id) });
 
-    res.status(200).json({ message: 'Garage and related data deleted successfully' });
+    res
+      .status(200)
+      .json({ message: "Garage and related data deleted successfully" });
   } catch (error) {
-    console.error('❌ Error deleting garage:', error);
-    res.status(500).json({ message: 'An error occurred while deleting the garage' });
+    console.error("❌ Error deleting garage:", error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while deleting the garage" });
   }
 };
-
 
 const updateGarage = async (req, res) => {
   try {
@@ -141,17 +254,19 @@ const updateGarage = async (req, res) => {
     const { name, location, ownerName, ownerEmail, cost } = req.body;
 
     const db = await connectDB();
-    const garagesCollection = db.collection('garages');
-    const ownerCollection = db.collection('owners');
-    const usersCollection = db.collection('users');
+    const garagesCollection = db.collection("garages");
+    const ownerCollection = db.collection("owners");
+    const usersCollection = db.collection("users");
 
     const garage = await garagesCollection.findOne({ _id: new ObjectId(id) });
     if (!garage) {
-      return res.status(404).json({ message: 'Garage not found' });
+      return res.status(404).json({ message: "Garage not found" });
     }
-    const owner = await ownerCollection.findOne({ _id: new ObjectId(garage.owner_id) });
+    const owner = await ownerCollection.findOne({
+      _id: new ObjectId(garage.owner_id),
+    });
     if (!owner) {
-      return res.status(404).json({ message: 'Owner not found' });
+      return res.status(404).json({ message: "Owner not found" });
     }
     const oldOwnerEmail = owner.email;
 
@@ -172,40 +287,74 @@ const updateGarage = async (req, res) => {
           cost,
           ownerName,
           ownerEmail,
-        }
+        },
       }
     );
 
-    res.status(200).json({ message: 'Garage and related owner/user updated successfully' });
-
+    res
+      .status(200)
+      .json({ message: "Garage and related owner/user updated successfully" });
   } catch (error) {
-    console.error('❌ Error updating garage:', error);
-    res.status(500).json({ message: 'An error occurred while updating the garage' });
+    console.error("❌ Error updating garage:", error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while updating the garage" });
+  }
+};
+const updateGarageStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!["Active", "Inactive"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status value" });
+    }
+
+    const db = await connectDB();
+    const garagesCollection = db.collection("garages");
+
+    const garage = await garagesCollection.findOne({ _id: new ObjectId(id) });
+    if (!garage) {
+      return res.status(404).json({ message: "Garage not found" });
+    }
+
+    await garagesCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { status } }
+    );
+
+    res.status(200).json({ message: "Garage status updated successfully" });
+  } catch (error) {
+    console.error("❌ Error updating garage status:", error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while updating garage status" });
   }
 };
 
 const getGarageLocations = async (req, res) => {
   try {
     const db = await connectDB();
-    const garagesCollection = db.collection('garages');
+    const garagesCollection = db.collection("garages");
 
     const locations = await garagesCollection
-      .find({}, { projection: { name: 1, location: 1 } }) 
+      .find({}, { projection: { name: 1, location: 1 } })
       .toArray();
 
-    const parsedLocations = locations.map(garage => ({
-      garageId: garage._id.toString(), 
+    const parsedLocations = locations.map((garage) => ({
+      garageId: garage._id.toString(),
       name: garage.name,
-      location: JSON.parse(garage.location) 
+      location: JSON.parse(garage.location),
     }));
 
     res.status(200).json(parsedLocations);
   } catch (error) {
-    console.error('❌ Error fetching garage locations:', error);
-    res.status(500).json({ message: 'An error occurred while fetching locations' });
+    console.error("❌ Error fetching garage locations:", error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while fetching locations" });
   }
 };
-
 
 const getGarageInfo = async (req, res) => {
   const userId = req.params.userId;
@@ -213,29 +362,37 @@ const getGarageInfo = async (req, res) => {
   try {
     const db = await connectDB();
 
-    const employeesCollection = db.collection('employees');
-    const ownersCollection = db.collection('owners');
-    const garagesCollection = db.collection('garages');
+    const employeesCollection = db.collection("employees");
+    const ownersCollection = db.collection("owners");
+    const garagesCollection = db.collection("garages");
 
-    let employee = await employeesCollection.findOne({_id: new ObjectId(userId) });
+    let employee = await employeesCollection.findOne({
+      _id: new ObjectId(userId),
+    });
 
     let garageId;
 
     if (employee) {
       garageId = employee.garage_id;
     } else {
-      const owner = await ownersCollection.findOne({_id: new ObjectId(userId) });
+      const owner = await ownersCollection.findOne({
+        _id: new ObjectId(userId),
+      });
       if (owner) {
         garageId = owner.garage_id;
       } else {
-        return res.status(404).json({ message: 'User not found in employees or owners' });
+        return res
+          .status(404)
+          .json({ message: "User not found in employees or owners" });
       }
     }
 
-    const garage = await garagesCollection.findOne({_id: new ObjectId(garageId) });
+    const garage = await garagesCollection.findOne({
+      _id: new ObjectId(garageId),
+    });
 
     if (!garage) {
-      return res.status(404).json({ message: 'Garage not found' });
+      return res.status(404).json({ message: "Garage not found" });
     }
 
     res.status(200).json({
@@ -244,14 +401,19 @@ const getGarageInfo = async (req, res) => {
       ownerEmail: garage.ownerEmail,
       location: garage.location,
     });
-
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Failed to fetch garage data' });
+    res.status(500).json({ message: "Failed to fetch garage data" });
   }
 };
 
-
-
-
-module.exports = { addGarage, getGarages, getGarageById, deleteGarage, updateGarage, getGarageLocations,getGarageInfo};
+module.exports = {
+  addGarage,
+  getGarages,
+  getGarageById,
+  deleteGarage,
+  updateGarage,
+  updateGarageStatus,
+  getGarageLocations,
+  getGarageInfo,
+};

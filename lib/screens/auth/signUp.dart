@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
+import 'package:flutter_provider/screens/auth/VerifyEmailPage.dart';
 import 'package:flutter_provider/screens/auth/forgot_password.dart';
 import 'package:flutter_provider/widgets/custom_snackbar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -411,10 +412,16 @@ class SignUpPage extends ConsumerWidget {
         'fcmToken': "",
       };
 
-      final result = await ref.read(registerUserProvider(userData).future);
-
-      CustomSnackBar.showSuccessSnackBar(context, "Registration successful.");
-      Navigator.pushNamed(context, '/login');
+      final result = ref.read(registerUserProvider(userData).future);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CheckVerificationPage(
+              email: emailController.text, password: passwordController.text),
+        ),
+      );
+      // CustomSnackBar.showSuccessSnackBar(context, "Registration successful.");
+      // Navigator.pushNamed(context, '/login');
     } catch (e) {
       print("❌ Error during signup: $e");
       CustomSnackBar.showErrorSnackBar(context, "Registration failed.");

@@ -1,58 +1,59 @@
-const express = require('express');
-const cloudinary = require('cloudinary').v2;
-const multer = require('multer');
-const multerStorageCloudinary = require('multer-storage-cloudinary').CloudinaryStorage;
-const { ObjectId } = require('mongodb');
-const connectDB = require('../config/db');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const express = require("express");
+const cloudinary = require("cloudinary").v2;
+const multer = require("multer");
+const multerStorageCloudinary =
+  require("multer-storage-cloudinary").CloudinaryStorage;
+const { ObjectId } = require("mongodb");
+const connectDB = require("../config/db");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 cloudinary.config({
   cloud_name: "dmqgqu7st",
   api_key: "757442912861293",
-  api_secret: "ifXxCdY2tdgnGG5y_55a_ZlDPKM"
+  api_secret: "ifXxCdY2tdgnGG5y_55a_ZlDPKM",
 });
 
 const storage = new multerStorageCloudinary({
   cloudinary: cloudinary,
   params: {
-    folder: 'user_avatars',
-    allowed_formats: ['jpg', 'jpeg', 'png'],
+    folder: "user_avatars",
+    allowed_formats: ["jpg", "jpeg", "png"],
   },
 });
 
 const upload = multer({ storage: storage });
 
-const nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: "gmail",
   auth: {
-    user: 'deyaanoor9@gmail.com',
-    pass: 'mzfc rxnn zeez tmxr'
-  }
+    user: "deyaanoor9@gmail.com",
+    pass: "mzfc rxnn zeez tmxr",
+  },
 });
 
 const registerUser = async (req, res) => {
-  const { name, email, password, phoneNumber,fcmToken } = req.body;
+  const { name, email, password, phoneNumber, fcmToken } = req.body;
 
   try {
     const db = await connectDB();
-    const usersCollection = db.collection('users');
-    const employeesCollection = db.collection('employees');
-    const ownersCollection = db.collection('owners');
-    const clientCollection = db.collection('clients');
+    const usersCollection = db.collection("users");
+    const employeesCollection = db.collection("employees");
+    const ownersCollection = db.collection("owners");
+    const clientCollection = db.collection("clients");
     const existingUser = await usersCollection.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: 'Email already exists' });
+      return res.status(400).json({ message: "Email already exists" });
     }
 
     let newUser = null;
     let role = null;
 
-    const owner = await ownersCollection.findOne({ email, name});
+    const owner = await ownersCollection.findOne({ email, name });
     if (owner) {
-      role = 'owner';
+      role = "owner";
       const hashedPassword = await bcrypt.hash(password, 10);
       newUser = {
         _id: owner._id,
@@ -64,12 +65,17 @@ const registerUser = async (req, res) => {
         role,
         avatar: null,
         isVerified: false,
+        verificationSentAt: new Date(),
       };
     }
 
-    const employee = await employeesCollection.findOne({ email, name, phoneNumber});
+    const employee = await employeesCollection.findOne({
+      email,
+      name,
+      phoneNumber,
+    });
     if (employee) {
-      role = 'employee';
+      role = "employee";
       const hashedPassword = await bcrypt.hash(password, 10);
       newUser = {
         _id: employee._id,
@@ -81,12 +87,13 @@ const registerUser = async (req, res) => {
         role,
         avatar: null,
         isVerified: false,
+        verificationSentAt: new Date(),
       };
     }
 
-    const client = await clientCollection.findOne({ email, name, phoneNumber});
+    const client = await clientCollection.findOne({ email, name, phoneNumber });
     if (client) {
-      role = 'client';
+      role = "client";
       const hashedPassword = await bcrypt.hash(password, 10);
       newUser = {
         _id: client._id,
@@ -98,20 +105,34 @@ const registerUser = async (req, res) => {
         role,
         avatar: null,
         isVerified: false,
+        verificationSentAt: new Date(),
       };
     }
 
     if (!newUser) {
-      return res.status(400).json({ message: 'User must be either an employee or an owner' });
+      // return res.status(400).json({ message: 'User must be either an employee or an owner' });
+      const hashedPassword = await bcrypt.hash(password, 10);
+      newUser = {
+        name,
+        email,
+        password: hashedPassword,
+        phoneNumber,
+        role,
+        avatar: null,
+        isVerified: false,
+        verificationSentAt: new Date(),
+      };
     }
 
-    const verifyToken = jwt.sign({ userId: newUser._id }, 'secret-key', { expiresIn: '1h' });
+    const verifyToken = jwt.sign(newUser, "secret-key", {
+      expiresIn: "1h",
+    });
     const verifyLink = `http://localhost:5000/users/verify?token=${verifyToken}`;
 
     await transporter.sendMail({
-      from: 'deyaanoor9@gmail.com',
+      from: "deyaanoor9@gmail.com",
       to: email,
-      subject: 'Verify your account',
+      subject: "Verify your account",
       html: `
         <html>
           <body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
@@ -136,41 +157,161 @@ const registerUser = async (req, res) => {
             </div>
           </body>
         </html>
-      `
+      `,
     });
 
-    await usersCollection.insertOne(newUser);
-    return res.status(201).json({ message: 'Account created successfully. Verification email sent.', role });
-
+    // await usersCollection.insertOne(newUser);
+    return res.status(201).json({
+      message: "Account created successfully. Verification email sent.",
+      role,
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'An error occurred during registration' });
+    res.status(500).json({ message: "An error occurred during registration" });
   }
 };
-
 
 const verifyEmail = async (req, res) => {
   const { token } = req.query;
 
   try {
-    const decoded = jwt.verify(token, 'secret-key');
+    const decoded = jwt.verify(token, "secret-key");
     const db = await connectDB();
-    const usersCollection = db.collection('users');
+    const usersCollection = db.collection("users");
 
-    const userId = new ObjectId(decoded.userId);
-    const user = await usersCollection.findOne({ _id: userId });
-
-    if (!user) {
-      return res.status(400).json({ message: 'User not found' });
+    // تحقق إذا المستخدم مسجل أصلاً (يمنع تسجيل مكرر)
+    const existingUser = await usersCollection.findOne({
+      email: decoded.email,
+    });
+    if (existingUser) {
+      return res.status(400).json({ message: "Account already verified" });
     }
 
-    await usersCollection.updateOne({ _id: userId }, { $set: { isVerified: true } });
+    // أدخل المستخدم مع حقل isVerified true
+    const newUser = {
+      name: decoded.name,
+      email: decoded.email,
+      password: decoded.password,
+      phoneNumber: decoded.phoneNumber,
+      role: decoded.role,
+      avatar: null,
+      isVerified: true,
+      createdAt: new Date(),
+    };
 
-    res.status(200).json({ message: 'Account verified successfully' });
+    await usersCollection.insertOne(newUser);
 
+    res
+      .status(200)
+      .json({ message: "Account verified and created successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Invalid or expired token' });
+    res.status(400).json({ message: "Invalid or expired token" });
+  }
+};
+const checkVerification = async (req, res) => {
+  const { email } = req.query;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  try {
+    const db = await connectDB();
+    const usersCollection = db.collection("users");
+
+    const user = await usersCollection.findOne({ email });
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "User not found", isVerified: false });
+    }
+
+    return res.status(200).json({
+      isVerified: user.isVerified,
+      message: user.isVerified
+        ? "Account is verified"
+        : "Account is not yet verified",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error", isVerified: false });
+  }
+};
+const resendVerificationEmail = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const db = await connectDB();
+    const usersCollection = db.collection("users");
+
+    const user = await usersCollection.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({ message: "Account already verified" });
+    }
+
+    const now = new Date();
+    const lastSent = user.verificationSentAt
+      ? new Date(user.verificationSentAt)
+      : null;
+
+    if (lastSent && now - lastSent < 60 * 1000) {
+      return res.status(429).json({
+        message: "You can request a new verification email after 1 minute",
+      });
+    }
+
+    const verifyToken = jwt.sign({ userId: user._id }, "secret-key", {
+      expiresIn: "1h",
+    });
+    const verifyLink = `http://localhost:5000/users/verify?token=${verifyToken}`;
+
+    await transporter.sendMail({
+      from: "deyaanoor9@gmail.com",
+      to: email,
+      subject: "Verify your account - Resend",
+      html: `
+        <html>
+          <body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
+            <div style="max-width: 600px; margin: auto; background-color: #fff; padding: 30px; border: 1px solid #ffa500; border-radius: 8px;">
+              <h2 style="color:rgb(252, 137, 29);">Account Verification 📝</h2>
+              <p style="font-size: 16px;">Hello ${user.name},</p>
+              <p style="font-size: 15px;">Click the button below to verify your email:</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${verifyLink}" target="_blank" style="
+                  background-color:rgb(252, 137, 29);
+                  color: white;
+                  padding: 14px 24px;
+                  text-decoration: none;
+                  border-radius: 6px;
+                  font-size: 16px;
+                  font-weight: bold;
+                  display: inline-block;
+                ">
+                  ✅ Verify Email
+                </a>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+    });
+
+    await usersCollection.updateOne(
+      { email },
+      { $set: { verificationSentAt: now } }
+    );
+
+    res.status(200).json({ message: "Verification email resent" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error resending verification email" });
   }
 };
 
@@ -179,20 +320,22 @@ const forgotPassword = async (req, res) => {
 
   try {
     const db = await connectDB();
-    const usersCollection = db.collection('users');
+    const usersCollection = db.collection("users");
     const user = await usersCollection.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ message: 'Email not found' });
+      return res.status(400).json({ message: "Email not found" });
     }
 
-    const resetToken = jwt.sign({ userId: user._id }, 'your_reset_secret', { expiresIn: '15m' });
+    const resetToken = jwt.sign({ userId: user._id }, "your_reset_secret", {
+      expiresIn: "15m",
+    });
     const resetLink = `http://localhost:5000/users/reset-password?token=${resetToken}`;
 
     await transporter.sendMail({
-      from: 'deyaanoor9@email.com',
+      from: "deyaanoor9@email.com",
       to: email,
-      subject: 'Reset Your Password',
+      subject: "Reset Your Password",
       html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #fff;">
         <div style="text-align: center; padding-bottom: 10px;">
@@ -215,24 +358,21 @@ const forgotPassword = async (req, res) => {
           &copy; 2025 Management Application for Mechanic Workshop. All rights reserved.
         </p>
       </div>
-    `
-    
+    `,
     });
 
-    res.status(200).json({ message: 'Reset link sent to your email.' });
-
+    res.status(200).json({ message: "Reset link sent to your email." });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error sending reset link.' });
+    res.status(500).json({ message: "Error sending reset link." });
   }
 };
-
 
 const renderResetPasswordForm = async (req, res) => {
   const { token } = req.query;
 
   if (!token) {
-    return res.status(400).send('Missing token');
+    return res.status(400).send("Missing token");
   }
 
   res.send(`
@@ -344,19 +484,18 @@ const renderResetPasswordForm = async (req, res) => {
       </body>
     </html>
   `);
-  
 };
 const resetPassword = async (req, res) => {
   const { token, newPassword } = req.body;
 
   if (!token || !newPassword) {
-    return res.status(400).send('Missing token or password.');
+    return res.status(400).send("Missing token or password.");
   }
 
   try {
-    const decoded = jwt.verify(token, 'your_reset_secret');
+    const decoded = jwt.verify(token, "your_reset_secret");
     const db = await connectDB();
-    const usersCollection = db.collection('users');
+    const usersCollection = db.collection("users");
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await usersCollection.updateOne(
@@ -372,37 +511,35 @@ const resetPassword = async (req, res) => {
         </body>
       </html>
     `);
-
   } catch (error) {
     console.error(error);
-    res.status(400).send('Invalid or expired token.');
+    res.status(400).send("Invalid or expired token.");
   }
 };
-
 
 const loginUser = async (req, res) => {
   const { email, password, fcmToken } = req.body;
 
   try {
     const db = await connectDB();
-    const usersCollection = db.collection('users');
+    const usersCollection = db.collection("users");
     const user = await usersCollection.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ message: 'Email not found' });
+      return res.status(400).json({ message: "Email not found" });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(400).json({ message: 'Invalid password' });
+      return res.status(400).json({ message: "Invalid password" });
     }
 
     if (!user.isVerified) {
       return res.status(403).json({
-        message: 'Email is not verified. Please verify your email before logging in.',
+        message:
+          "Email is not verified. Please verify your email before logging in.",
       });
     }
-
     // ✅ تحديث fcmToken إذا كان موجود
     if (fcmToken) {
       await usersCollection.updateOne(
@@ -410,45 +547,43 @@ const loginUser = async (req, res) => {
         { $set: { fcmToken: fcmToken } }
       );
     }
-
     const token = jwt.sign(
       { userId: user._id, role: user.role },
-      'your_jwt_secret',
-      { expiresIn: '1h' }
+      "your_jwt_secret",
+      { expiresIn: "1h" }
     );
 
     res.status(200).json({
-      message: 'Login successful',
+      message: "Login successful",
       token,
       role: user.role,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'An error occurred during login' });
+    res.status(500).json({ message: "An error occurred during login" });
   }
 };
-
 
 const updateAvatar = async (req, res) => {
   const { userId } = req.params;
 
   if (!req.file) {
-    return res.status(400).json({ message: 'No file uploaded' });
+    return res.status(400).json({ message: "No file uploaded" });
   }
 
   try {
     const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: 'avatars',
+      folder: "avatars",
     });
 
     const avatarUrl = result.secure_url;
 
     const db = await connectDB();
-    const usersCollection = db.collection('users');
+    const usersCollection = db.collection("users");
 
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
     await usersCollection.updateOne(
@@ -456,25 +591,24 @@ const updateAvatar = async (req, res) => {
       { $set: { avatar: avatarUrl } }
     );
 
-    res.status(200).json({ message: 'Avatar updated successfully', avatarUrl });
+    res.status(200).json({ message: "Avatar updated successfully", avatarUrl });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error uploading avatar' });
+    res.status(500).json({ message: "Error uploading avatar" });
   }
 };
 
-
 //Get user info
 const getUserInfo = async (req, res) => {
-  const userId = req.params.userId;  
+  const userId = req.params.userId;
 
   try {
     const db = await connectDB();
-    const usersCollection = db.collection('users');
+    const usersCollection = db.collection("users");
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
     res.status(200).json({
@@ -487,7 +621,7 @@ const getUserInfo = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Failed to fetch user data' });
+    res.status(500).json({ message: "Failed to fetch user data" });
   }
 };
 
@@ -498,16 +632,16 @@ const updateUserInfo = async (req, res) => {
 
   try {
     const db = await connectDB();
-    const usersCollection = db.collection('users');
-    const employeesCollection = db.collection('employees');
-    const ownersCollection = db.collection('owners');
-    const garagesCollection = db.collection('garages');
-    const clientCollection = db.collection('clients');
+    const usersCollection = db.collection("users");
+    const employeesCollection = db.collection("employees");
+    const ownersCollection = db.collection("owners");
+    const garagesCollection = db.collection("garages");
+    const clientCollection = db.collection("clients");
 
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
     const updatedFields = {};
@@ -570,18 +704,29 @@ const updateUserInfo = async (req, res) => {
     );
 
     if (updatedUser.modifiedCount === 0) {
-      return res.status(400).json({ message: 'No changes made' });
+      return res.status(400).json({ message: "No changes made" });
     }
 
-    res.status(200).json({ message: 'User info updated successfully' });
+    res.status(200).json({ message: "User info updated successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'An error occurred while updating user info' });
+    res
+      .status(500)
+      .json({ message: "An error occurred while updating user info" });
   }
 };
 
-
-
-module.exports = { registerUser, loginUser,
-   updateAvatar, getUserInfo, updateUserInfo, 
-   upload, verifyEmail,forgotPassword,renderResetPasswordForm,resetPassword};
+module.exports = {
+  registerUser,
+  loginUser,
+  updateAvatar,
+  getUserInfo,
+  updateUserInfo,
+  upload,
+  verifyEmail,
+  forgotPassword,
+  renderResetPasswordForm,
+  resetPassword,
+  resendVerificationEmail,
+  checkVerification,
+};

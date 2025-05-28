@@ -5,6 +5,7 @@ import 'package:flutter_provider/providers/news_provider.dart';
 import 'package:flutter_provider/providers/reports_provider.dart';
 import 'package:flutter_provider/screens/Admin/Garage/ContactUsInboxPage.dart';
 import 'package:flutter_provider/screens/Admin/Garage/garage_page.dart';
+import 'package:flutter_provider/screens/Admin/Garage/registrationRequests.dart';
 import 'package:flutter_provider/screens/Client/ClientGaragesPage.dart';
 import 'package:flutter_provider/screens/Client/EmergencyRequestPage.dart';
 import 'package:flutter_provider/screens/Client/GarageRequestsPage.dart';
@@ -95,10 +96,7 @@ class Home extends ConsumerWidget {
   List<Widget> _getPagesByRole(String role, WidgetRef ref) {
     switch (role.toLowerCase()) {
       case 'admin':
-        return [
-          GaragePage(),
-          ContactUsInboxPage(),
-        ];
+        return [GaragePage(), ContactUsInboxPage(), RegistrationRequests()];
       case 'owner':
         return [
           OverviewPage(key: UniqueKey()),
@@ -170,7 +168,11 @@ class Home extends ConsumerWidget {
         color: const Color(0xFFFF8F00),
         backgroundColor: Colors.grey[200]!,
         items: <Widget>[
-          buildNavItem(Icons.auto_awesome, lang['dashboard'] ?? 'Dashboard', 3,
+          buildNavItem(Icons.auto_awesome, lang['dashboard'] ?? 'Dashboard', 1,
+              selectedIndex),
+          buildNavItem(Icons.auto_awesome, lang['support'] ?? 'support', 2,
+              selectedIndex),
+          buildNavItem(Icons.auto_awesome, lang['request'] ?? 'request', 3,
               selectedIndex),
         ],
         onTap: (index) =>
@@ -378,6 +380,15 @@ class Home extends ConsumerWidget {
               label: lang['ContactUsInboxPage'] ?? 'ContactUsInboxPage',
               isSelected: selectedIndex == 1,
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 1,
+              isExpanded: isExpanded,
+            ),
+          if (userRole.toLowerCase() == 'admin')
+            _buildNavButton(
+              context: context,
+              icon: Icons.how_to_reg,
+              label: lang['registrationRequests'] ?? 'registrationRequests',
+              isSelected: selectedIndex == 2,
+              onTap: () => ref.read(selectedIndexProvider.notifier).state = 2,
               isExpanded: isExpanded,
             ),
           if (userRole.toLowerCase() == 'owner' ||
@@ -645,6 +656,30 @@ class Home extends ConsumerWidget {
                 lang['EmergencyRequest'] ?? 'Emergency Request',
                 Icons.request_quote_sharp,
                 6,
+              ),
+            if (userInfo['role'].toLowerCase() == 'admin')
+              buildDrawerItem(
+                context,
+                ref,
+                lang['Garage Page'] ?? 'Garage Page',
+                Icons.garage,
+                0,
+              ),
+            if (userInfo['role'].toLowerCase() == 'admin')
+              buildDrawerItem(
+                context,
+                ref,
+                lang['ContactUsInboxPage'] ?? 'ContactUsInboxPage',
+                Icons.support_agent,
+                1,
+              ),
+            if (userInfo['role'].toLowerCase() == 'admin')
+              buildDrawerItem(
+                context,
+                ref,
+                lang['registrationRequests'] ?? 'registrationRequests',
+                Icons.how_to_reg,
+                2,
               ),
             buildDrawerItem(
               context,
