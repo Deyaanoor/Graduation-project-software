@@ -147,12 +147,6 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
                                         'خطأ في تحميل بيانات الموديلات: $err')),
                               ),
                               const SizedBox(height: 16),
-                              _buildChartCard(
-                                'الإيرادات آخر 6 شهور',
-                                _buildLineChart(),
-                                context,
-                              ),
-                              const SizedBox(height: 16),
                               topEmployeesAsync.when(
                                 data: (topEmployees) {
                                   return _buildChartCard(
@@ -177,11 +171,14 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
 
                     // Repairs Table
                     reports.when(
-                      data: (report) => _buildRepairTable(context, report),
+                      data: (report) {
+                        print('Building UI with ${report.length} items');
+                        return _buildRepairTable(
+                            context, report.take(5).toList());
+                      },
                       loading: () =>
                           const Center(child: CircularProgressIndicator()),
-                      error: (err, stack) => Center(
-                          child: Text('خطأ في تحميل بيانات الموديلات: $err')),
+                      error: (err, stack) => Center(child: Text('خطأ: $err')),
                     )
                   ],
                 ),
@@ -222,32 +219,6 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
     double brightness = random.nextDouble() * 0.4 + 0.6;
 
     return HSVColor.fromAHSV(1.0, hue, saturation, brightness).toColor();
-  }
-
-  Widget _buildLineChart() {
-    return LineChart(
-      LineChartData(
-        gridData: FlGridData(show: true),
-        titlesData: FlTitlesData(show: false),
-        borderData: FlBorderData(show: true),
-        lineBarsData: [
-          LineChartBarData(
-            spots: [
-              FlSpot(0, 3),
-              FlSpot(1, 4),
-              FlSpot(2, 2),
-              FlSpot(3, 5),
-              FlSpot(4, 6),
-              FlSpot(5, 7),
-            ],
-            isCurved: true,
-            barWidth: 3,
-            color: Colors.orange,
-            belowBarData: BarAreaData(show: false),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildBarChart(List<Map<String, dynamic>> data) {

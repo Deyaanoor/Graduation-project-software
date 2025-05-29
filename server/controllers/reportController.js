@@ -29,30 +29,66 @@ const getReports = async (req, res) => {
 
     const employee = await db.collection('employees').findOne({ _id: new ObjectId(userId) });
     const owner = await db.collection('owners').findOne({ _id: new ObjectId(userId) });
-    
-    let garageId;
+
+    let garage;
     if (owner) {
-      const garage = await db.collection('garages').findOne({ owner_id: owner._id });
-      garageId = garage ? garage._id : null;
+      garage = await db.collection('garages').findOne({ owner_id: owner._id });
     } else if (employee) {
-      const garage = await db.collection('garages').findOne({ _id: employee.garage_id }); 
-      garageId = garage ? garage._id : null;
+      garage = await db.collection('garages').findOne({ _id: employee.garage_id });
     } else {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    if (!garageId) {
+    if (!garage) {
       return res.status(404).json({ message: 'Garage not found for this user' });
     }
 
-    const reports = await reportsCollection.find({ garageId }).toArray();
+    const reports = await reportsCollection.find({ garageId: garage._id }).toArray();
 
-    res.status(200).json(reports);
+    res.status(200).json({
+      garageName: garage.name,
+      garagePhone:"234656668",
+      reports,
+    });
   } catch (error) {
     console.error("❌ Error fetching reports:", error);
     res.status(500).json({ message: "An error occurred while fetching reports" });
   }
 };
+
+
+// const getReports = async (req, res) => {
+//   try {
+//     const { userId } = req.params;
+//     const db = await connectDB();
+//     const reportsCollection = db.collection('reports');
+
+//     const employee = await db.collection('employees').findOne({ _id: new ObjectId(userId) });
+//     const owner = await db.collection('owners').findOne({ _id: new ObjectId(userId) });
+    
+//     let garageId;
+//     if (owner) {
+//       const garage = await db.collection('garages').findOne({ owner_id: owner._id });
+//       garageId = garage ? garage._id : null;
+//     } else if (employee) {
+//       const garage = await db.collection('garages').findOne({ _id: employee.garage_id }); 
+//       garageId = garage ? garage._id : null;
+//     } else {
+//       return res.status(404).json({ message: 'User not found' });
+//     }
+
+//     if (!garageId) {
+//       return res.status(404).json({ message: 'Garage not found for this user' });
+//     }
+
+//     const reports = await reportsCollection.find({ garageId }).toArray();
+
+//     res.status(200).json(reports);
+//   } catch (error) {
+//     console.error("❌ Error fetching reports:", error);
+//     res.status(500).json({ message: "An error occurred while fetching reports" });
+//   }
+// };
 
 // const getReportsToClient = async (req, res) => {
 //   try {
@@ -168,24 +204,49 @@ const addReport = async (req, res) => {
 };
 
 
+
 const getReportDetails = async (req, res) => {
   try {
     const { id } = req.params;
     const db = await connectDB();
-    const reportsCollection = db.collection('reports');
 
+    const reportsCollection = db.collection('reports');
+    const garagesCollection = db.collection('garages');
+
+    // 🧾 Step 1: Fetch the report
     const report = await reportsCollection.findOne({ _id: new ObjectId(id) });
 
     if (!report) {
       return res.status(404).json({ message: "Report not found" });
     }
 
-    res.status(200).json(report);
+    // 🧰 Step 2: Fetch garage details using garageId
+    let garageInfo = {};
+    if (report.garageId) {
+      const garage = await garagesCollection.findOne({ _id: new ObjectId(report.garageId) });
+      if (garage) {
+        garageInfo = {
+          garageName: garage.name || null,
+          garagePhone: garage.phone || null,
+        };
+      }
+    }
+
+    // ✅ Combine the result
+    const fullReport = {
+      ...report,
+      ...garageInfo,
+    };
+    console.log("Full Report7777777777777777777777:", fullReport);
+
+    res.status(200).json(fullReport);
   } catch (error) {
     console.error("❌ Error fetching report details:", error);
     res.status(500).json({ message: "An error occurred while fetching report details" });
   }
 };
+
+
 
 const updateReport = async (req, res) => {
   try {

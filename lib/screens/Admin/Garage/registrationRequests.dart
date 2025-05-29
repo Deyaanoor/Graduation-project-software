@@ -42,16 +42,6 @@ class _RegistrationRequestsState extends ConsumerState<RegistrationRequests> {
     final backgroundColor = isDarkMode ? Colors.grey[900] : Colors.white;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('طلبات تسجيل الكراجات'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(getAllRequestsProvider),
-            tooltip: 'تحديث البيانات',
-          ),
-        ],
-      ),
       body: getAllRequests.when(
         loading: () => Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(child: Text('حدث خطأ: $error')),
@@ -83,109 +73,103 @@ class _RegistrationRequestsState extends ConsumerState<RegistrationRequests> {
                         child: Container(
                           width: constraints.maxWidth,
                           color: backgroundColor,
-                          child: Scrollbar(
-                            child: DataTable2(
-                              showCheckboxColumn: false,
-                              columnSpacing:
-                                  ResponsiveHelper.isMobile(context) ? 0 : 2,
-                              horizontalMargin:
-                                  ResponsiveHelper.isMobile(context) ? 2 : 15,
-                              minWidth: constraints.maxWidth,
-                              dataRowHeight: 60,
-                              headingRowHeight: 60,
-                              sortColumnIndex: sortColumnIndex,
-                              sortAscending: sortAscending,
-                              border: TableBorder(
-                                verticalInside: BorderSide(
-                                  color: isDarkMode
-                                      ? Colors.grey[700]!
-                                      : Colors.grey[300]!,
-                                ),
+                          child: DataTable2(
+                            showCheckboxColumn: false,
+                            columnSpacing: 6,
+                            horizontalMargin: 10,
+                            dataRowHeight: 60,
+                            headingRowHeight: 60,
+                            sortColumnIndex: sortColumnIndex,
+                            sortAscending: sortAscending,
+                            border: TableBorder(
+                              verticalInside: BorderSide(
+                                color: isDarkMode
+                                    ? Colors.grey[700]!
+                                    : Colors.grey[300]!,
                               ),
-                              columns: [
-                                DataColumn2(
-                                  label: Center(
-                                    child: _buildSortableHeader(
-                                        'اسم الكراج', headerColor, 0),
-                                  ),
-                                  onSort: (columnIndex, ascending) =>
-                                      _onSort(columnIndex, ascending),
-                                  size: ColumnSize.M,
+                            ),
+                            columns: [
+                              DataColumn2(
+                                label: Center(
+                                  child: _buildSortableHeader(
+                                      'اسم الكراج', headerColor, 0),
                                 ),
-                                DataColumn2(
-                                  label: Center(
-                                    child: _buildSortableHeader(
-                                        'صاحب الكراج', headerColor, 1),
-                                  ),
-                                  onSort: (columnIndex, ascending) =>
-                                      _onSort(columnIndex, ascending),
-                                  size: ColumnSize.M,
+                                onSort: (columnIndex, ascending) =>
+                                    _onSort(columnIndex, ascending),
+                                size: ColumnSize.S,
+                              ),
+                              DataColumn2(
+                                label: Center(
+                                  child: _buildSortableHeader(
+                                      'المالك', headerColor, 1),
                                 ),
-                                DataColumn2(
-                                  label: Center(
-                                      child:
-                                          _SimpleHeader('الحالة', headerColor)),
-                                  size: ColumnSize.L,
+                                onSort: (columnIndex, ascending) =>
+                                    _onSort(columnIndex, ascending),
+                                size: ColumnSize.S,
+                              ),
+                              DataColumn2(
+                                label: Center(
+                                  child: _SimpleHeader('الحالة', headerColor),
                                 ),
-                              ],
-                              rows: List<DataRow2>.generate(
-                                filteredRequests.length,
-                                (index) {
-                                  final request = filteredRequests[index];
-                                  final userInfo = request['userInfo']
-                                      as Map<String, dynamic>;
+                                size: ColumnSize.S,
+                              ),
+                            ],
+                            rows: List<DataRow2>.generate(
+                              filteredRequests.length,
+                              (index) {
+                                final request = filteredRequests[index];
+                                final userInfo =
+                                    request['userInfo'] as Map<String, dynamic>;
 
-                                  return DataRow2(
-                                    color: MaterialStateProperty.resolveWith<
-                                        Color?>(
-                                      (Set<MaterialState> states) {
-                                        if (states
-                                            .contains(MaterialState.hovered)) {
-                                          return Colors.orange.withOpacity(0.3);
-                                        }
-                                        return index.isEven
-                                            ? rowColor!.withOpacity(0.8)
-                                            : Colors.transparent;
-                                      },
-                                    ),
-                                    onSelectChanged: (selected) {
-                                      if (selected == true) {
-                                        _showRequestDetails(context, request);
+                                return DataRow2(
+                                  color:
+                                      MaterialStateProperty.resolveWith<Color?>(
+                                    (Set<MaterialState> states) {
+                                      if (states
+                                          .contains(MaterialState.hovered)) {
+                                        return Colors.orange.withOpacity(0.3);
                                       }
+                                      return index.isEven
+                                          ? rowColor!.withOpacity(0.8)
+                                          : Colors.transparent;
                                     },
-                                    cells: [
-                                      DataCell(
-                                        Center(
-                                          child: Text(
-                                            request['garageName'],
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              color: textColor,
-                                              fontWeight: FontWeight.w500,
-                                            ),
+                                  ),
+                                  onSelectChanged: (selected) {
+                                    if (selected == true) {
+                                      _showRequestDetails(context, request);
+                                    }
+                                  },
+                                  cells: [
+                                    DataCell(
+                                      Center(
+                                        child: Text(
+                                          request['garageName'],
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: textColor,
+                                            fontWeight: FontWeight.w500,
                                           ),
                                         ),
                                       ),
-                                      DataCell(
-                                        Center(
-                                          child: Text(
-                                            userInfo['name'],
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color:
-                                                  textColor?.withOpacity(0.8),
-                                            ),
+                                    ),
+                                    DataCell(
+                                      Center(
+                                        child: Text(
+                                          userInfo['name'],
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: textColor?.withOpacity(0.8),
                                           ),
                                         ),
                                       ),
-                                      DataCell(
-                                        Center(
-                                            child: _buildStatusWidget(request)),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
+                                    ),
+                                    DataCell(
+                                      Center(
+                                          child: _buildStatusWidget(request)),
+                                    ),
+                                  ],
+                                );
+                              },
                             ),
                           ),
                         ),
@@ -228,25 +212,27 @@ class _RegistrationRequestsState extends ConsumerState<RegistrationRequests> {
         ElevatedButton(
           onPressed: () => _updateRequestStatus(request['_id'], 'accepted'),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green.shade400,
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            backgroundColor: Colors.green.shade500,
+            padding: const EdgeInsets.all(8),
+            minimumSize: const Size(36, 36),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(10),
             ),
           ),
-          child: const Text('قبول', style: TextStyle(color: Colors.white)),
+          child: const Icon(Icons.check, color: Colors.white, size: 20),
         ),
         const SizedBox(width: 8),
         ElevatedButton(
           onPressed: () => _updateRequestStatus(request['_id'], 'rejected'),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red.shade400,
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            backgroundColor: Colors.red.shade500,
+            padding: const EdgeInsets.all(8),
+            minimumSize: const Size(36, 36),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(10),
             ),
           ),
-          child: const Text('رفض', style: TextStyle(color: Colors.white)),
+          child: const Icon(Icons.close, color: Colors.white, size: 20),
         ),
       ],
     );

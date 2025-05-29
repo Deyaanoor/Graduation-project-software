@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/home_provider.dart';
 import 'package:flutter_provider/providers/reports_provider.dart';
 import 'package:flutter_provider/screens/Technician/reports/components/pdf_page.dart';
 import 'package:flutter_provider/widgets/custom_button.dart';
 import 'package:flutter_provider/widgets/top_snackbar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as ref;
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_provider/providers/reports_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ReportDetailsPage extends StatefulWidget {
+class ReportDetailsPage extends ConsumerStatefulWidget {
   final Map<String, dynamic> report;
 
   const ReportDetailsPage({super.key, required this.report});
@@ -19,11 +21,17 @@ class ReportDetailsPage extends StatefulWidget {
   _ReportDetailsPageState createState() => _ReportDetailsPageState();
 }
 
-class _ReportDetailsPageState extends State<ReportDetailsPage> {
+class _ReportDetailsPageState extends ConsumerState<ReportDetailsPage> {
   Map<String, dynamic> get report => widget.report;
 
   @override
   Widget build(BuildContext context) {
+    final userId = ref.watch(userIdProvider).value;
+
+    final userInfo =
+        userId != null ? ref.watch(getUserInfoProvider(userId)).value : null;
+    final userRole =
+        userInfo != null ? userInfo['role'] ?? 'بدون اسم' : 'جاري التحميل...';
     final isDesktop = MediaQuery.of(context).size.width > 800;
     final date = _parseDate(report['date']);
     final currencyFormat = NumberFormat.currency(
@@ -35,7 +43,7 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'تقرير الإصلاح #${report['_id']?.substring(0, 6) ?? ''}',
+          'تقرير الإصلاح',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -62,8 +70,8 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
             const SizedBox(height: 24),
             Expanded(
               child: isDesktop
-                  ? _buildDesktopLayout(date, currencyFormat, context)
-                  : _buildMobileLayout(date, currencyFormat, context),
+                  ? _buildDesktopLayout(date, currencyFormat, context, userRole)
+                  : _buildMobileLayout(date, currencyFormat, context, userRole),
             ),
           ],
         ),
@@ -72,21 +80,72 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
   }
 
   Widget _buildHeaderSection() {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildHeaderItem(Icons.car_repair, 'موديل المركبة',
-                '${report['year']} ${report['make']} ${report['model']}'),
-            _buildHeaderItem(Icons.confirmation_number, 'رقم اللوحة',
-                report['plateNumber'] ?? 'N/A'),
-            _buildHeaderItem(Icons.person, 'المالك', report['owner'] ?? 'N/A'),
-          ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        bool isMobile = constraints.maxWidth < 600;
+
+        return Card(
+          elevation: 2,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: isMobile
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildMobileHeaderItem(Icons.car_repair, 'موديل المركبة',
+                          '${report['year']} ${report['make']} ${report['model']}'),
+                      const SizedBox(height: 16),
+                      _buildMobileHeaderItem(Icons.confirmation_number,
+                          'رقم اللوحة', report['plateNumber'] ?? 'N/A'),
+                      const SizedBox(height: 16),
+                      _buildMobileHeaderItem(
+                          Icons.person, 'المالك', report['owner'] ?? 'N/A'),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildHeaderItem(Icons.car_repair, 'موديل المركبة',
+                          '${report['year']} ${report['make']} ${report['model']}'),
+                      _buildHeaderItem(Icons.confirmation_number, 'رقم اللوحة',
+                          report['plateNumber'] ?? 'N/A'),
+                      _buildHeaderItem(
+                          Icons.person, 'المالك', report['owner'] ?? 'N/A'),
+                    ],
+                  ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMobileHeaderItem(IconData icon, String title, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 28, color: Colors.orange),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title,
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -108,8 +167,8 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
     );
   }
 
-  Widget _buildDesktopLayout(
-      DateTime date, NumberFormat format, BuildContext context) {
+  Widget _buildDesktopLayout(DateTime date, NumberFormat format,
+      BuildContext context, String userRole) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -120,20 +179,20 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
         const SizedBox(width: 24),
         Expanded(
           flex: 3,
-          child: _buildMediaSection(context),
+          child: _buildMediaSection(context, userRole),
         ),
       ],
     );
   }
 
-  Widget _buildMobileLayout(
-      DateTime date, NumberFormat format, BuildContext context) {
+  Widget _buildMobileLayout(DateTime date, NumberFormat format,
+      BuildContext context, String userRole) {
     return SingleChildScrollView(
       child: Column(
         children: [
           _buildDetailsColumn(date, format),
           const SizedBox(height: 24),
-          _buildMediaSection(context),
+          _buildMediaSection(context, userRole),
         ],
       ),
     );
@@ -292,7 +351,7 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
     );
   }
 
-  Widget _buildMediaSection(BuildContext context) {
+  Widget _buildMediaSection(BuildContext context, String userRole) {
     final images = List<String>.from(report['imageUrls'] ?? []);
     final isDesktop = MediaQuery.of(context).size.width > 800;
 
@@ -360,38 +419,37 @@ class _ReportDetailsPageState extends State<ReportDetailsPage> {
                         ),
                       ),
                     ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Wrap(
-                  spacing: 12, // المسافة بين الأزرار أفقياً
-                  runSpacing: 8, // المسافة بين الأسطر لو التف الأزرار
-                  children: [
-                    SizedBox(
-                      width: isDesktop
-                          ? 200
-                          : double
-                              .infinity, // عرض ثابت للدسكتوب وعرض كامل للموبايل
-                      height: 60,
-                      child: CustomButton(
-                        key: UniqueKey(),
-                        onPressed: _deleteReport,
-                        text: "حذف",
-                        backgroundColor: Colors.red,
+              if (userRole == 'owner')
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: [
+                      SizedBox(
+                        width: isDesktop ? 200 : double.infinity,
+                        height: 60,
+                        child: CustomButton(
+                          key: UniqueKey(),
+                          onPressed: _deleteReport,
+                          text: "حذف",
+                          backgroundColor: Colors.red,
+                        ),
                       ),
-                    ),
-                    SizedBox(
-                      width: isDesktop ? 200 : double.infinity,
-                      height: 60,
-                      child: CustomButton(
-                        key: UniqueKey(),
-                        onPressed: () => _navigateToEditReport(context, report),
-                        text: "تعديل",
-                        backgroundColor: Colors.orange,
+                      SizedBox(
+                        width: isDesktop ? 200 : double.infinity,
+                        height: 60,
+                        child: CustomButton(
+                          key: UniqueKey(),
+                          onPressed: () =>
+                              _navigateToEditReport(context, report),
+                          text: "تعديل",
+                          backgroundColor: Colors.orange,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
             ]),
       ),
     );

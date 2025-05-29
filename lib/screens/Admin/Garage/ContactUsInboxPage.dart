@@ -36,16 +36,6 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
     final backgroundColor = isDarkMode ? Colors.grey[900] : Colors.white;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('صندوق الوارد'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.refresh(contactMessagesProvider),
-            tooltip: 'تحديث البيانات',
-          ),
-        ],
-      ),
       body: messagesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
@@ -91,147 +81,128 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
                         child: Container(
                           width: constraints.maxWidth,
                           color: backgroundColor,
-                          child: Scrollbar(
-                            child: DataTable2(
-                              showCheckboxColumn: false,
-                              columnSpacing: 4,
-                              horizontalMargin: 4,
-                              minWidth: constraints.maxWidth,
-                              dataRowHeight: 70,
-                              headingRowHeight: 70,
-                              sortColumnIndex: sortColumnIndex,
-                              sortAscending: sortAscending,
-                              border: TableBorder(
-                                verticalInside: BorderSide(
-                                  color: isDarkMode
-                                      ? Colors.grey[700]!
-                                      : Colors.grey[300]!,
-                                ),
+                          child: DataTable2(
+                            showCheckboxColumn: false,
+                            columnSpacing: 10,
+                            horizontalMargin: 5,
+                            // ❌ احذف minWidth حتى لا يفرض عرض زائد
+                            // minWidth: constraints.maxWidth,
+                            dataRowHeight: 70,
+                            headingRowHeight: 70,
+                            sortColumnIndex: sortColumnIndex,
+                            sortAscending: sortAscending,
+                            border: TableBorder(
+                              verticalInside: BorderSide(
+                                color: isDarkMode
+                                    ? Colors.grey[700]!
+                                    : Colors.grey[300]!,
                               ),
-                              columns: [
-                                DataColumn2(
-                                  label: Center(
-                                    child: _buildSortableHeader(
-                                        'نوع المشكلة', headerColor, 0),
-                                  ),
-                                  onSort: (columnIndex, ascending) =>
-                                      _onSort(columnIndex, ascending),
-                                  size: ColumnSize.L,
+                            ),
+                            columns: [
+                              DataColumn2(
+                                label: Center(
+                                  child: _buildSortableHeader(
+                                      'المشكلة', headerColor, 0),
                                 ),
-                                DataColumn2(
-                                  label: Center(
-                                    child: _buildSortableHeader(
-                                        " إسم المستخدم", headerColor, 1),
-                                  ),
-                                  onSort: (columnIndex, ascending) =>
-                                      _onSort(columnIndex, ascending),
-                                  size: ColumnSize.M,
+                                onSort: (columnIndex, ascending) =>
+                                    _onSort(columnIndex, ascending),
+                                size: ColumnSize.S, // ⬅️ خلي الحجم صغير
+                              ),
+                              DataColumn2(
+                                label: Center(
+                                  child: _buildSortableHeader(
+                                      "Sender", headerColor, 1),
                                 ),
-                                DataColumn2(
-                                  label: Center(
-                                    child: _buildSortableHeader(
-                                        'نص المشكلة', headerColor, 1),
-                                  ),
-                                  onSort: (columnIndex, ascending) =>
-                                      _onSort(columnIndex, ascending),
-                                  size: ColumnSize.L,
+                                onSort: (columnIndex, ascending) =>
+                                    _onSort(columnIndex, ascending),
+                                size: ColumnSize.S,
+                              ),
+                              DataColumn2(
+                                label: Center(
+                                  child: _buildSortableHeader(
+                                      'الحالة', headerColor, 2),
                                 ),
-                                DataColumn2(
-                                  label: Center(
-                                    child: _buildSortableHeader(
-                                        'الحالة', headerColor, 2),
-                                  ),
-                                  onSort: (columnIndex, ascending) =>
-                                      _onSort(columnIndex, ascending),
-                                  size: ColumnSize.M,
-                                ),
-                              ],
-                              rows: List<DataRow2>.generate(
-                                filteredMessages.length,
-                                (index) {
-                                  final msg = filteredMessages[index];
-                                  return DataRow2(
-                                    color: MaterialStateProperty.resolveWith<
-                                        Color?>(
-                                      (Set<MaterialState> states) {
-                                        if (states
-                                            .contains(MaterialState.hovered)) {
-                                          return Colors.orange.withOpacity(0.3);
-                                        }
-                                        return index.isEven
-                                            ? rowColor!.withOpacity(0.8)
-                                            : Colors.transparent;
-                                      },
-                                    ),
-                                    onSelectChanged: (selected) {
-                                      if (selected == true) {
-                                        _onMessageTap(context, msg);
+                                onSort: (columnIndex, ascending) =>
+                                    _onSort(columnIndex, ascending),
+                                size: ColumnSize.S,
+                              ),
+                            ],
+                            rows: List<DataRow2>.generate(
+                              filteredMessages.length,
+                              (index) {
+                                final msg = filteredMessages[index];
+                                return DataRow2(
+                                  color:
+                                      MaterialStateProperty.resolveWith<Color?>(
+                                    (Set<MaterialState> states) {
+                                      if (states
+                                          .contains(MaterialState.hovered)) {
+                                        return Colors.orange.withOpacity(0.3);
                                       }
+                                      return index.isEven
+                                          ? rowColor!.withOpacity(0.8)
+                                          : Colors.transparent;
                                     },
-                                    cells: [
-                                      DataCell(
-                                        Text(
-                                          msg['type'] ?? 'بدون نوع',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            color: textColor,
-                                            fontWeight: FontWeight.w500,
-                                          ),
+                                  ),
+                                  onSelectChanged: (selected) {
+                                    if (selected == true) {
+                                      _onMessageTap(context, msg);
+                                    }
+                                  },
+                                  cells: [
+                                    DataCell(
+                                      Text(
+                                        msg['type'] ?? 'بدون نوع',
+                                        softWrap: true,
+                                        maxLines: 2,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: textColor,
                                         ),
                                       ),
-                                      DataCell(
-                                        Text(
-                                          msg['userName']?.toString() ?? '',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: textColor?.withOpacity(0.8),
-                                          ),
+                                    ),
+                                    DataCell(
+                                      Text(
+                                        msg['userName']?.toString() ?? '',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: textColor?.withOpacity(0.8),
                                         ),
                                       ),
-                                      DataCell(
-                                        Text(
-                                          msg['message'] ?? 'بدون محتوى',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: textColor?.withOpacity(0.8),
-                                          ),
+                                    ),
+                                    DataCell(
+                                      Center(
+                                        child: DropdownButton<String>(
+                                          value: msg['status'] ?? 'pending',
+                                          underline: const SizedBox(),
+                                          style: const TextStyle(fontSize: 14),
+                                          onChanged: (value) {
+                                            if (value != null &&
+                                                msg['_id'] != null) {
+                                              _updateMessageStatus(
+                                                  msg['_id'], value);
+                                            }
+                                          },
+                                          items: const [
+                                            DropdownMenuItem(
+                                              value: 'pending',
+                                              child: Text('قيد الانتظار'),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: 'in progress',
+                                              child: Text('قيد المعالجة'),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: 'resolved',
+                                              child: Text('تم الحل'),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                      DataCell(
-                                        Center(
-                                          child: DropdownButton<String>(
-                                            value: msg['status'] ?? 'pending',
-                                            underline: const SizedBox(),
-                                            style:
-                                                const TextStyle(fontSize: 14),
-                                            onChanged: (value) {
-                                              if (value != null &&
-                                                  msg['_id'] != null) {
-                                                _updateMessageStatus(
-                                                    msg['_id'], value);
-                                              }
-                                            },
-                                            items: const [
-                                              DropdownMenuItem(
-                                                value: 'pending',
-                                                child: Text('قيد الانتظار'),
-                                              ),
-                                              DropdownMenuItem(
-                                                value: 'in progress',
-                                                child: Text('قيد المعالجة'),
-                                              ),
-                                              DropdownMenuItem(
-                                                value: 'resolved',
-                                                child: Text('تم الحل'),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
+                                    ),
+                                  ],
+                                );
+                              },
                             ),
                           ),
                         ),
@@ -378,7 +349,7 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
                 fontSize: 14, fontWeight: FontWeight.bold, color: color),
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 2),
           Icon(icon, size: 14, color: color),
         ],
       ),
@@ -396,25 +367,76 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('تفاصيل المشكلة: ${message['type'] ?? 'بدون نوع'}'),
+        backgroundColor: const Color(0xFF1E1E2C),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            const Icon(Icons.info_outline, color: Colors.amber),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'تفاصيل المشكلة',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.amber,
+                  fontSize: 20,
+                ),
+              ),
+            ),
+          ],
+        ),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('نوع المشكلة: ${message['type'] ?? 'غير محدد'}'),
+              _buildDetailRow("نوع المشكلة", message['type'] ?? 'غير محدد'),
               const SizedBox(height: 10),
-              Text('نص المشكلة: ${message['message'] ?? 'بدون محتوى'}'),
+              _buildDetailRow("نص المشكلة", message['message'] ?? 'بدون محتوى'),
               const SizedBox(height: 10),
-              Text('الحالة: ${_getStatusText(message['status'])}'),
-              const SizedBox(height: 10),
-              Text('رقم المعرف: ${message['_id'] ?? 'غير متوفر'}'),
+              _buildDetailRow("الحالة", _getStatusText(message['status'])),
             ],
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إغلاق'),
+          Center(
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber,
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.close),
+              label: const Text('إغلاق'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: '$label:\n',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontSize: 16,
+            ),
+          ),
+          TextSpan(
+            text: value,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 15,
+            ),
           ),
         ],
       ),

@@ -31,14 +31,34 @@ class GarageDetailsPage extends ConsumerWidget {
               final ownerEmail = garage['owner']['email'] ?? 'غير متوفر';
               final location = garage['location'] ?? 'غير متوفر';
               final ownerPhone = garage['owner']['phoneNumber'] ?? 'غير متوفر';
-              final startSub = garage['subscriptionStartDate'] ?? 'غير متوفر';
-              final endSub = garage['subscriptionEndDate'] ?? 'غير متوفر';
-              DateTime startDateTime = DateTime.parse(startSub);
-              String startformattedDate =
-                  DateFormat('dd/MM/yyyy').format(startDateTime);
-              DateTime EndDateTime = DateTime.parse(endSub);
-              String EndformattedDate =
-                  DateFormat('dd/MM/yyyy').format(EndDateTime);
+              final startSub = garage['subscriptionStartDate'];
+              final endSub = garage['subscriptionEndDate'];
+
+              String startformattedDate = 'غير متوفر';
+              String endformattedDate = 'غير متوفر';
+
+              if (startSub != null &&
+                  startSub is String &&
+                  startSub.isNotEmpty) {
+                try {
+                  DateTime startDateTime = DateTime.parse(startSub);
+                  startformattedDate =
+                      DateFormat('dd/MM/yyyy').format(startDateTime);
+                } catch (e) {
+                  print('خطأ في تنسيق تاريخ البداية: $e');
+                }
+              }
+
+              if (endSub != null && endSub is String && endSub.isNotEmpty) {
+                try {
+                  DateTime endDateTime = DateTime.parse(endSub);
+                  endformattedDate =
+                      DateFormat('dd/MM/yyyy').format(endDateTime);
+                } catch (e) {
+                  print('خطأ في تنسيق تاريخ النهاية: $e');
+                }
+              }
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -85,8 +105,8 @@ class GarageDetailsPage extends ConsumerWidget {
                   _buildInfoCard(
                     icon: Icons.calendar_month,
                     title: 'Subscription end date',
-                    content: EndformattedDate.isNotEmpty
-                        ? EndformattedDate
+                    content: endformattedDate.isNotEmpty
+                        ? endformattedDate
                         : 'غير متوفر',
                   ),
                 ],

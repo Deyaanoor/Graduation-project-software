@@ -1,7 +1,6 @@
 import 'dart:html' as html;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter_provider/screens/map.dart';
 import 'package:flutter_provider/screens/Admin/Garage/apply_Request.dart';
 
 import 'package:flutter_provider/screens/Admin/Garage/garage_page.dart';
@@ -15,17 +14,13 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:flutter_provider/providers/language_provider.dart';
 
-import 'package:flutter_provider/screens/Admin/Garage/garage_page.dart';
 import 'package:flutter_provider/screens/Admin/Garage/theamDark_mode.dart';
-import 'package:flutter_provider/screens/Client/roboflow_screen.dart';
-import 'package:flutter_provider/screens/Owner/notifications/notifications_screen.dart';
 import 'package:flutter_provider/screens/Technician/AttendancePage.dart';
 import 'package:flutter_provider/screens/Technician/Home/home.dart';
 import 'package:flutter_provider/screens/Technician/SparePartsPage.dart';
 import 'package:flutter_provider/screens/Technician/reports/report.dart';
 import 'package:flutter_provider/screens/Technician/settings/AccountSettingsPage.dart';
 import 'package:flutter_provider/screens/Technician/settings/SettingsPage.dart';
-import 'package:flutter_provider/screens/auth/forgotPassword.dart';
 import 'package:flutter_provider/screens/auth/logIn.dart';
 import 'package:flutter_provider/screens/auth/signUp.dart';
 import 'package:flutter_provider/screens/auth/welcomePage.dart';
