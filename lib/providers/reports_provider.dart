@@ -21,7 +21,6 @@ class ReportsNotifier
 
   Future<void> fetchReports({required String userId}) async {
     try {
-      state = const AsyncValue.loading();
       final response = await http.get(
         Uri.parse('$_baseUrl/$userId'),
         headers: {

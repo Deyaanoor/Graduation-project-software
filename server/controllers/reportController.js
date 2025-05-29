@@ -1,61 +1,25 @@
-const connectDB = require('../config/db');
-const { ObjectId } = require('mongodb');
-const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
-const multerStorageCloudinary = require('multer-storage-cloudinary').CloudinaryStorage;
+const connectDB = require("../config/db");
+const { ObjectId } = require("mongodb");
+const multer = require("multer");
+const cloudinary = require("cloudinary").v2;
+const multerStorageCloudinary =
+  require("multer-storage-cloudinary").CloudinaryStorage;
 
 cloudinary.config({
   cloud_name: "dmqgqu7st",
   api_key: "757442912861293",
-  api_secret: "ifXxCdY2tdgnGG5y_55a_ZlDPKM"
+  api_secret: "ifXxCdY2tdgnGG5y_55a_ZlDPKM",
 });
-
 
 const storage = new multerStorageCloudinary({
   cloudinary: cloudinary,
   params: {
-    folder: 'reports',
-    allowed_formats: ['jpg', 'jpeg', 'png'],
+    folder: "reports",
+    allowed_formats: ["jpg", "jpeg", "png"],
   },
 });
 
 const upload = multer({ storage: storage });
-
-const getReports = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const db = await connectDB();
-    const reportsCollection = db.collection('reports');
-
-    const employee = await db.collection('employees').findOne({ _id: new ObjectId(userId) });
-    const owner = await db.collection('owners').findOne({ _id: new ObjectId(userId) });
-
-    let garage;
-    if (owner) {
-      garage = await db.collection('garages').findOne({ owner_id: owner._id });
-    } else if (employee) {
-      garage = await db.collection('garages').findOne({ _id: employee.garage_id });
-    } else {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    if (!garage) {
-      return res.status(404).json({ message: 'Garage not found for this user' });
-    }
-
-    const reports = await reportsCollection.find({ garageId: garage._id }).toArray();
-
-    res.status(200).json({
-      garageName: garage.name,
-      garagePhone:"234656668",
-      reports,
-    });
-  } catch (error) {
-    console.error("❌ Error fetching reports:", error);
-    res.status(500).json({ message: "An error occurred while fetching reports" });
-  }
-};
-
 
 // const getReports = async (req, res) => {
 //   try {
@@ -65,30 +29,77 @@ const getReports = async (req, res) => {
 
 //     const employee = await db.collection('employees').findOne({ _id: new ObjectId(userId) });
 //     const owner = await db.collection('owners').findOne({ _id: new ObjectId(userId) });
-    
-//     let garageId;
+
+//     let garage;
 //     if (owner) {
-//       const garage = await db.collection('garages').findOne({ owner_id: owner._id });
-//       garageId = garage ? garage._id : null;
+//       garage = await db.collection('garages').findOne({ owner_id: owner._id });
 //     } else if (employee) {
-//       const garage = await db.collection('garages').findOne({ _id: employee.garage_id }); 
-//       garageId = garage ? garage._id : null;
+//       garage = await db.collection('garages').findOne({ _id: employee.garage_id });
 //     } else {
 //       return res.status(404).json({ message: 'User not found' });
 //     }
 
-//     if (!garageId) {
+//     if (!garage) {
 //       return res.status(404).json({ message: 'Garage not found for this user' });
 //     }
 
-//     const reports = await reportsCollection.find({ garageId }).toArray();
+//     const reports = await reportsCollection.find({ garageId: garage._id }).toArray();
 
-//     res.status(200).json(reports);
+//     res.status(200).json({
+//       garageName: garage.name,
+//       garagePhone:"234656668",
+//       reports,
+//     });
 //   } catch (error) {
 //     console.error("❌ Error fetching reports:", error);
 //     res.status(500).json({ message: "An error occurred while fetching reports" });
 //   }
 // };
+
+const getReports = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const db = await connectDB();
+    const reportsCollection = db.collection("reports");
+
+    const employee = await db
+      .collection("employees")
+      .findOne({ _id: new ObjectId(userId) });
+    const owner = await db
+      .collection("owners")
+      .findOne({ _id: new ObjectId(userId) });
+
+    let garageId;
+    if (owner) {
+      const garage = await db
+        .collection("garages")
+        .findOne({ owner_id: owner._id });
+      garageId = garage ? garage._id : null;
+    } else if (employee) {
+      const garage = await db
+        .collection("garages")
+        .findOne({ _id: employee.garage_id });
+      garageId = garage ? garage._id : null;
+    } else {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!garageId) {
+      return res
+        .status(404)
+        .json({ message: "Garage not found for this user" });
+    }
+
+    const reports = await reportsCollection.find({ garageId }).toArray();
+
+    res.status(200).json(reports);
+  } catch (error) {
+    console.error("❌ Error fetching reports:", error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while fetching reports" });
+  }
+};
 
 // const getReportsToClient = async (req, res) => {
 //   try {
@@ -116,41 +127,62 @@ const getReports = async (req, res) => {
 //   }
 // };
 
-
 const getReportsToClient = async (req, res) => {
   try {
     const { id, name } = req.params;
 
     const db = await connectDB();
-    const reportsCollection = db.collection('reports');
+    const reportsCollection = db.collection("reports");
 
-    const reports = await reportsCollection.find({
-      garageId: new ObjectId(id),
-      owner: name
-    }).toArray();
+    const reports = await reportsCollection
+      .find({
+        garageId: new ObjectId(id),
+        owner: name,
+      })
+      .toArray();
 
     res.status(200).json(reports);
-
   } catch (error) {
     console.error("❌ Error fetching reports:", error);
-    res.status(500).json({ message: "An error occurred while fetching reports" });
+    res
+      .status(500)
+      .json({ message: "An error occurred while fetching reports" });
   }
 };
 const addReport = async (req, res) => {
   try {
-    const { owner, cost, plateNumber, date, issue, make, model, year, symptoms, repairDescription, usedParts, status, mechanicName, user_id } = req.body;
+    const {
+      owner,
+      cost,
+      plateNumber,
+      date,
+      issue,
+      make,
+      model,
+      year,
+      symptoms,
+      repairDescription,
+      usedParts,
+      status,
+      mechanicName,
+      user_id,
+    } = req.body;
 
     const db = await connectDB();
-    const employeesCollection = db.collection('employees');
-    const ownersCollection = db.collection('owners'); 
+    const employeesCollection = db.collection("employees");
+    const ownersCollection = db.collection("owners");
 
     let garageId;
 
-    const ownerDocument = await ownersCollection.findOne({ _id: new ObjectId(user_id) });
+    const ownerDocument = await ownersCollection.findOne({
+      _id: new ObjectId(user_id),
+    });
     if (ownerDocument) {
       garageId = ownerDocument.garage_id;
     } else {
-      const employee = await employeesCollection.findOne({ _id: new ObjectId(user_id) });
+      const employee = await employeesCollection.findOne({
+        _id: new ObjectId(user_id),
+      });
       if (employee) {
         garageId = employee.garage_id;
       } else {
@@ -170,13 +202,13 @@ const addReport = async (req, res) => {
       symptoms,
       repairDescription,
       usedParts,
-      imageUrls: req.files?.map(file => file.path) || [], // ✅ يقبل بدون صور
+      imageUrls: req.files?.map((file) => file.path) || [], // ✅ يقبل بدون صور
       status: "pending",
       mechanicName,
-      garageId 
+      garageId,
     };
 
-    const reportsCollection = db.collection('reports');
+    const reportsCollection = db.collection("reports");
     const result = await reportsCollection.insertOne(newReport);
 
     const fs = require("fs");
@@ -194,8 +226,8 @@ const addReport = async (req, res) => {
 
     res.status(201).json({
       message: "Report added successfully",
-      reportId: result.insertedId, 
-      data: newReport
+      reportId: result.insertedId,
+      data: newReport,
     });
   } catch (error) {
     console.error("Error adding report:", error);
@@ -203,15 +235,13 @@ const addReport = async (req, res) => {
   }
 };
 
-
-
 const getReportDetails = async (req, res) => {
   try {
     const { id } = req.params;
     const db = await connectDB();
 
-    const reportsCollection = db.collection('reports');
-    const garagesCollection = db.collection('garages');
+    const reportsCollection = db.collection("reports");
+    const garagesCollection = db.collection("garages");
 
     // 🧾 Step 1: Fetch the report
     const report = await reportsCollection.findOne({ _id: new ObjectId(id) });
@@ -223,7 +253,9 @@ const getReportDetails = async (req, res) => {
     // 🧰 Step 2: Fetch garage details using garageId
     let garageInfo = {};
     if (report.garageId) {
-      const garage = await garagesCollection.findOne({ _id: new ObjectId(report.garageId) });
+      const garage = await garagesCollection.findOne({
+        _id: new ObjectId(report.garageId),
+      });
       if (garage) {
         garageInfo = {
           garageName: garage.name || null,
@@ -242,11 +274,11 @@ const getReportDetails = async (req, res) => {
     res.status(200).json(fullReport);
   } catch (error) {
     console.error("❌ Error fetching report details:", error);
-    res.status(500).json({ message: "An error occurred while fetching report details" });
+    res
+      .status(500)
+      .json({ message: "An error occurred while fetching report details" });
   }
 };
-
-
 
 const updateReport = async (req, res) => {
   try {
@@ -268,10 +300,10 @@ const updateReport = async (req, res) => {
     } = req.body;
 
     const db = await connectDB();
-    const reportsCollection = db.collection('reports');
+    const reportsCollection = db.collection("reports");
 
     const report = await reportsCollection.findOne({ _id: new ObjectId(id) });
-console.log("report :",report);
+    console.log("report :", report);
     if (!report) {
       return res.status(404).json({ message: "Report not found" });
     }
@@ -287,14 +319,15 @@ console.log("report :",report);
     if (model !== undefined) updatedFields.model = model;
     if (year !== undefined) updatedFields.year = year;
     if (symptoms !== undefined) updatedFields.symptoms = symptoms;
-    if (repairDescription !== undefined) updatedFields.repairDescription = repairDescription;
+    if (repairDescription !== undefined)
+      updatedFields.repairDescription = repairDescription;
     if (usedParts !== undefined) updatedFields.usedParts = usedParts;
     if (status !== undefined) updatedFields.status = status;
     if (mechanicName !== undefined) updatedFields.mechanicName = mechanicName;
 
     // إذا فيه صور جديدة مرفوعة
     if (req.files && req.files.length > 0) {
-      updatedFields.imageUrls = req.files.map(file => file.path);
+      updatedFields.imageUrls = req.files.map((file) => file.path);
     }
 
     await reportsCollection.updateOne(
@@ -303,35 +336,39 @@ console.log("report :",report);
     );
 
     res.status(200).json({ message: "Report updated successfully" });
-
   } catch (error) {
     console.error("❌ Error updating report:", error);
-    res.status(500).json({ message: "An error occurred while updating the report" });
+    res
+      .status(500)
+      .json({ message: "An error occurred while updating the report" });
   }
 };
 
-const deleteReport=async (req,res)=>{
+const deleteReport = async (req, res) => {
+  try {
+    const db = await connectDB();
+    const reportsCollection = db.collection("reports");
 
-    try {
-      const db = await connectDB();
-      const reportsCollection = db.collection('reports');
-  
-      const result = await reportsCollection.deleteOne({ _id: new ObjectId(req.params.id) });
-  
-      if (result.deletedCount === 0) {
-        return res.status(404).json({ message: 'Report not found' });
-      }
-  
-      res.status(200).json({ message: 'Report deleted successfully' });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
+    const result = await reportsCollection.deleteOne({
+      _id: new ObjectId(req.params.id),
+    });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: "Report not found" });
     }
-  
+
+    res.status(200).json({ message: "Report deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
-
-
-
-
-
-module.exports = { getReports, getReportDetails, addReport, upload ,updateReport, deleteReport,getReportsToClient};
+module.exports = {
+  getReports,
+  getReportDetails,
+  addReport,
+  upload,
+  updateReport,
+  deleteReport,
+  getReportsToClient,
+};

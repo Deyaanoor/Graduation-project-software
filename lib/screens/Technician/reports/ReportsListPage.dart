@@ -28,22 +28,20 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final userId = ref.read(userIdProvider).value;
-      if (userId != null) {
-        ref.read(reportsProvider.notifier).fetchReports(userId: userId);
-      }
-    });
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final uid = ref.read(userIdProvider).value;
+    if (uid != null && uid.isNotEmpty) {
+      ref.read(reportsProvider.notifier).fetchReports(userId: uid);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final reportsAsync = ref.watch(reportsProvider);
     final userId = ref.watch(userIdProvider).value;
-
+    print("reportsAsync : $reportsAsync");
     final userInfo =
         userId != null ? ref.watch(getUserInfoProvider(userId)).value : null;
     final userRole =
