@@ -268,7 +268,8 @@ class _RegistrationRequestsState extends ConsumerState<RegistrationRequests> {
   }
 
   void _updateRequestStatus(String id, String status) async {
-    final url = Uri.parse('http://localhost:5000/request_register/$id/status');
+    final url = Uri.parse(
+        'https://graduation-project-software.onrender.com/request_register/$id/status');
 
     try {
       final response = await http.put(

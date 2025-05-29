@@ -8,7 +8,7 @@ final String apiUrl = '${dotenv.env['API_URL']}/users';
 
 final checkVerificationProvider =
     StreamProvider.family<bool, String>((ref, email) {
-  return Stream.periodic(const Duration(seconds: 5), (_) async {
+  return Stream.periodic(const Duration(seconds: 111111111111), (_) async {
     final response = await Dio()
         .get('$apiUrl/check-verification', queryParameters: {'email': email});
 

@@ -44,8 +44,7 @@ Future<void> main() async {
     await Firebase.initializeApp();
   }
 
-  await dotenv.load();
-
+  await dotenv.load(fileName: "assets/.env");
   // Initialize FCM based on platform
   if (kIsWeb) {
     await _setupWebFCM();
