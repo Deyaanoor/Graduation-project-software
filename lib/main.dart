@@ -1,4 +1,4 @@
-import 'dart:html' as html;
+// import 'dart:html' as html;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/screens/Admin/Garage/apply_Request.dart';
@@ -129,37 +129,37 @@ Future<void> main() async {
 }
 
 Future<void> setupWebFCM() async {
-  final messaging = FirebaseMessaging.instance;
+  // final messaging = FirebaseMessaging.instance;
 
-  if (html.Notification.supported) {
-    final permission = await html.Notification.requestPermission();
-    print('🔔 html.Notification permission: $permission');
-    if (permission != 'granted') return;
-  }
+  // if (html.Notification.supported) {
+  //   final permission = await html.Notification.requestPermission();
+  //   print('🔔 html.Notification permission: $permission');
+  //   if (permission != 'granted') return;
+  // }
 
-  try {
-    final registration = await html.window.navigator.serviceWorker
-        ?.register('/firebase-messaging-sw.js');
-    print('✅ تم تسجيل Service Worker بنجاح: $registration');
-  } catch (e) {
-    print('❌ فشل تسجيل Service Worker: $e');
-  }
+  // try {
+  //   final registration = await html.window.navigator.serviceWorker
+  //       ?.register('/firebase-messaging-sw.js');
+  //   print('✅ تم تسجيل Service Worker بنجاح: $registration');
+  // } catch (e) {
+  //   print('❌ فشل تسجيل Service Worker: $e');
+  // }
 
-  NotificationSettings settings = await messaging.requestPermission();
-  print('🔐 Web FCM permission: ${settings.authorizationStatus}');
+  // NotificationSettings settings = await messaging.requestPermission();
+  // print('🔐 Web FCM permission: ${settings.authorizationStatus}');
 
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    print('📩 إشعار Web (Foreground): ${message.notification?.title}');
-    if (html.Notification.permission == 'granted' &&
-        message.notification != null) {
-      html.Notification(
-        message.notification!.title ?? 'إشعار جديد',
-        body: message.notification!.body ?? '',
-        icon: message.notification!.android?.imageUrl ??
-            '../assets/icon/app_icon.png',
-      );
-    }
-  });
+  // FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+  //   print('📩 إشعار Web (Foreground): ${message.notification?.title}');
+  //   if (html.Notification.permission == 'granted' &&
+  //       message.notification != null) {
+  //     html.Notification(
+  //       message.notification!.title ?? 'إشعار جديد',
+  //       body: message.notification!.body ?? '',
+  //       icon: message.notification!.android?.imageUrl ??
+  //           '../assets/icon/app_icon.png',
+  //     );
+  //   }
+  // });
 }
 
 void setupMobileFCM() {

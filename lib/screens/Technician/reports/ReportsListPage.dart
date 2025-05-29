@@ -20,23 +20,14 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
   int? _sortColumnIndex;
   bool _sortAscending = true;
 
-  void _loadData() {
-    final userId = ref.read(userIdProvider).value;
-    if (userId != null) {
-      ref.read(reportsProvider.notifier).fetchReports(userId: userId);
-    }
-  }
-
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final userId = ref.read(userIdProvider).value;
-      if (userId != null) {
-        ref.read(reportsProvider.notifier).fetchReports(userId: userId);
-      }
-    });
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final uid = ref.read(userIdProvider).value;
+    if (uid != null && uid.isNotEmpty) {
+      ref.read(reportsProvider.notifier).fetchReports(userId: uid);
+    }
   }
 
   @override
