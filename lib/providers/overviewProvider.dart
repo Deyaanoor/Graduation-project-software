@@ -46,7 +46,16 @@ final employeeSalaryProvider =
   );
   if (response.statusCode == 200) {
     final data = json.decode(response.body);
-    return data['totalSalary'];
+    final totalSalary = data['totalSalary'];
+    if (totalSalary == null) {
+      return 0.0;
+    }
+    // This line ensures the return type is always double
+    return (totalSalary is int)
+        ? totalSalary.toDouble()
+        : (totalSalary is double)
+            ? totalSalary
+            : double.tryParse(totalSalary.toString()) ?? 0.0;
   } else {
     throw Exception('Failed to load employee salary');
   }
@@ -62,7 +71,16 @@ final monthlySummaryProvider =
   );
   if (response.statusCode == 200) {
     final data = json.decode(response.body);
-    return data['netProfit'];
+    final netProfit = data['netProfit'];
+    if (netProfit == null) {
+      return 0.0;
+    }
+    // This line ensures the return type is always double
+    return (netProfit is int)
+        ? netProfit.toDouble()
+        : (netProfit is double)
+            ? netProfit
+            : double.tryParse(netProfit.toString()) ?? 0.0;
   } else {
     throw Exception('Failed to load monthly summary');
   }
