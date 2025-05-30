@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/screens/auth/Title_Project.dart';
+import 'package:flutter_provider/screens/auth/signUp.dart';
 import 'package:flutter_provider/widgets/custom_button.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -150,7 +151,9 @@ class WelcomePage extends ConsumerWidget {
               CustomButton(
                 text: 'Register now',
                 onPressed: () {
-                  Navigator.pushNamed(context, "/signup");
+                  MaterialPageRoute(
+                    builder: (context) => SignUpPage(),
+                  );
                 },
                 backgroundColor:
                     Color(0xFFFB8C00).withOpacity(0.8), // لون برتقالي شفاف

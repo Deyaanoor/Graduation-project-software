@@ -98,7 +98,7 @@ class MyApp extends ConsumerWidget {
       routes: {
         '/welcome': (context) => const WelcomePage(),
         '/login': (context) => LoginPage(),
-        '/signup': (context) => SignUpPage(),
+        "/signup": (context) => SignUpPage(),
         '/Apply_Request': (context) => ApplyRequestPage(),
         '/home': (context) => Home(),
         '/report': (context) => ReportPage(),

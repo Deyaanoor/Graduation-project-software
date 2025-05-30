@@ -516,7 +516,7 @@ class _ReportDetailsPageState extends ConsumerState<ReportDetailsPage> {
     // الانتقال إلى صفحة ReportPage (state = 5)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Navigator.pop(context);
-      ref.read(selectedIndexProvider.notifier).state = 5;
+      ref.read(selectedIndexProvider.notifier).state = 3;
     });
   }
 
