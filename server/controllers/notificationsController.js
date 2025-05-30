@@ -177,6 +177,8 @@ const createNotification = async (req, res) => {
 
     console.log("📱 Tokens:", tokens);
 
+    console.log("Server local time:", new Date().toString());
+    console.log("Server UTC time:", new Date().toUTCString());
     if (tokens.length > 0) {
       const response = await admin.messaging().sendEachForMulticast({
         tokens,
