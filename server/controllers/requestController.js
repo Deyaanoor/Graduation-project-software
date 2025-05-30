@@ -24,7 +24,7 @@ const addRequest = async (req, res) => {
     if (!garage) return res.status(404).json({ message: "Garage not found" });
 
     const newRequest = {
-      userId: new ObjectId(userId),
+      userId: userId,
       userName: user.name,
       garageId: garageId,
       location,
