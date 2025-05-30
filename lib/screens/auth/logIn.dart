@@ -368,7 +368,7 @@ class LoginPage extends ConsumerWidget {
         print("rooooole $role");
 
         ref.invalidate(userIdProvider);
-        if (role == "") {
+        if (role == null || role == "") {
           Navigator.pushNamed(context, '/Apply_Request');
         } else {
           Navigator.pushNamed(context, '/home');

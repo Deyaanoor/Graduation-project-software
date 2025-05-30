@@ -13,21 +13,32 @@ import 'package:flutter_provider/widgets/bezierContainer.dart';
 import 'package:flutter_provider/screens/auth/divider_widget.dart';
 import 'package:latlong2/latlong.dart';
 
-class ApplyRequestPage extends ConsumerWidget {
+class ApplyRequestPage extends ConsumerStatefulWidget {
   const ApplyRequestPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ApplyRequestPage> createState() => _ApplyRequestPageState();
+}
+
+class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
+  final TextEditingController garageNameController = TextEditingController();
+  final TextEditingController garageLocationController =
+      TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  String selectedSubscription = 'trial';
+
+  @override
+  void dispose() {
+    garageNameController.dispose();
+    garageLocationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
-
-    final TextEditingController garageNameController = TextEditingController();
-    final TextEditingController garageLocationController =
-        TextEditingController();
-    String selectedSubscription = 'trial'; // Default selection
-    final userId = ref.read(userIdProvider).value; // Get user ID from provider
-
-    final _formKey = GlobalKey<FormState>();
+    final userId = ref.read(userIdProvider).value;
 
     return Scaffold(
       body: LayoutBuilder(
@@ -110,7 +121,7 @@ class ApplyRequestPage extends ConsumerWidget {
 
                           if (result != null) {
                             garageLocationController.text =
-                                '${result.latitude}, ${result.longitude}';
+                                '{"latitude":${result.latitude},"longitude":${result.longitude}}';
                           }
                         },
                       ),
@@ -386,28 +397,20 @@ class ApplyRequestPage extends ConsumerWidget {
     }
 
     // افتح نافذة الدفع هنا
-    showDialog(
-      context: context,
-      builder: (context) => PaymentDialog(
-        onPaymentConfirmed: (paymentData) async {
-          Navigator.of(context).pop(); // إغلاق dialog الدفع
-          final garageData = {
-            'garageName': garageNameController.text,
-            'garageLocation': garageLocationController.text,
-            'subscriptionType': subscriptionType,
-            'user_id': userId,
-            'paymentData': paymentData, // بيانات الدفع المجمعة
-          };
-          try {
-            await ref.read(applyGarageProvider(garageData).future);
-            CustomSnackBar.showSuccessSnackBar(
-                context, "Application submitted successfully.");
-          } catch (e) {
-            CustomSnackBar.showErrorSnackBar(
-                context, "Application failed: ${e.toString()}");
-          }
-        },
-      ),
-    );
+
+    final garageData = {
+      'garageName': garageNameController.text,
+      'garageLocation': garageLocationController.text,
+      'subscriptionType': subscriptionType,
+      'user_id': userId,
+    };
+    try {
+      ref.read(applyGarageProvider(garageData).future);
+      CustomSnackBar.showSuccessSnackBar(
+          context, "Application submitted successfully.");
+    } catch (e) {
+      CustomSnackBar.showErrorSnackBar(
+          context, "Application failed: ${e.toString()}");
+    }
   }
 }
