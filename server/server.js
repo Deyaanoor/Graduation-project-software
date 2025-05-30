@@ -14,6 +14,7 @@ const clientRoutes = require("./routes/clientRouter");
 const requestRoutes = require("./routes/requestRouter");
 const request_register = require("./routes/applyRequestRoutes");
 dotenv.config({ path: "../assets/.env" });
+console.log("Server time:", new Date().toISOString());
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -41,4 +42,3 @@ app.use("/requests", requestRoutes);
 app.use("/request_register", request_register);
 
 app.listen(port, () => console.log(`🚀 Server running on port ${port}`));
-
