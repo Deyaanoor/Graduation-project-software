@@ -5,6 +5,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/garage_provider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/providers/requestProvider.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,10 +39,12 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
   @override
   Widget build(BuildContext context) {
     final request = ref.watch(selectedRequestProvider);
+    final lang = ref.watch(languageProvider);
 
     if (request == null) {
-      return const Scaffold(
-        body: Center(child: Text('لا يوجد تفاصيل للطلب')),
+      return Scaffold(
+        body: Center(
+            child: Text(lang['noRequestDetails'] ?? 'لا يوجد تفاصيل للطلب')),
       );
     }
 
@@ -53,20 +56,22 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
     return garageAsync.when(
       data: (garageData) {
         return Scaffold(
-          appBar: isMobile ? _buildAppBar() : null,
-          body: _buildBody(context, garageData, request, ref),
+          appBar: isMobile ? _buildAppBar(lang) : null,
+          body: _buildBody(context, garageData, request, ref, lang),
         );
       },
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (err, _) =>
-          Scaffold(body: Center(child: Text('فشل تحميل بيانات الكراج'))),
+      error: (err, _) => Scaffold(
+          body: Center(
+              child: Text(
+                  lang['failedToLoadGarage'] ?? 'فشل تحميل بيانات الكراج'))),
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(Map<String, dynamic> lang) {
     return AppBar(
-      title: const Text('تفاصيل الطلب'),
+      title: Text(lang['requestDetails'] ?? 'تفاصيل الطلب'),
       centerTitle: true,
       flexibleSpace: Container(
         decoration: BoxDecoration(
@@ -79,7 +84,7 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
   }
 
   Widget _buildBody(BuildContext context, Map<String, dynamic> garageData,
-      Map<String, dynamic> request, WidgetRef ref) {
+      Map<String, dynamic> request, WidgetRef ref, Map<String, dynamic> lang) {
     final isDesktop = ResponsiveHelper.isDesktop(context);
 
     return Container(
@@ -90,13 +95,16 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
             colors: [Colors.blue.shade50, Colors.white]),
       ),
       child: isDesktop
-          ? _buildDesktopLayout(request, garageData, ref)
-          : _buildMobileLayout(request, garageData, ref),
+          ? _buildDesktopLayout(request, garageData, ref, lang)
+          : _buildMobileLayout(request, garageData, ref, lang),
     );
   }
 
-  Widget _buildDesktopLayout(Map<String, dynamic> request,
-      Map<String, dynamic> garageData, WidgetRef ref) {
+  Widget _buildDesktopLayout(
+      Map<String, dynamic> request,
+      Map<String, dynamic> garageData,
+      WidgetRef ref,
+      Map<String, dynamic> lang) {
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Row(
@@ -109,14 +117,18 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
             ),
           ),
           const SizedBox(width: 20),
-          Expanded(flex: 1, child: _buildMessage(request['_id'], true, ref)),
+          Expanded(
+              flex: 1, child: _buildMessage(request['_id'], true, ref, lang)),
         ],
       ),
     );
   }
 
-  Widget _buildMobileLayout(Map<String, dynamic> request,
-      Map<String, dynamic> garageData, WidgetRef ref) {
+  Widget _buildMobileLayout(
+      Map<String, dynamic> request,
+      Map<String, dynamic> garageData,
+      WidgetRef ref,
+      Map<String, dynamic> lang) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -132,7 +144,9 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
             });
           },
           icon: Icon(_showMessages ? Icons.visibility_off : Icons.visibility),
-          label: Text(_showMessages ? 'إخفاء الرسائل' : 'عرض الرسائل'),
+          label: Text(_showMessages
+              ? (lang['hideMessages'] ?? 'إخفاء الرسائل')
+              : (lang['showMessages'] ?? 'عرض الرسائل')),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.orange,
             shape: RoundedRectangleBorder(
@@ -142,7 +156,7 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
           ),
         ),
         const SizedBox(height: 12),
-        if (_showMessages) _buildMessage(request['_id'], false, ref),
+        if (_showMessages) _buildMessage(request['_id'], false, ref, lang),
       ],
     );
   }
@@ -207,7 +221,8 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
     );
   }
 
-  Widget _buildMessage(String requestId, bool isDesktop, WidgetRef ref) {
+  Widget _buildMessage(String requestId, bool isDesktop, WidgetRef ref,
+      Map<String, dynamic> lang) {
     final userId = ref.watch(userIdProvider).value;
     final userInfo =
         userId != null ? ref.watch(getUserInfoProvider(userId)).value : null;
@@ -219,7 +234,8 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
     }
 
     if (messagesAsync.hasError) {
-      return Center(child: Text('خطأ في جلب الرسائل'));
+      return Center(
+          child: Text(lang['errorFetchingMessages'] ?? 'خطأ في جلب الرسائل'));
     }
 
     final messages = messagesAsync.value ?? [];
@@ -242,7 +258,7 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: Text(
-                          'تفاصيل الطلب',
+                          lang['requestDetails'] ?? 'تفاصيل الطلب',
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -310,7 +326,7 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
                     child: TextField(
                       controller: _controller,
                       decoration: InputDecoration(
-                        hintText: 'اكتب ردك هنا...',
+                        hintText: lang['writeReplyHere'] ?? 'اكتب ردك هنا...',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -323,6 +339,7 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
                   const SizedBox(width: 8),
                   IconButton(
                     icon: Icon(Icons.send, color: Colors.orange),
+                    tooltip: lang['send'] ?? 'إرسال',
                     onPressed: () async {
                       final messageText = _controller.text.trim();
                       if (messageText.isEmpty) return;

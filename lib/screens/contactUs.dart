@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/contactUs.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ContactUsPage extends ConsumerStatefulWidget {
@@ -13,31 +14,25 @@ class ContactUsPage extends ConsumerStatefulWidget {
 class _ContactUsPageState extends ConsumerState<ContactUsPage> {
   final _formKey = GlobalKey<FormState>();
 
-  String issueType = 'تطبيق لا يعمل';
-  final List<String> issueTypes = [
-    'تطبيق لا يعمل',
-    'مشكلة في الدفع',
-    'خطأ في البيانات',
-    'اقتراح ميزة جديدة',
-    'أخرى'
-  ];
+  String? issueType; // اجعلها nullable
 
   final TextEditingController messageController = TextEditingController();
 
   void sendMessage() async {
+    final lang = ref.read(languageProvider);
     if (_formKey.currentState!.validate()) {
       final userId = ref.watch(userIdProvider).value;
 
       try {
         await ref.read(addContactMessageProvider)(
           userId: userId ?? '',
-          type: issueType,
+          type: issueType ?? '',
           message: messageController.text,
         );
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('تم إرسال المشكلة بنجاح!'),
+            content: Text(lang['messageSent'] ?? 'تم إرسال المشكلة بنجاح!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -45,7 +40,7 @@ class _ContactUsPageState extends ConsumerState<ContactUsPage> {
       } catch (error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('فشل في إرسال المشكلة'),
+            content: Text(lang['messageFailed'] ?? 'فشل في إرسال المشكلة'),
             backgroundColor: Colors.red,
           ),
         );
@@ -55,10 +50,27 @@ class _ContactUsPageState extends ConsumerState<ContactUsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(languageProvider);
+
+    final List<String> issueTypes = [
+      lang['appNotWorking'] ?? 'تطبيق لا يعمل',
+      lang['paymentIssue'] ?? 'مشكلة في الدفع',
+      lang['dataError'] ?? 'خطأ في البيانات',
+      lang['featureSuggestion'] ?? 'اقتراح ميزة جديدة',
+      lang['other'] ?? 'أخرى',
+    ];
+
+    // الحل: تأكد أن القيمة دائماً موجودة في القائمة
+    if (issueType == null || !issueTypes.contains(issueType)) {
+      issueType = issueTypes.first;
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("تواصل معنا",
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          lang['contactUs'] ?? "تواصل معنا",
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         backgroundColor: Colors.orange.shade600,
       ),
@@ -71,7 +83,7 @@ class _ContactUsPageState extends ConsumerState<ContactUsPage> {
               const SizedBox(height: 15),
               DropdownButtonFormField<String>(
                 decoration: InputDecoration(
-                  labelText: "نوع المشكلة",
+                  labelText: lang['issueType'] ?? "نوع المشكلة",
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15)),
                 ),
@@ -89,14 +101,15 @@ class _ContactUsPageState extends ConsumerState<ContactUsPage> {
                 controller: messageController,
                 maxLines: 5,
                 decoration: InputDecoration(
-                  labelText: "وصف المشكلة",
+                  labelText: lang['issueDescription'] ?? "وصف المشكلة",
                   prefixIcon: const Icon(Icons.message),
                   alignLabelWithHint: true,
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15)),
                 ),
-                validator: (value) =>
-                    value!.isEmpty ? 'يرجى كتابة الرسالة' : null,
+                validator: (value) => value!.isEmpty
+                    ? (lang['enterMessage'] ?? 'يرجى كتابة الرسالة')
+                    : null,
               ),
               const SizedBox(height: 25),
               ElevatedButton.icon(
@@ -109,7 +122,8 @@ class _ContactUsPageState extends ConsumerState<ContactUsPage> {
                       borderRadius: BorderRadius.circular(12)),
                 ),
                 icon: const Icon(Icons.send),
-                label: const Text("إرسال", style: TextStyle(fontSize: 18)),
+                label: Text(lang['send'] ?? "إرسال",
+                    style: const TextStyle(fontSize: 18)),
               ),
             ],
           ),

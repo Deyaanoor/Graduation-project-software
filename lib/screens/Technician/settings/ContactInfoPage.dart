@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/garage_provider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +13,7 @@ class ContactInfoPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final userId = ref.watch(userIdProvider).value;
     final garageInfoAsync = ref.watch(garageInfoByUserIdProvider(userId!));
+    final lang = ref.watch(languageProvider);
 
     final bool isMobile = ResponsiveHelper.isMobile(context);
     final bool isDesktop = ResponsiveHelper.isDesktop(context);
@@ -19,7 +21,7 @@ class ContactInfoPage extends ConsumerWidget {
     return Scaffold(
       appBar: isMobile
           ? AppBar(
-              title: Text('معلومات الاتصال',
+              title: Text(lang['infoContactUs'] ?? 'معلومات التواصل',
                   style: TextStyle(
                       color: Colors.white, fontWeight: FontWeight.bold)),
               centerTitle: true,
@@ -29,71 +31,84 @@ class ContactInfoPage extends ConsumerWidget {
           : null,
       body: garageInfoAsync.when(
         loading: () => Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('حدث خطأ: $error')),
+        error: (error, _) => Center(
+            child: Text('${lang['errorOccurred'] ?? 'حدث خطأ'}: $error')),
         data: (garageInfo) {
-          final String email = garageInfo['ownerEmail'] ?? 'غير متوفر';
-          final String phone = 'غير متوفر';
+          print('garageInfo: $garageInfo');
+
+          final ownerInfo = garageInfo['ownerInfo'];
+
+          final String email = ownerInfo != null && ownerInfo['email'] != null
+              ? ownerInfo['email']
+              : (lang['notAvailable'] ?? 'غير متوفر');
+
+          final String phone =
+              ownerInfo != null && ownerInfo['phoneNumber'] != null
+                  ? ownerInfo['phoneNumber']
+                  : (lang['notAvailable'] ?? 'غير متوفر');
+
           final Map<String, dynamic> address =
               jsonDecode(garageInfo['location']);
-
-          print('Address: $address');
 
           final children = [
             _buildContactCard(
               context,
+              lang: lang,
               icon: Icons.email_rounded,
-              title: 'البريد الإلكتروني',
+              title: lang['email'] ?? 'Email',
               subtitle: email,
               iconColor: Colors.blue.shade800,
               actions: [
                 _buildActionButton(
                   icon: Icons.content_copy_rounded,
-                  onPressed: () => _copyToClipboard(context, email),
+                  onPressed: () => _copyToClipboard(context, email, lang),
                 ),
               ],
-              onTap: () => _launchEmail(context, email),
+              onTap: () => _launchEmail(context, email, lang),
               isMobile: isMobile,
             ),
             _buildContactCard(
               context,
+              lang: lang,
               icon: Icons.phone_rounded,
-              title: 'رقم الهاتف',
+              title: lang['phone'] ?? 'Phone',
               subtitle: phone,
               iconColor: Colors.green.shade800,
               actions: [
                 _buildActionButton(
                   icon: Icons.content_copy_rounded,
-                  onPressed: () => _copyToClipboard(context, phone),
+                  onPressed: () => _copyToClipboard(context, phone, lang),
                 ),
                 _buildActionButton(
                   icon: Icons.call_rounded,
-                  onPressed: () => _launchPhone(context, phone),
+                  onPressed: () => _launchPhone(context, phone, lang),
                 ),
                 _buildActionButton(
                   icon: Icons.sms_rounded,
-                  onPressed: () => _launchSMS(context, phone),
+                  onPressed: () => _launchSMS(context, phone, lang),
                 ),
               ],
-              onTap: () => _launchPhone(context, phone),
+              onTap: () => _launchPhone(context, phone, lang),
               isMobile: isMobile,
             ),
             _buildContactCard(
               context,
+              lang: lang,
               icon: Icons.location_on_rounded,
-              title: 'العنوان',
-              subtitle: 'العنوان',
+              title: lang['map'] ?? 'Map',
+              subtitle: lang['location'] ?? 'location',
               iconColor: Colors.purple.shade800,
               actions: [
                 _buildActionButton(
                   icon: Icons.content_copy_rounded,
-                  onPressed: () => {},
+                  onPressed: () {},
                 ),
                 _buildActionButton(
                   icon: Icons.map_rounded,
-                  onPressed: () => _launchMaps(context, address),
+                  onPressed: () => _launchMaps(context, address, lang),
                 ),
               ],
-              onTap: () => _launchMaps(context, address),
+              onTap: () => _launchMaps(context, address, lang),
               isMobile: isMobile,
             ),
           ];
@@ -134,6 +149,7 @@ class ContactInfoPage extends ConsumerWidget {
 
   Widget _buildContactCard(
     BuildContext context, {
+    required Map<String, dynamic> lang,
     required IconData icon,
     required String title,
     required String subtitle,
@@ -142,9 +158,12 @@ class ContactInfoPage extends ConsumerWidget {
     required VoidCallback onTap,
     required bool isMobile,
   }) {
+    final theme = Theme.of(context);
+
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      color: theme.cardColor,
       child: InkWell(
         borderRadius: BorderRadius.circular(15),
         onTap: onTap,
@@ -157,7 +176,7 @@ class ContactInfoPage extends ConsumerWidget {
               Container(
                 padding: EdgeInsets.all(isMobile ? 12 : 16),
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.1),
+                  color: iconColor.withOpacity(0.12),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: iconColor, size: isMobile ? 28 : 32),
@@ -167,18 +186,23 @@ class ContactInfoPage extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title,
-                        style: TextStyle(
-                          fontSize: isMobile ? 16 : 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade800,
-                        )),
+                    Text(
+                      title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: isMobile ? 16 : 20,
+                        color: theme.textTheme.titleMedium?.color,
+                      ),
+                    ),
                     SizedBox(height: 5),
-                    Text(subtitle,
-                        style: TextStyle(
-                          fontSize: isMobile ? 14 : 18,
-                          color: Colors.grey.shade600,
-                        )),
+                    Text(
+                      subtitle,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontSize: isMobile ? 14 : 18,
+                        color:
+                            theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -200,7 +224,8 @@ class ContactInfoPage extends ConsumerWidget {
     );
   }
 
-  void _copyToClipboard(BuildContext context, String text) {
+  void _copyToClipboard(
+      BuildContext context, String text, Map<String, dynamic> lang) {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -211,7 +236,8 @@ class ContactInfoPage extends ConsumerWidget {
           children: [
             Icon(Icons.check_circle, color: Colors.white, size: 24),
             SizedBox(width: 10),
-            Text('تم النسخ إلى الحافظة', style: TextStyle(color: Colors.white)),
+            Text(lang['copiedToClipboard'] ?? 'تم النسخ إلى الحافظة',
+                style: TextStyle(color: Colors.white)),
           ],
         ),
         duration: Duration(seconds: 2),
@@ -219,9 +245,11 @@ class ContactInfoPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _launchPhone(BuildContext context, String phone) async {
+  Future<void> _launchPhone(
+      BuildContext context, String phone, Map<String, dynamic> lang) async {
     if (!_isValidPhone(phone)) {
-      _showErrorSnackBar(context, 'رقم الهاتف غير صالح');
+      _showErrorSnackBar(
+          context, lang['invalidPhone'] ?? 'رقم الهاتف غير صالح');
       return;
     }
 
@@ -231,16 +259,19 @@ class ContactInfoPage extends ConsumerWidget {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.platformDefault);
       } else {
-        _showAlternativeOptions(context, phone);
+        _showAlternativeOptions(context, phone, lang);
       }
     } catch (e) {
-      _showErrorSnackBar(context, 'خطأ في الاتصال: ${e.toString()}');
+      _showErrorSnackBar(
+          context, '${lang['callError'] ?? 'خطأ في الاتصال'}: ${e.toString()}');
     }
   }
 
-  Future<void> _launchSMS(BuildContext context, String phone) async {
+  Future<void> _launchSMS(
+      BuildContext context, String phone, Map<String, dynamic> lang) async {
     if (!_isValidPhone(phone)) {
-      _showErrorSnackBar(context, 'رقم الهاتف غير صالح');
+      _showErrorSnackBar(
+          context, lang['invalidPhone'] ?? 'رقم الهاتف غير صالح');
       return;
     }
 
@@ -250,14 +281,17 @@ class ContactInfoPage extends ConsumerWidget {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
       } else {
-        _showErrorSnackBar(context, 'لا يوجد تطبيق رسائل مثبت على الجهاز');
+        _showErrorSnackBar(
+            context, lang['noSmsApp'] ?? 'لا يوجد تطبيق رسائل مثبت على الجهاز');
       }
     } catch (e) {
-      _showErrorSnackBar(context, 'خطأ في فتح الرسائل: ${e.toString()}');
+      _showErrorSnackBar(context,
+          '${lang['smsError'] ?? 'خطأ في فتح الرسائل'}: ${e.toString()}');
     }
   }
 
-  Future<void> _launchMaps(BuildContext context, dynamic location) async {
+  Future<void> _launchMaps(
+      BuildContext context, dynamic location, Map<String, dynamic> lang) async {
     try {
       Uri uri;
 
@@ -270,61 +304,74 @@ class ContactInfoPage extends ConsumerWidget {
         final longitude = location['longitude'];
 
         if (latitude == null || longitude == null) {
-          _showErrorSnackBar(context, 'الإحداثيات غير متوفرة');
+          _showErrorSnackBar(context,
+              lang['coordinatesNotAvailable'] ?? 'الإحداثيات غير متوفرة');
           return;
         }
 
         uri = Uri.parse(
             'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude&hl=ar');
       } else {
-        _showErrorSnackBar(context, 'تنسيق الموقع غير مدعوم');
+        _showErrorSnackBar(context,
+            lang['unsupportedLocationFormat'] ?? 'تنسيق الموقع غير مدعوم');
         return;
       }
 
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
       } else {
-        _showErrorSnackBar(context, 'تعذر فتح تطبيق الخرائط');
+        _showErrorSnackBar(
+            context, lang['cantOpenMaps'] ?? 'تعذر فتح تطبيق الخرائط');
       }
     } catch (e) {
-      _showErrorSnackBar(context, 'خطأ في فتح الخرائط: ${e.toString()}');
+      _showErrorSnackBar(context,
+          '${lang['mapsError'] ?? 'خطأ في فتح الخرائط'}: ${e.toString()}');
     }
   }
 
-  Future<void> _launchEmail(BuildContext context, String email) async {
+  Future<void> _launchEmail(
+      BuildContext context, String email, Map<String, dynamic> lang) async {
     if (!_isValidEmail(email)) {
-      _showErrorSnackBar(context, 'بريد إلكتروني غير صالح');
+      _showErrorSnackBar(
+          context, lang['invalidEmail'] ?? 'بريد إلكتروني غير صالح');
       return;
     }
 
-    final Uri uri = Uri.parse('mailto:$email');
+    final Uri uri = Uri(
+      scheme: 'mailto',
+      path: email,
+    );
 
     try {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
       } else {
-        _showErrorSnackBar(context, 'يرجى تثبيت تطبيق بريد إلكتروني مثل Gmail');
+        _showErrorSnackBar(
+            context, lang['cantOpenEmail'] ?? 'تعذر فتح تطبيق البريد');
       }
     } catch (e) {
-      _showErrorSnackBar(context, 'خطأ في فتح البريد: ${e.toString()}');
+      _showErrorSnackBar(context,
+          '${lang['emailError'] ?? 'خطأ في فتح البريد'}: ${e.toString()}');
     }
   }
 
-  void _showAlternativeOptions(BuildContext context, String phone) {
+  void _showAlternativeOptions(
+      BuildContext context, String phone, Map<String, dynamic> lang) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('اختر طريقة الاتصال'),
-        content: Text('لم يتم العثور على تطبيق اتصال افتراضي'),
+        title: Text(lang['chooseContactMethod'] ?? 'اختر طريقة الاتصال'),
+        content: Text(
+            lang['noDefaultDialer'] ?? 'لم يتم العثور على تطبيق اتصال افتراضي'),
         actions: [
           TextButton(
-            child: Text('فتح متجر التطبيقات'),
-            onPressed: () => _launchAppStore(context),
+            child: Text(lang['openAppStore'] ?? 'فتح متجر التطبيقات'),
+            onPressed: () => _launchAppStore(context, lang),
           ),
           TextButton(
-            child: Text('نسخ الرقم'),
+            child: Text(lang['copyNumber'] ?? 'نسخ الرقم'),
             onPressed: () {
-              _copyToClipboard(context, phone);
+              _copyToClipboard(context, phone, lang);
               Navigator.pop(context);
             },
           ),
@@ -333,7 +380,8 @@ class ContactInfoPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _launchAppStore(BuildContext context) async {
+  Future<void> _launchAppStore(
+      BuildContext context, Map<String, dynamic> lang) async {
     const String appStoreUrl = 'market://details?id=com.google.android.dialer';
     final Uri uri = Uri.parse(appStoreUrl);
 
@@ -341,19 +389,23 @@ class ContactInfoPage extends ConsumerWidget {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
       } else {
-        _showErrorSnackBar(context, 'تعذر فتح متجر التطبيقات');
+        _showErrorSnackBar(
+            context, lang['cantOpenStore'] ?? 'تعذر فتح متجر التطبيقات');
       }
     } catch (e) {
-      _showErrorSnackBar(context, 'خطأ في فتح المتجر: ${e.toString()}');
+      _showErrorSnackBar(context,
+          '${lang['storeError'] ?? 'خطأ في فتح المتجر'}: ${e.toString()}');
     }
   }
 
-  bool _isValidPhone(String phone) {
-    return RegExp(r'^[+0-9]{8,15}$').hasMatch(phone);
+  bool _isValidEmail(String email) {
+    final emailRegex = RegExp(r'^[\w\.-]+@[\w\.-]+\.\w+$');
+    return emailRegex.hasMatch(email);
   }
 
-  bool _isValidEmail(String email) {
-    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  bool _isValidPhone(String phone) {
+    final regex = RegExp(r'^\+?\d{6,15}$'); // يقبل أرقام دولية ومحلية
+    return regex.hasMatch(phone);
   }
 
   void _showErrorSnackBar(BuildContext context, String message) {

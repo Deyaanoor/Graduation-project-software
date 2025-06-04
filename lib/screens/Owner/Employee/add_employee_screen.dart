@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/employeeProvider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
+import 'package:flutter_provider/providers/overviewProvider.dart';
 import 'package:flutter_provider/screens/Owner/Employee/employee_screen.dart';
 import 'package:flutter_provider/widgets/custom_text_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,6 +45,8 @@ class _AddEmployeeScreenState extends ConsumerState<AddEmployeeScreen> {
     try {
       await ref.read(addEmployeeProvider)(newEmployee, userId!);
       ref.invalidate(employeesProvider(userId));
+      ref.invalidate(employeeCountProvider(userId));
+      ref.invalidate(employeeSalaryProvider(userId));
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("✅ تمت إضافة الموظف بنجاح")),
       );
@@ -57,9 +61,11 @@ class _AddEmployeeScreenState extends ConsumerState<AddEmployeeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(languageProvider);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('إضافة موظف'),
+        title: Text(lang['addEmployee'] ?? 'إضافة موظف'),
         backgroundColor: Colors.orange,
       ),
       body: Padding(
@@ -69,44 +75,47 @@ class _AddEmployeeScreenState extends ConsumerState<AddEmployeeScreen> {
           child: ListView(
             children: [
               CustomTextField(
-                label: 'الاسم',
+                label: lang['name'] ?? 'الاسم',
                 controller: nameController,
-                hint: 'أدخل اسم الموظف',
+                hint: lang['enterEmployeeName'] ?? 'أدخل اسم الموظف',
                 icon: Icons.person,
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'الاسم مطلوب' : null,
+                validator: (value) => value == null || value.isEmpty
+                    ? (lang['nameRequired'] ?? 'الاسم مطلوب')
+                    : null,
               ),
               const SizedBox(height: 16),
               CustomTextField(
-                label: 'البريد الإلكتروني',
+                label: lang['email'] ?? 'البريد الإلكتروني',
                 controller: emailController,
-                hint: 'أدخل الإيميل',
+                hint: lang['enterEmail'] ?? 'أدخل الإيميل',
                 icon: Icons.email,
                 inputType: TextInputType.emailAddress,
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'الإيميل مطلوب' : null,
+                validator: (value) => value == null || value.isEmpty
+                    ? (lang['emailRequired'] ?? 'الإيميل مطلوب')
+                    : null,
               ),
               const SizedBox(height: 16),
               CustomTextField(
-                label: 'رقم الجوال',
+                label: lang['phoneNumber'] ?? 'رقم الجوال',
                 controller: phoneController,
-                hint: 'أدخل رقم الجوال',
+                hint: lang['enterPhoneNumber'] ?? 'أدخل رقم الجوال',
                 icon: Icons.phone,
                 inputType: TextInputType.phone,
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'رقم الجوال مطلوب' : null,
+                validator: (value) => value == null || value.isEmpty
+                    ? (lang['phoneRequired'] ?? 'رقم الجوال مطلوب')
+                    : null,
               ),
               const SizedBox(height: 16),
               CustomTextField(
-                label: 'الراتب',
+                label: lang['salary'] ?? 'الراتب',
                 controller: salaryController,
-                hint: 'أدخل الراتب',
+                hint: lang['enterSalary'] ?? 'أدخل الراتب',
                 icon: Icons.monetization_on,
                 inputType: TextInputType.number,
                 validator: (value) {
                   final salary = double.tryParse(value ?? '');
                   if (salary == null || salary <= 0) {
-                    return 'أدخل راتب صالح';
+                    return lang['validSalary'] ?? 'أدخل راتب صالح';
                   }
                   return null;
                 },
@@ -117,7 +126,7 @@ class _AddEmployeeScreenState extends ConsumerState<AddEmployeeScreen> {
                 style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     padding: const EdgeInsets.symmetric(vertical: 15)),
-                child: const Text('إضافة الموظف'),
+                child: Text(lang['addEmployee'] ?? 'إضافة الموظف'),
               ),
             ],
           ),

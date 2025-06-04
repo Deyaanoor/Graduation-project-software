@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/clientProvider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/screens/Client/client_screen.dart';
 import 'package:flutter_provider/widgets/custom_text_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,6 +29,7 @@ class _AddClientScreenState extends ConsumerState<AddClientScreen> {
   }
 
   Future<void> _submitClient() async {
+    final lang = ref.read(languageProvider);
     final userId = ref.watch(userIdProvider).value;
     if (!_formKey.currentState!.validate()) return;
 
@@ -41,22 +43,28 @@ class _AddClientScreenState extends ConsumerState<AddClientScreen> {
       await ref.read(addClientProvider)(newClient, userId!);
       ref.invalidate(clientsProvider(userId));
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("✅ تمت إضافة  client")),
+        SnackBar(
+            content:
+                Text(lang['clientAdded'] ?? "✅ Client added successfully")),
       );
       Navigator.pop(context);
       ref.watch(clientsProvider(userId));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("❌ خطأ أثناء الإضافة: $e")),
+        SnackBar(
+            content: Text(
+                "${lang['addClientError'] ?? "❌ Error adding client"}: $e")),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(languageProvider);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Client'),
+        title: Text(lang['addClient'] ?? 'Add Client'),
         backgroundColor: Colors.orange,
       ),
       body: Padding(
@@ -66,32 +74,34 @@ class _AddClientScreenState extends ConsumerState<AddClientScreen> {
           child: ListView(
             children: [
               CustomTextField(
-                label: 'Name',
+                label: lang['name'] ?? 'Name',
                 controller: nameController,
-                hint: 'Enter name',
+                hint: lang['enterName'] ?? 'Enter name',
                 icon: Icons.person,
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Name is required' : null,
+                validator: (value) => value == null || value.isEmpty
+                    ? (lang['nameRequired'] ?? 'Name is required')
+                    : null,
               ),
               const SizedBox(height: 16),
               CustomTextField(
-                label: 'Email',
+                label: lang['email'] ?? 'Email',
                 controller: emailController,
-                hint: 'Enter email',
+                hint: lang['enterEmail'] ?? 'Enter email',
                 icon: Icons.email,
                 inputType: TextInputType.emailAddress,
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Email is required' : null,
+                validator: (value) => value == null || value.isEmpty
+                    ? (lang['emailRequired'] ?? 'Email is required')
+                    : null,
               ),
               const SizedBox(height: 16),
               CustomTextField(
-                label: 'Phone Number',
+                label: lang['phoneNumber'] ?? 'Phone Number',
                 controller: phoneController,
-                hint: 'Enter phone number',
+                hint: lang['enterPhoneNumber'] ?? 'Enter phone number',
                 icon: Icons.phone,
                 inputType: TextInputType.phone,
                 validator: (value) => value == null || value.isEmpty
-                    ? 'Phone Number is required'
+                    ? (lang['phoneRequired'] ?? 'Phone Number is required')
                     : null,
               ),
               const SizedBox(height: 24),
@@ -100,8 +110,8 @@ class _AddClientScreenState extends ConsumerState<AddClientScreen> {
                 style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     padding: const EdgeInsets.symmetric(vertical: 15)),
-                child: const Text(
-                  'Add Client',
+                child: Text(
+                  lang['addClient'] ?? 'Add Client',
                 ),
               ),
             ],

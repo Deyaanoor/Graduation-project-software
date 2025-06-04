@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/widgets/CustomDialog.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,14 +13,17 @@ void showEditDialog(
   String userId,
   WidgetRef ref,
 ) {
+  final lang = ref.read(languageProvider);
+
   final TextEditingController controller =
       TextEditingController(text: currentValue);
   final TextEditingController newPasswordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
-  bool isPassword = field.toLowerCase() == 'password';
+  bool isPassword =
+      field.toLowerCase() == (lang['password'] ?? 'password').toLowerCase();
 
-  // ✅ نقل متغيرات الرؤية هنا حتى تبقى محفوظة في الذاكرة
+  // متغيرات الرؤية
   bool obscureTextNew = true;
   bool obscureTextConfirm = true;
 
@@ -34,7 +38,7 @@ void showEditDialog(
           contentPadding: EdgeInsets.all(isMobile ? 20 : 30),
           titlePadding: EdgeInsets.all(isMobile ? 20 : 30),
           title: Text(
-            'تعديل $field',
+            '${lang['edit'] ?? 'تعديل'} $field',
             textAlign: TextAlign.right,
             style: TextStyle(
               color: Colors.orange.shade800,
@@ -53,7 +57,7 @@ void showEditDialog(
                       obscureText: obscureTextNew,
                       textAlign: TextAlign.right,
                       decoration: InputDecoration(
-                        labelText: 'كلمة مرور جديدة',
+                        labelText: lang['newPassword'] ?? 'كلمة مرور جديدة',
                         floatingLabelBehavior: FloatingLabelBehavior.never,
                         labelStyle: TextStyle(
                           color: Colors.orange.shade800,
@@ -94,7 +98,8 @@ void showEditDialog(
                       obscureText: obscureTextConfirm,
                       textAlign: TextAlign.right,
                       decoration: InputDecoration(
-                        labelText: 'تأكيد كلمة المرور',
+                        labelText:
+                            lang['confirmPassword'] ?? 'تأكيد كلمة المرور',
                         floatingLabelBehavior: FloatingLabelBehavior.never,
                         labelStyle: TextStyle(
                           color: Colors.orange.shade800,
@@ -179,7 +184,7 @@ void showEditDialog(
                     ),
                   ),
                   child: Text(
-                    'إلغاء',
+                    lang['cancel'] ?? 'إلغاء',
                     style: TextStyle(
                       color: Colors.red.shade800,
                       fontSize: isMobile ? 14 : 16,
@@ -194,8 +199,9 @@ void showEditDialog(
                         CustomDialogPage.show(
                           context: context,
                           type: MessageType.error,
-                          title: 'Error',
-                          content: 'passwords do not match',
+                          title: lang['error'] ?? 'خطأ',
+                          content: lang['passwordsNotMatch'] ??
+                              'كلمتا المرور غير متطابقتين',
                         );
                         return;
                       } else {
@@ -209,13 +215,17 @@ void showEditDialog(
                           ref.invalidate(getUserInfoProvider(userId));
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('تم التحديث بنجاح ✅')),
+                            SnackBar(
+                                content: Text(lang['updateSuccess'] ??
+                                    'تم التحديث بنجاح ✅')),
                           );
+                          ref.invalidate(getUserInfoProvider(userId));
                         } catch (e) {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                                content: Text('حدث خطأ أثناء التحديث: $e')),
+                                content: Text(
+                                    '${lang['updateError'] ?? 'حدث خطأ أثناء التحديث'}: $e')),
                           );
                         }
                       }
@@ -231,13 +241,16 @@ void showEditDialog(
                           ref.invalidate(getUserInfoProvider(userId));
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('تم التحديث بنجاح ✅')),
+                            SnackBar(
+                                content: Text(lang['updateSuccess'] ??
+                                    'تم التحديث بنجاح ✅')),
                           );
                         } catch (e) {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                                content: Text('حدث خطأ أثناء التحديث: $e')),
+                                content: Text(
+                                    '${lang['updateError'] ?? 'حدث خطأ أثناء التحديث'}: $e')),
                           );
                         }
                       } else {
@@ -256,7 +269,7 @@ void showEditDialog(
                     ),
                   ),
                   child: Text(
-                    'تحديث',
+                    lang['update'] ?? 'تحديث',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: isMobile ? 14 : 16,

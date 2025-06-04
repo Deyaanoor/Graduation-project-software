@@ -60,3 +60,18 @@ final updateEmployeeProvider = Provider((ref) => (
         throw Exception('Failed to update employee');
       }
     });
+
+final getEmployeeGarageInfoProvider =
+    FutureProvider.family<Map<String, dynamic>, String>((ref, userId) async {
+  final response = await http.get(
+    Uri.parse('$apiUrl/employee/$userId/garage-info'),
+    headers: {'Content-Type': 'application/json'},
+  );
+
+  if (response.statusCode == 200) {
+    final Map<String, dynamic> data = json.decode(response.body);
+    return data;
+  } else {
+    throw Exception('Failed to fetch employee garage info');
+  }
+});

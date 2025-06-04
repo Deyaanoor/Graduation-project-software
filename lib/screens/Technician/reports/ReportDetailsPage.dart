@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/home_provider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/providers/reports_provider.dart';
 import 'package:flutter_provider/screens/Technician/reports/components/pdf_page.dart';
 import 'package:flutter_provider/widgets/custom_button.dart';
@@ -27,6 +28,7 @@ class _ReportDetailsPageState extends ConsumerState<ReportDetailsPage> {
   @override
   Widget build(BuildContext context) {
     final userId = ref.watch(userIdProvider).value;
+    final lang = ref.watch(languageProvider);
 
     final userInfo =
         userId != null ? ref.watch(getUserInfoProvider(userId)).value : null;
@@ -43,7 +45,7 @@ class _ReportDetailsPageState extends ConsumerState<ReportDetailsPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'تقرير الإصلاح',
+          lang['reportDetails'] ?? 'تفاصيل التقرير',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -51,9 +53,9 @@ class _ReportDetailsPageState extends ConsumerState<ReportDetailsPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.picture_as_pdf),
-            tooltip: 'تحميل PDF',
+            tooltip: lang['generatePdf'] ?? 'إنشاء PDF',
             onPressed: () {
-              generatePdf(context, report);
+              generatePdf(context, report, lang);
             },
           ),
         ],
@@ -66,12 +68,14 @@ class _ReportDetailsPageState extends ConsumerState<ReportDetailsPage> {
         ),
         child: Column(
           children: [
-            _buildHeaderSection(),
+            _buildHeaderSection(lang),
             const SizedBox(height: 24),
             Expanded(
               child: isDesktop
-                  ? _buildDesktopLayout(date, currencyFormat, context, userRole)
-                  : _buildMobileLayout(date, currencyFormat, context, userRole),
+                  ? _buildDesktopLayout(
+                      date, currencyFormat, context, userRole, lang)
+                  : _buildMobileLayout(
+                      date, currencyFormat, context, userRole, lang),
             ),
           ],
         ),
@@ -79,7 +83,9 @@ class _ReportDetailsPageState extends ConsumerState<ReportDetailsPage> {
     );
   }
 
-  Widget _buildHeaderSection() {
+  Widget _buildHeaderSection(
+    Map<String, dynamic> lang,
+  ) {
     return LayoutBuilder(
       builder: (context, constraints) {
         bool isMobile = constraints.maxWidth < 600;
@@ -94,25 +100,33 @@ class _ReportDetailsPageState extends ConsumerState<ReportDetailsPage> {
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildMobileHeaderItem(Icons.car_repair, 'موديل المركبة',
+                      _buildMobileHeaderItem(
+                          Icons.car_repair,
+                          lang['vehicleModel'] ?? 'موديل المركبة',
                           '${report['year']} ${report['make']} ${report['model']}'),
                       const SizedBox(height: 16),
-                      _buildMobileHeaderItem(Icons.confirmation_number,
-                          'رقم اللوحة', report['plateNumber'] ?? 'N/A'),
-                      const SizedBox(height: 16),
                       _buildMobileHeaderItem(
-                          Icons.person, 'المالك', report['owner'] ?? 'N/A'),
+                          Icons.confirmation_number,
+                          lang['plateNumber'] ?? 'رقم اللوحة',
+                          report['plateNumber'] ?? 'N/A'),
+                      const SizedBox(height: 16),
+                      _buildMobileHeaderItem(Icons.person,
+                          lang['owner'] ?? 'المالك', report['owner'] ?? 'N/A'),
                     ],
                   )
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildHeaderItem(Icons.car_repair, 'موديل المركبة',
-                          '${report['year']} ${report['make']} ${report['model']}'),
-                      _buildHeaderItem(Icons.confirmation_number, 'رقم اللوحة',
-                          report['plateNumber'] ?? 'N/A'),
                       _buildHeaderItem(
-                          Icons.person, 'المالك', report['owner'] ?? 'N/A'),
+                          Icons.car_repair,
+                          lang['vehicleModel'] ?? 'موديل المركبة',
+                          '${report['year']} ${report['make']} ${report['model']}'),
+                      _buildHeaderItem(
+                          Icons.confirmation_number,
+                          lang['plateNumber'] ?? 'رقم اللوحة',
+                          report['plateNumber'] ?? 'N/A'),
+                      _buildHeaderItem(Icons.person, lang['owner'] ?? 'المالك',
+                          report['owner'] ?? 'N/A'),
                     ],
                   ),
           ),
@@ -167,64 +181,75 @@ class _ReportDetailsPageState extends ConsumerState<ReportDetailsPage> {
     );
   }
 
-  Widget _buildDesktopLayout(DateTime date, NumberFormat format,
-      BuildContext context, String userRole) {
+  Widget _buildDesktopLayout(
+    DateTime date,
+    NumberFormat format,
+    BuildContext context,
+    String userRole,
+    Map<String, dynamic> lang,
+  ) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           flex: 2,
-          child: _buildDetailsColumn(date, format),
+          child: _buildDetailsColumn(date, format, lang),
         ),
         const SizedBox(width: 24),
         Expanded(
           flex: 3,
-          child: _buildMediaSection(context, userRole),
+          child: _buildMediaSection(context, userRole, lang),
         ),
       ],
     );
   }
 
   Widget _buildMobileLayout(DateTime date, NumberFormat format,
-      BuildContext context, String userRole) {
+      BuildContext context, String userRole, Map<String, dynamic> lang) {
     return SingleChildScrollView(
       child: Column(
         children: [
-          _buildDetailsColumn(date, format),
+          _buildDetailsColumn(date, format, lang),
           const SizedBox(height: 24),
-          _buildMediaSection(context, userRole),
+          _buildMediaSection(context, userRole, lang),
         ],
       ),
     );
   }
 
-  Widget _buildDetailsColumn(DateTime date, NumberFormat format) {
+  Widget _buildDetailsColumn(
+    DateTime date,
+    NumberFormat format,
+    Map<String, dynamic> lang,
+  ) {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildSectionCard(
-            title: 'تفاصيل الإصلاح',
+            title: lang['reportDetails'] ?? 'تفاصيل التقرير',
             icon: Icons.build,
             children: [
               _buildDetailRow(
-                'تاريخ الإصلاح',
+                lang['reportDate'] ?? 'تاريخ الاصلاح',
                 DateFormat('dd/MM/yyyy - HH:mm').format(date),
               ),
-              _buildDetailRow('الأعراض الأولية', report['symptoms'] ?? 'N/A'),
-              _buildDetailRow('المشكله', report['issue'] ?? 'N/A'),
               _buildDetailRow(
-                  'الإجراءات المتخذة', report['repairDescription'] ?? 'N/A'),
+                  lang['symptoms'] ?? 'الأعراض', report['symptoms'] ?? 'N/A'),
+              _buildDetailRow(
+                  lang['issue'] ?? 'المشكلة', report['issue'] ?? 'N/A'),
+              _buildDetailRow(lang['repairDescription'] ?? 'وصف الاصلاح',
+                  report['repairDescription'] ?? 'N/A'),
             ],
           ),
           const SizedBox(height: 16),
           _buildSectionCard(
-            title: 'القطع المستخدمة',
+            title: lang['usedParts'] ?? 'قطع المستخدمة',
             icon: Icons.inventory_2,
-            children: [_buildPartsGrid()],
+            children: [_buildPartsGrid(lang)],
           ),
           const SizedBox(height: 16),
-          _buildCostCard(format),
+          _buildCostCard(format, lang),
         ],
       ),
     );
@@ -289,11 +314,14 @@ class _ReportDetailsPageState extends ConsumerState<ReportDetailsPage> {
     );
   }
 
-  Widget _buildPartsGrid() {
+  Widget _buildPartsGrid(
+    Map<String, dynamic> lang,
+  ) {
     final parts = List<String>.from(report['usedParts'] ?? []);
 
     return parts.isEmpty
-        ? _buildEmptyState('لم يتم استخدام قطع غيار', Icons.construction)
+        ? _buildEmptyState(
+            lang['noPartsUsed'] ?? 'لا توجد قطع مستخدمة', Icons.construction)
         : Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -309,7 +337,10 @@ class _ReportDetailsPageState extends ConsumerState<ReportDetailsPage> {
           );
   }
 
-  Widget _buildCostCard(NumberFormat format) {
+  Widget _buildCostCard(
+    NumberFormat format,
+    Map<String, dynamic> lang,
+  ) {
     final costString = report['cost']?.toString() ?? '0';
     final costValue = double.tryParse(costString) ?? 0.0;
 
@@ -327,8 +358,8 @@ class _ReportDetailsPageState extends ConsumerState<ReportDetailsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'التكلفة الإجمالية',
+                  Text(
+                    lang['totalCost'] ?? 'التكلفة الإجمالية',
                     style: TextStyle(
                       color: Colors.orange, // Changed to orange
                       fontWeight: FontWeight.bold,
@@ -351,7 +382,11 @@ class _ReportDetailsPageState extends ConsumerState<ReportDetailsPage> {
     );
   }
 
-  Widget _buildMediaSection(BuildContext context, String userRole) {
+  Widget _buildMediaSection(
+    BuildContext context,
+    String userRole,
+    Map<String, dynamic> lang,
+  ) {
     final images = List<String>.from(report['imageUrls'] ?? []);
     final isDesktop = MediaQuery.of(context).size.width > 800;
 
@@ -367,8 +402,8 @@ class _ReportDetailsPageState extends ConsumerState<ReportDetailsPage> {
                   const Icon(Icons.photo_library,
                       color: Colors.orange), // Changed to orange
                   const SizedBox(width: 8),
-                  const Text(
-                    'الملفات المرفقة',
+                  Text(
+                    lang['attachedImages'] ?? 'الصور المرفقة',
                     style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -384,7 +419,9 @@ class _ReportDetailsPageState extends ConsumerState<ReportDetailsPage> {
               const Divider(color: Colors.grey),
               const SizedBox(height: 5),
               images.isEmpty
-                  ? _buildEmptyState('لا توجد صور مرفقة', Icons.photo_camera)
+                  ? _buildEmptyState(
+                      lang['noImagesAttached'] ?? 'لا توجد صور مرفقة',
+                      Icons.photo_camera)
                   : ConstrainedBox(
                       constraints: BoxConstraints(
                         maxHeight: isDesktop ? 200 : 200, // حد أقصى للارتفاع
@@ -431,8 +468,8 @@ class _ReportDetailsPageState extends ConsumerState<ReportDetailsPage> {
                         height: 60,
                         child: CustomButton(
                           key: UniqueKey(),
-                          onPressed: _deleteReport,
-                          text: "حذف",
+                          onPressed: () => _deleteReport(lang),
+                          text: lang['deleteReport'] ?? 'حذف التقرير',
                           backgroundColor: Colors.red,
                         ),
                       ),
@@ -443,7 +480,7 @@ class _ReportDetailsPageState extends ConsumerState<ReportDetailsPage> {
                           key: UniqueKey(),
                           onPressed: () =>
                               _navigateToEditReport(context, report),
-                          text: "تعديل",
+                          text: lang['editReport'] ?? 'تعديل التقرير',
                           backgroundColor: Colors.orange,
                         ),
                       ),
@@ -516,24 +553,29 @@ class _ReportDetailsPageState extends ConsumerState<ReportDetailsPage> {
     // الانتقال إلى صفحة ReportPage (state = 5)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Navigator.pop(context);
-      ref.read(selectedIndexProvider.notifier).state = 5;
+      ref.read(selectedIndexProvider.notifier).state = 3;
     });
   }
 
-  void _deleteReport() async {
+  _deleteReport(
+    Map<String, dynamic> lang,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('حذف التقرير'),
-        content: const Text('هل أنت متأكد من رغبتك في حذف هذا التقرير'),
+        title: Text(lang['confirmDelete'] ?? 'تأكيد الحذف'),
+        content: Text(
+            lang['deleteReportMessage'] ?? 'هل أنت متأكد من حذف هذا التقرير؟'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('إلغاء'),
+            child: Text(lang['cancel'] ?? 'إلغاء',
+                style: TextStyle(color: Colors.grey)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('حذف', style: TextStyle(color: Colors.red)),
+            child: Text(lang['delete'] ?? 'حذف',
+                style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -547,8 +589,8 @@ class _ReportDetailsPageState extends ConsumerState<ReportDetailsPage> {
 
         TopSnackBar.show(
           context: context,
-          title: "تم الحذف",
-          message: "تم حذف التقرير بنجاح",
+          title: lang['success'] ?? 'نجاح',
+          message: lang['reportDeleted'] ?? 'تم حذف التقرير بنجاح',
           icon: Icons.check_circle,
           color: Colors.green,
         );
@@ -556,8 +598,8 @@ class _ReportDetailsPageState extends ConsumerState<ReportDetailsPage> {
       } catch (e) {
         TopSnackBar.show(
           context: context,
-          title: "خطأ",
-          message: "فشل في الحذف: ${e.toString()}",
+          title: lang['error'] ?? 'خطأ',
+          message: "${e.toString()}",
           icon: Icons.error,
           color: Colors.red,
         );

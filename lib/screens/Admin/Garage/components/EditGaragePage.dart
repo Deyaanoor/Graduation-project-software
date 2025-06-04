@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/garage_provider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/screens/Admin/Garage/components/GarageForm.dart';
 import 'package:flutter_provider/widgets/CustomDialog.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,6 +44,7 @@ class _EditGaragePageState extends ConsumerState<EditGaragePage> {
   }
 
   Future<void> _submitForm() async {
+    final lang = ref.watch(languageProvider);
     if (_formKey.currentState!.validate()) {
       try {
         setState(() => _isLoading = true);
@@ -68,8 +70,8 @@ class _EditGaragePageState extends ConsumerState<EditGaragePage> {
         CustomDialogPage.show(
           context: context,
           type: MessageType.success,
-          title: 'Success',
-          content: 'تم تعديل الجراج بنجاح',
+          title: lang['success'] ?? 'نجاح',
+          content: lang['garageEdited'] ?? 'تم تعديل الجراج بنجاح',
         );
 
         Navigator.pop(context); // العودة للصفحة السابقة
@@ -78,7 +80,9 @@ class _EditGaragePageState extends ConsumerState<EditGaragePage> {
         setState(() => _isLoading = false);
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('حدث خطأ أثناء التعديل: $e')),
+          SnackBar(
+              content:
+                  Text('${lang['editError'] ?? 'حدث خطأ أثناء التعديل'}: $e')),
         );
       }
     }
@@ -86,9 +90,11 @@ class _EditGaragePageState extends ConsumerState<EditGaragePage> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(languageProvider);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('تعديل الجراج'),
+        title: Text(lang['editGarage'] ?? 'تعديل الجراج'),
         backgroundColor: Colors.orange,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -108,8 +114,9 @@ class _EditGaragePageState extends ConsumerState<EditGaragePage> {
           ],
           onSubmit: _submitForm,
           buildTextFormField: _buildTextFormField,
-          buttonText: 'تعديل',
+          buttonText: lang['edit'] ?? 'تعديل',
           isLoading: _isLoading,
+          lang: lang,
         ),
       ),
     );

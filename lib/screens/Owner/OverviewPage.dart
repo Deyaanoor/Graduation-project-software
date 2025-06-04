@@ -26,12 +26,10 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
     final userId = ref.read(userIdProvider).value;
     if (userId != null) {
       ref.invalidate(monthlyReportsCountProvider(userId));
-      ref.invalidate(employeeCountProvider(userId));
-      ref.invalidate(employeeSalaryProvider(userId));
+
       ref.invalidate(monthlySummaryProvider(userId));
-      ref.invalidate(modelsSummaryProvider(userId));
+
       ref.invalidate(topEmployeesProvider(userId));
-      ref.invalidate(reportsProvider(userId));
     }
   }
 
@@ -49,7 +47,7 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
           final monthlySummary = ref.watch(monthlySummaryProvider(userId));
           final modelsSummaryAsync = ref.watch(modelsSummaryProvider(userId));
           final topEmployeesAsync = ref.watch(topEmployeesProvider(userId));
-          final reports = ref.watch(reportsProvider(userId));
+          final reports = ref.watch(reportsProviderOverview(userId));
 
           return Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,

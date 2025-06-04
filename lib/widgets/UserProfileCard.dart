@@ -1,19 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 
-class UserProfileCard extends StatelessWidget {
+class UserProfileCard extends ConsumerWidget {
   final bool isExpanded;
   final Map<String, dynamic> userInfo;
-  final bool isMobile; // براميتر اختياري
+  final bool isMobile;
 
   const UserProfileCard({
     Key? key,
     this.isExpanded = false,
     required this.userInfo,
-    this.isMobile = false, // القيمة الافتراضية false
+    this.isMobile = false,
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(languageProvider);
+
+    String userName = userInfo['name'] ?? (lang['userName'] ?? 'User Name');
+    String userEmail = userInfo['email'] ?? '';
+    String userRole = userInfo['role']?.toString().toUpperCase() ??
+        (lang['unknown'] ?? 'UNKNOWN');
+
     if (isMobile) {
       return UserAccountsDrawerHeader(
         decoration: BoxDecoration(
@@ -24,7 +33,7 @@ class UserProfileCard extends StatelessWidget {
           ),
         ),
         currentAccountPicture: Container(
-          padding: const EdgeInsets.all(3), // للـ border
+          padding: const EdgeInsets.all(3),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(color: Colors.orange, width: 2),
@@ -45,7 +54,7 @@ class UserProfileCard extends StatelessWidget {
         accountName: Padding(
           padding: const EdgeInsets.only(bottom: 4),
           child: Text(
-            userInfo['name'] ?? 'User Name',
+            userName,
             style: const TextStyle(
               fontSize: 14,
               color: Colors.black87,
@@ -54,7 +63,7 @@ class UserProfileCard extends StatelessWidget {
           ),
         ),
         accountEmail: Text(
-          userInfo['email'] ?? '',
+          userEmail,
           style: const TextStyle(
             fontSize: 12,
             color: Colors.black87,
@@ -89,7 +98,7 @@ class UserProfileCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      userInfo['name'] ?? 'User Name',
+                      userName,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -97,14 +106,14 @@ class UserProfileCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      userInfo['email'] ?? '',
+                      userEmail,
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey[600],
                       ),
                     ),
                     Text(
-                      'Role: ${userInfo['role']?.toString().toUpperCase() ?? 'UNKNOWN'}',
+                      '${lang['role'] ?? 'Role'}: $userRole',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey[500],

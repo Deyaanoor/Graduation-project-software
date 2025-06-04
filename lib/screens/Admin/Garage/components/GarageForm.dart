@@ -6,6 +6,7 @@ class GarageForm extends StatelessWidget {
   final VoidCallback onSubmit;
   final String buttonText;
   final bool isLoading;
+  final Map<String, String> lang;
 
   final Widget Function({
     required BuildContext context,
@@ -22,7 +23,8 @@ class GarageForm extends StatelessWidget {
     required this.onSubmit,
     required this.buildTextFormField,
     required this.buttonText,
-    this.isLoading = false, // ✅ مرر القيمة هنا
+    required this.lang,
+    this.isLoading = false,
   });
 
   @override
@@ -34,49 +36,57 @@ class GarageForm extends StatelessWidget {
           buildTextFormField(
             context: context,
             controller: controllers[0],
-            label: 'اسم الجراج',
+            label: lang['garageName'] ?? 'اسم الجراج',
             icon: Icons.business,
-            validator: (val) => val!.isEmpty ? 'هذا الحقل مطلوب' : null,
+            validator: (val) => val!.isEmpty
+                ? (lang['fieldRequired'] ?? 'هذا الحقل مطلوب')
+                : null,
           ),
           const SizedBox(height: 20),
           buildTextFormField(
             context: context,
             controller: controllers[1],
-            label: 'الموقع',
+            label: lang['location'] ?? 'الموقع',
             icon: Icons.location_on,
-            validator: (val) => val!.isEmpty ? 'هذا الحقل مطلوب' : null,
+            validator: (val) => val!.isEmpty
+                ? (lang['fieldRequired'] ?? 'هذا الحقل مطلوب')
+                : null,
           ),
           const SizedBox(height: 20),
           buildTextFormField(
             context: context,
             controller: controllers[2],
-            label: 'اسم المالك',
+            label: lang['ownerName'] ?? 'اسم المالك',
             icon: Icons.person,
-            validator: (val) => val!.isEmpty ? 'هذا الحقل مطلوب' : null,
+            validator: (val) => val!.isEmpty
+                ? (lang['fieldRequired'] ?? 'هذا الحقل مطلوب')
+                : null,
           ),
           const SizedBox(height: 20),
           buildTextFormField(
             context: context,
             controller: controllers[3],
-            label: 'البريد الإلكتروني',
+            label: lang['ownerEmail'] ?? 'البريد الإلكتروني',
             icon: Icons.email,
             keyboardType: TextInputType.emailAddress,
-            validator: (val) =>
-                !val!.contains('@') ? 'بريد إلكتروني غير صالح' : null,
+            validator: (val) => !val!.contains('@')
+                ? (lang['invalidEmail'] ?? 'بريد إلكتروني غير صالح')
+                : null,
           ),
           const SizedBox(height: 20),
           buildTextFormField(
             context: context,
             controller: controllers[4],
-            label: 'التكلفة',
+            label: lang['cost'] ?? 'التكلفة',
             icon: Icons.numbers,
             keyboardType: TextInputType.number,
-            validator: (val) => val!.isEmpty ? 'هذا الحقل مطلوب' : null,
+            validator: (val) => val!.isEmpty
+                ? (lang['fieldRequired'] ?? 'هذا الحقل مطلوب')
+                : null,
           ),
           const SizedBox(height: 30),
           isLoading
-              ? const Center(
-                  child: CircularProgressIndicator()) // ✅ صحح الاستخدام
+              ? const Center(child: CircularProgressIndicator())
               : ElevatedButton(
                   onPressed: onSubmit,
                   style: ElevatedButton.styleFrom(

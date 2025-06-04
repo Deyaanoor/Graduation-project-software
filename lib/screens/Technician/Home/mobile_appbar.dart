@@ -22,22 +22,11 @@ class CustomAppBar extends ConsumerStatefulWidget
 
 class _CustomAppBarState extends ConsumerState<CustomAppBar> {
   @override
-  void initState() {
-    super.initState();
-    Future.microtask(() {
-      final userId = ref.read(userIdProvider).value;
-
-      if (userId != null) {
-        ref
-            .read(notificationsProvider.notifier)
-            .fetchUnreadCount(adminId: userId, ref: ref);
-      }
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final unreadCount = ref.watch(unreadCountStateProvider);
+    final userId = ref.watch(userIdProvider).value;
+    final unreadCountAsync = userId != null
+        ? ref.watch(unreadCountProvider(userId))
+        : const AsyncValue.data(0);
 
     return Material(
       elevation: 6,
@@ -89,18 +78,24 @@ class _CustomAppBarState extends ConsumerState<CustomAppBar> {
                 (widget.userInfo['role'] == 'owner' ||
                         widget.userInfo['role'] == 'employee')
                     ? IconButton(
-                        icon: unreadCount > 0
-                            ? Badge(
-                                label: Text(
-                                  unreadCount.toString(),
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                backgroundColor: Colors.red,
-                                child: const Icon(Icons.notifications,
-                                    color: Colors.white, size: 30),
-                              )
-                            : const Icon(Icons.notifications,
-                                color: Colors.white, size: 30),
+                        icon: unreadCountAsync.when(
+                          data: (unreadCount) => unreadCount > 0
+                              ? Badge(
+                                  label: Text(
+                                    unreadCount.toString(),
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                  backgroundColor: Colors.red,
+                                  child: const Icon(Icons.notifications,
+                                      color: Colors.white, size: 30),
+                                )
+                              : const Icon(Icons.notifications,
+                                  color: Colors.white, size: 30),
+                          loading: () => const Icon(Icons.notifications,
+                              color: Colors.white, size: 30),
+                          error: (err, stack) => const Icon(Icons.notifications,
+                              color: Colors.white, size: 30),
+                        ),
                         onPressed: () {
                           Navigator.pushNamed(context, '/notifications');
                         },
@@ -129,14 +124,14 @@ Widget _buildProfileMenu(
 
   return PopupMenuButton<String>(
     icon: Container(
-      width: 50,
-      height: 50,
+      width: 70,
+      height: 70,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(color: Colors.orange, width: 2),
       ),
       child: CircleAvatar(
-        radius: 25,
+        radius: 30,
         backgroundColor: Colors.white,
         backgroundImage: hasAvatar ? NetworkImage(avatarUrl) : null,
         child: !hasAvatar
@@ -160,7 +155,6 @@ Widget _buildProfileMenu(
               MaterialPageRoute(builder: (context) => WelcomePage()),
             );
           }
-
           break;
       }
     },

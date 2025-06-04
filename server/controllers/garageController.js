@@ -365,6 +365,7 @@ const getGarageInfo = async (req, res) => {
     const employeesCollection = db.collection("employees");
     const ownersCollection = db.collection("owners");
     const garagesCollection = db.collection("garages");
+    const usersCollection = db.collection("users");
 
     let employee = await employeesCollection.findOne({
       _id: new ObjectId(userId),
@@ -395,17 +396,36 @@ const getGarageInfo = async (req, res) => {
       return res.status(404).json({ message: "Garage not found" });
     }
 
-    res.status(200).json({
-      name: garage.name,
-      ownerName: garage.ownerName,
-      ownerEmail: garage.ownerEmail,
-      location: garage.location,
+    // Get owner info from users table using owner_id from garage
+    const ownerUser = await usersCollection.findOne({
+      _id: garage.owner_id,
     });
+
+    if (!ownerUser) {
+      return res.status(404).json({ message: "Owner user not found" });
+    }
+
+    // Prepare the data to return
+    const responseData = {
+      name: garage.name,
+      location: garage.location,
+      ownerInfo: {
+        name: ownerUser.name,
+        email: ownerUser.email,
+        phoneNumber: ownerUser.phoneNumber,
+      },
+    };
+
+    console.log("Garage Info Response:", responseData); // ✅ This is safe
+
+    // Send the response
+    res.status(200).json(responseData);
   } catch (error) {
-    console.error(error);
+    console.error("Error in getGarageInfo:", error);
     res.status(500).json({ message: "Failed to fetch garage data" });
   }
 };
+
 
 module.exports = {
   addGarage,

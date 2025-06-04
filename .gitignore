@@ -45,3 +45,6 @@ app.*.map.json
 /android/app/release
 /node_modules
 /server/node_modules
+firebase/graduation-notifications-firebase-adminsdk-fbsvc-e107a62d91.json
+/assets/.env
+assets/.env

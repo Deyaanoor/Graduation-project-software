@@ -32,11 +32,11 @@ class LoginPage extends ConsumerWidget {
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (ResponsiveHelper.isMobile(context)) {
-            return _buildMobileView(
-                context, emailController, passwordController, height, ref);
+            return _buildMobileView(context, emailController,
+                passwordController, height, ref, lang);
           } else {
             return _buildDesktopView(context, emailController,
-                passwordController, height, width, ref);
+                passwordController, height, width, ref, lang);
           }
         },
       ),
@@ -46,11 +46,13 @@ class LoginPage extends ConsumerWidget {
   final _formKey = GlobalKey<FormState>();
 
   Widget _buildMobileView(
-      BuildContext context,
-      TextEditingController emailController,
-      TextEditingController passwordController,
-      double height,
-      WidgetRef ref) {
+    BuildContext context,
+    TextEditingController emailController,
+    TextEditingController passwordController,
+    double height,
+    WidgetRef ref,
+    Map<String, dynamic> lang,
+  ) {
     return Stack(
       children: [
         Positioned(
@@ -71,31 +73,34 @@ class LoginPage extends ConsumerWidget {
                   TitlePro(),
                   const SizedBox(height: 50),
                   CustomTextField(
-                    label: "Email",
-                    hint: "Enter your email",
+                    label: lang['email'] ?? "Email",
+                    hint: lang['enterEmail'] ?? "Enter your email",
                     icon: Icons.email,
                     controller: emailController,
                     validator: (value) {
                       if (value == null ||
                           value.isEmpty ||
                           !value.contains('@')) {
-                        return 'Please enter a valid email';
+                        return lang['emailRequired'] ??
+                            'Please enter a valid email';
                       }
                       return null;
                     },
                   ),
                   CustomTextField(
-                    label: "Password",
-                    hint: "Enter your password",
+                    label: lang['password'] ?? "Password",
+                    hint: lang['enterPassword'] ?? "Enter your password",
                     icon: Icons.lock,
                     isPassword: true,
                     controller: passwordController,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
+                        return lang['passwordRequired'] ??
+                            'Please enter your password';
                       }
                       if (value.length < 6) {
-                        return 'Password must be at least 6 characters';
+                        return lang['passwordShort'] ??
+                            'Password must be at least 6 characters';
                       }
                       return null;
                     },
@@ -110,10 +115,10 @@ class LoginPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 20),
                   CustomButton(
-                    text: 'Login',
+                    text: lang['login'] ?? 'Login',
                     onPressed: () async {
-                      handleLogin(
-                          context, emailController, passwordController, ref);
+                      handleLogin(context, emailController, passwordController,
+                          ref, lang);
                     },
                     isGradient: true,
                   ),
@@ -136,6 +141,7 @@ class LoginPage extends ConsumerWidget {
     double height,
     double width,
     WidgetRef ref,
+    Map<String, dynamic> lang,
   ) {
     return Center(
       child: Container(
@@ -208,32 +214,34 @@ class LoginPage extends ConsumerWidget {
                           height: 10,
                         ),
                         CustomTextField(
-                          label: "Email Address",
-                          hint: "Enter your email",
+                          label: lang['email'] ?? "Email",
+                          hint: lang['enterEmail'] ?? "Enter your email",
                           icon: Icons.email,
                           controller: emailController,
                           validator: (value) {
                             if (value == null ||
                                 value.isEmpty ||
                                 !value.contains('@')) {
-                              return 'Please enter a valid email';
+                              return lang['emailRequired'] ??
+                                  'Please enter a valid email';
                             }
                             return null;
                           },
                         ),
-                        SizedBox(height: 10),
                         CustomTextField(
-                          label: "Password",
-                          hint: "Enter your password",
+                          label: lang['password'] ?? "Password",
+                          hint: lang['enterPassword'] ?? "Enter your password",
                           icon: Icons.lock,
                           isPassword: true,
                           controller: passwordController,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter your password';
+                              return lang['passwordRequired'] ??
+                                  'Please enter your password';
                             }
                             if (value.length < 6) {
-                              return 'Password must be at least 6 characters';
+                              return lang['passwordShort'] ??
+                                  'Password must be at least 6 characters';
                             }
                             return null;
                           },
@@ -248,12 +256,10 @@ class LoginPage extends ConsumerWidget {
                         ),
                         SizedBox(height: 20),
                         CustomButton(
-                          text: 'Login',
+                          text: lang['login'] ?? 'Login',
                           onPressed: () async {
-                            if (_formKey.currentState!.validate()) {
-                              handleLogin(context, emailController,
-                                  passwordController, ref);
-                            }
+                            handleLogin(context, emailController,
+                                passwordController, ref, lang);
                           },
                           isGradient: true,
                         ),
@@ -272,60 +278,12 @@ class LoginPage extends ConsumerWidget {
     );
   }
 
-  // void handleLogin(
-  //   BuildContext context,
-  //   TextEditingController emailController,
-  //   TextEditingController passwordController,
-  //   WidgetRef ref,
-  // ) async {
-  //   if (_formKey.currentState?.validate() ?? false) {
-  //     try {
-  //       ref.read(selectedIndexProvider.notifier).state = 0;
-  //       // 🔑 طلب إذن الإشعارات
-  //       NotificationSettings settings =
-  //           await FirebaseMessaging.instance.requestPermission();
-
-  //       String? fcmToken;
-
-  //       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-  //         fcmToken = await FirebaseMessaging.instance.getToken(
-  //           vapidKey:
-  //               "BGZEIrp8Oc46VWd92gmyEdP3UnQkfOOmAMVpRKSey09EkKn66cKNPnApwTMA7j49E2y-0QggAzx1J2qhiY418xE",
-  //         );
-  //         print("✅ FCM Token in Login: $fcmToken");
-  //       } else {
-  //         print("❌ Notification permission not granted");
-  //         fcmToken = "";
-  //       }
-
-  //       final credentials = {
-  //         'email': emailController.text,
-  //         'password': passwordController.text,
-  //         'fcmToken': fcmToken ?? "",
-  //       };
-
-  //       final result = await ref.read(loginUserProvider(credentials).future);
-  //       final role = result['role'];
-  //       print(role);
-
-  //       ref.invalidate(userIdProvider);
-
-  //       Navigator.pushNamed(context, '/home');
-  //     } catch (e) {
-  //       print("❌ Login error: $e");
-  //       CustomSnackBar.showErrorSnackBar(
-  //         context,
-  //         'Login failed',
-  //       );
-  //     }
-  //   }
-  // }
-
   void handleLogin(
     BuildContext context,
     TextEditingController emailController,
     TextEditingController passwordController,
     WidgetRef ref,
+    Map<String, dynamic> lang,
   ) async {
     if (_formKey.currentState?.validate() ?? false) {
       try {
@@ -368,7 +326,7 @@ class LoginPage extends ConsumerWidget {
         print("rooooole $role");
 
         ref.invalidate(userIdProvider);
-        if (role == "") {
+        if (role == null || role == "") {
           Navigator.pushNamed(context, '/Apply_Request');
         } else {
           Navigator.pushNamed(context, '/home');
@@ -377,7 +335,7 @@ class LoginPage extends ConsumerWidget {
         print("❌ Login error: $e");
         CustomSnackBar.showErrorSnackBar(
           context,
-          'Login failed',
+          lang['loginFailed'] ?? 'Login failed',
         );
       }
     }

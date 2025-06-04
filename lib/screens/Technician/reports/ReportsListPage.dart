@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/home_provider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:data_table_2/data_table_2.dart';
@@ -20,25 +21,26 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
   int? _sortColumnIndex;
   bool _sortAscending = true;
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+  // @override
+  // void didChangeDependencies() {
+  //   super.didChangeDependencies();
 
-    final uid = ref.read(userIdProvider).value;
-    if (uid != null && uid.isNotEmpty) {
-      ref.read(reportsProvider.notifier).fetchReports(userId: uid);
-    }
-  }
+  //   final uid = ref.read(userIdProvider).value;
+  //   if (uid != null && uid.isNotEmpty) {
+  //     ref.read(reportsProvider.notifier).fetchReports(userId: uid);
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
     final reportsAsync = ref.watch(reportsProvider);
     final userId = ref.watch(userIdProvider).value;
-
+    print("reportsAsync : $reportsAsync");
     final userInfo =
         userId != null ? ref.watch(getUserInfoProvider(userId)).value : null;
     final userRole =
         userInfo != null ? userInfo['role'] ?? 'بدون اسم' : 'جاري التحميل...';
+    final lang = ref.watch(languageProvider);
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
@@ -49,7 +51,7 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
       backgroundColor: Colors.grey[50],
       body: Column(
         children: [
-          _buildSearchBar(),
+          _buildSearchBar(lang),
           Expanded(
             child: reportsAsync.when(
               data: (reports) {
@@ -79,8 +81,8 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
                       ],
                     ),
                     child: ResponsiveHelper.isMobile(context)
-                        ? _buildMobileTable(filteredReports, userRole)
-                        : _buildDesktopTable(filteredReports, userRole),
+                        ? _buildMobileTable(filteredReports, userRole, lang)
+                        : _buildDesktopTable(filteredReports, userRole, lang),
                   ),
                 );
               },
@@ -95,7 +97,10 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
   }
 
   Widget _buildDesktopTable(
-      List<Map<String, dynamic>> reports, String userRole) {
+    List<Map<String, dynamic>> reports,
+    String userRole,
+    Map<String, dynamic> lang,
+  ) {
     final isOwner = userRole == 'owner';
 
     return DataTable2(
@@ -104,23 +109,30 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
       showCheckboxColumn: false,
       minWidth: isOwner ? 700 : 600,
       columns: [
-        _buildDataColumn('Plate', Icons.directions_car, 0),
-        _buildDataColumn('Issue', Icons.warning, 1),
-        _buildDataColumn('Owner', Icons.person, 2),
-        _buildDataColumn('Price', Icons.attach_money, 2, true),
-        _buildDataColumn('Date', Icons.calendar_today, 2),
-        if (isOwner) _buildDataColumn('Mechanic', Icons.build, 2),
+        _buildDataColumn(
+            lang['plate_number'] ?? 'Plate Number', Icons.directions_car, 0),
+        _buildDataColumn(lang['issue'] ?? 'Issue', Icons.warning, 1),
+        _buildDataColumn(lang['owner'] ?? 'Owner', Icons.person, 2),
+        _buildDataColumn(lang['cost'] ?? 'Cost', Icons.attach_money, 2, true),
+        _buildDataColumn(lang['date'] ?? 'Date', Icons.calendar_today, 2),
+        if (isOwner)
+          _buildDataColumn(
+              lang['mechanic_name'] ?? 'Mechanic Name', Icons.build, 2),
       ],
       rows: reports.map((report) => _buildDesktopRow(report, isOwner)).toList(),
     );
   }
 
   Widget _buildMobileTable(
-      List<Map<String, dynamic>> reports, String userRole) {
+    List<Map<String, dynamic>> reports,
+    String userRole,
+    Map<String, dynamic> lang,
+  ) {
     final columns = [
-      _buildDataColumn('Plate', Icons.directions_car, 0),
-      _buildDataColumn('Owner', Icons.person, 1),
-      _buildDataColumn('Date', Icons.calendar_today, 2),
+      _buildDataColumn(
+          lang['plate_number'] ?? 'Plate Number', Icons.directions_car, 0),
+      _buildDataColumn(lang['owner'] ?? 'Owner', Icons.person, 1),
+      _buildDataColumn(lang['date'] ?? 'Date', Icons.calendar_today, 2),
     ];
 
     return SizedBox(
@@ -232,7 +244,9 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(
+    Map<String, dynamic> lang,
+  ) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Container(
@@ -250,7 +264,7 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
         child: TextField(
           onChanged: (value) => setState(() => _searchText = value),
           decoration: InputDecoration(
-            hintText: 'Search by plate number...',
+            hintText: lang['search'] ?? 'Search',
             prefixIcon: const Icon(Icons.search, color: Colors.orange),
             filled: true,
             fillColor: Colors.white,

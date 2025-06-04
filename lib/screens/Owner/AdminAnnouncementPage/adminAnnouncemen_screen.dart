@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/providers/news_provider.dart';
 import 'package:flutter_provider/providers/notifications_provider.dart';
 import 'package:flutter_provider/widgets/top_snackbar.dart';
@@ -39,6 +40,7 @@ class _AdminAnnouncementPageState extends ConsumerState<AdminAnnouncementPage> {
   }
 
   Future<void> sendAnnouncement() async {
+    final lang = ref.read(languageProvider);
     final title = _titleController.text.trim();
     final message = _messageController.text.trim();
     final userId = ref.read(userIdProvider).value;
@@ -46,8 +48,8 @@ class _AdminAnnouncementPageState extends ConsumerState<AdminAnnouncementPage> {
     if (title.isEmpty || message.isEmpty || userId == null) {
       TopSnackBar.show(
         context: context,
-        title: "خطأ",
-        message: "الرجاء تعبئة جميع الحقول",
+        title: lang['error'] ?? "خطأ",
+        message: lang['fillAllFields'] ?? "الرجاء تعبئة جميع الحقول",
         icon: Icons.warning,
         color: Colors.orange,
       );
@@ -75,8 +77,8 @@ class _AdminAnnouncementPageState extends ConsumerState<AdminAnnouncementPage> {
 
       TopSnackBar.show(
         context: context,
-        title: "تم الإرسال",
-        message: "تم نشر الإعلان بنجاح",
+        title: lang['sent'] ?? "تم الإرسال",
+        message: lang['announcementSent'] ?? "تم نشر الإعلان بنجاح",
         icon: Icons.check_circle,
         color: Colors.green,
       );
@@ -88,8 +90,9 @@ class _AdminAnnouncementPageState extends ConsumerState<AdminAnnouncementPage> {
     } catch (e) {
       TopSnackBar.show(
         context: context,
-        title: "خطأ",
-        message: "فشل في إرسال الإعلان: ${e.toString()}",
+        title: lang['error'] ?? "خطأ",
+        message:
+            "${lang['announcementFailed'] ?? "فشل في إرسال الإعلان"}: ${e.toString()}",
         icon: Icons.error,
         color: Colors.red,
       );
@@ -99,6 +102,7 @@ class _AdminAnnouncementPageState extends ConsumerState<AdminAnnouncementPage> {
   }
 
   Future<void> _updateNews() async {
+    final lang = ref.read(languageProvider);
     if (!_isEditing) {
       setState(() => _isEditing = true);
       return;
@@ -114,21 +118,19 @@ class _AdminAnnouncementPageState extends ConsumerState<AdminAnnouncementPage> {
           );
 
       TopSnackBar.show(
-        // ignore: use_build_context_synchronously
         context: context,
-        title: "تم التحديث",
-        message: "تم تحديث الخبر بنجاح",
+        title: lang['updated'] ?? "تم التحديث",
+        message: lang['announcementUpdated'] ?? "تم تحديث الخبر بنجاح",
         icon: Icons.check_circle,
         color: Colors.green,
       );
       await ref.read(newsProvider.notifier).refreshNews(widget.userId!);
       Navigator.pop(context);
     } catch (e) {
-      debugPrint("exception $e");
       TopSnackBar.show(
         context: context,
-        title: "خطأ",
-        message: "فشل في التحديث: ${e.toString()}",
+        title: lang['error'] ?? "خطأ",
+        message: "${lang['updateFailed'] ?? "فشل في التحديث"}: ${e.toString()}",
         icon: Icons.error,
         color: Colors.red,
       );
@@ -141,19 +143,22 @@ class _AdminAnnouncementPageState extends ConsumerState<AdminAnnouncementPage> {
   }
 
   Future<void> _deleteNews() async {
+    final lang = ref.read(languageProvider);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('حذف الخبر'),
-        content: const Text('هل أنت متأكد من رغبتك في حذف هذا الخبر؟'),
+        title: Text(lang['deleteNews'] ?? 'حذف الخبر'),
+        content: Text(lang['deleteNewsConfirm'] ??
+            'هل أنت متأكد من رغبتك في حذف هذا الخبر؟'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('إلغاء'),
+            child: Text(lang['cancel'] ?? 'إلغاء'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('حذف', style: TextStyle(color: Colors.red)),
+            child: Text(lang['delete'] ?? 'حذف',
+                style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -166,8 +171,8 @@ class _AdminAnnouncementPageState extends ConsumerState<AdminAnnouncementPage> {
 
         TopSnackBar.show(
           context: context,
-          title: "تم الحذف",
-          message: "تم حذف الخبر بنجاح",
+          title: lang['deleted'] ?? "تم الحذف",
+          message: lang['announcementDeleted'] ?? "تم حذف الخبر بنجاح",
           icon: Icons.check_circle,
           color: Colors.green,
         );
@@ -176,8 +181,8 @@ class _AdminAnnouncementPageState extends ConsumerState<AdminAnnouncementPage> {
       } catch (e) {
         TopSnackBar.show(
           context: context,
-          title: "خطأ",
-          message: "فشل في الحذف: ${e.toString()}",
+          title: lang['error'] ?? "خطأ",
+          message: "${lang['deleteFailed'] ?? "فشل في الحذف"}: ${e.toString()}",
           icon: Icons.error,
           color: Colors.red,
         );
@@ -189,9 +194,13 @@ class _AdminAnnouncementPageState extends ConsumerState<AdminAnnouncementPage> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(languageProvider);
+
     return Scaffold(
       appBar: AppBar(
-        title: widget.isUpdate ? Text('التعديل إعلان') : Text('إضافة إعلان'),
+        title: widget.isUpdate
+            ? Text(lang['editAnnouncement'] ?? 'تعديل إعلان')
+            : Text(lang['addAnnouncement'] ?? 'إضافة إعلان'),
         backgroundColor: Colors.orange,
         actions: widget.isUpdate
             ? [
@@ -210,7 +219,7 @@ class _AdminAnnouncementPageState extends ConsumerState<AdminAnnouncementPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "إرسال إعلان جديد",
+                lang['sendNewAnnouncement'] ?? "إرسال إعلان جديد",
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -222,9 +231,10 @@ class _AdminAnnouncementPageState extends ConsumerState<AdminAnnouncementPage> {
                 controller: _titleController,
                 enabled: _isEditing,
                 decoration: InputDecoration(
-                  labelText: 'عنوان الإعلان',
+                  labelText: lang['announcementTitle'] ?? 'عنوان الإعلان',
                   prefixIcon: const Icon(Icons.title, color: Colors.orange),
-                  hintText: 'اكتب عنوان الإعلان...',
+                  hintText:
+                      lang['announcementTitleHint'] ?? 'اكتب عنوان الإعلان...',
                   focusedBorder: OutlineInputBorder(
                     borderSide:
                         const BorderSide(color: Colors.orange, width: 2),
@@ -244,9 +254,10 @@ class _AdminAnnouncementPageState extends ConsumerState<AdminAnnouncementPage> {
                 maxLines: 4,
                 enabled: _isEditing,
                 decoration: InputDecoration(
-                  labelText: 'محتوى الرسالة',
+                  labelText: lang['announcementContent'] ?? 'محتوى الرسالة',
                   prefixIcon: const Icon(Icons.message, color: Colors.orange),
-                  hintText: 'اكتب تفاصيل الإعلان...',
+                  hintText: lang['announcementContentHint'] ??
+                      'اكتب تفاصيل الإعلان...',
                   focusedBorder: OutlineInputBorder(
                     borderSide:
                         const BorderSide(color: Colors.orange, width: 2),
@@ -278,11 +289,11 @@ class _AdminAnnouncementPageState extends ConsumerState<AdminAnnouncementPage> {
                         : Icons.send),
                 label: Text(widget.isUpdate
                     ? _isEditing
-                        ? 'حفظ التعديلات'
-                        : 'تعديل'
+                        ? lang['saveChanges'] ?? 'حفظ التعديلات'
+                        : lang['edit'] ?? 'تعديل'
                     : _isLoading
-                        ? "جاري الإرسال..."
-                        : "إرسال"),
+                        ? lang['sending'] ?? "جاري الإرسال..."
+                        : lang['send'] ?? "إرسال"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange,
                   padding:

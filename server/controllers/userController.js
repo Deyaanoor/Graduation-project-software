@@ -127,7 +127,7 @@ const registerUser = async (req, res) => {
     const verifyToken = jwt.sign(newUser, "secret-key", {
       expiresIn: "1h",
     });
-    const verifyLink = `http://localhost:5000/users/verify?token=${verifyToken}`;
+    const verifyLink = `https://graduation-project-software.onrender.com/users/verify?token=${verifyToken}`;
 
     await transporter.sendMail({
       from: "deyaanoor9@gmail.com",
@@ -270,7 +270,7 @@ const resendVerificationEmail = async (req, res) => {
     const verifyToken = jwt.sign({ userId: user._id }, "secret-key", {
       expiresIn: "1h",
     });
-    const verifyLink = `http://localhost:5000/users/verify?token=${verifyToken}`;
+    const verifyLink = `https://graduation-project-software.onrender.com/users/verify?token=${verifyToken}`;
 
     await transporter.sendMail({
       from: "deyaanoor9@gmail.com",
@@ -330,7 +330,7 @@ const forgotPassword = async (req, res) => {
     const resetToken = jwt.sign({ userId: user._id }, "your_reset_secret", {
       expiresIn: "15m",
     });
-    const resetLink = `http://localhost:5000/users/reset-password?token=${resetToken}`;
+    const resetLink = `https://graduation-project-software.onrender.com/users/reset-password?token=${resetToken}`;
 
     await transporter.sendMail({
       from: "deyaanoor9@email.com",

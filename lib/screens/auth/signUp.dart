@@ -13,21 +13,35 @@ import 'package:flutter_provider/widgets/bezierContainer.dart';
 import 'package:flutter_provider/screens/auth/divider_widget.dart';
 import 'package:flutter_provider/screens/auth/register_label.dart';
 
-class SignUpPage extends ConsumerWidget {
+class SignUpPage extends ConsumerStatefulWidget {
   const SignUpPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SignUpPage> createState() => _SignUpPageState();
+}
+
+class _SignUpPageState extends ConsumerState<SignUpPage> {
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    phoneController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
 
-    final TextEditingController nameController = TextEditingController();
-    final TextEditingController emailController = TextEditingController();
-    final TextEditingController passwordController = TextEditingController();
-    final TextEditingController phoneController = TextEditingController();
-
-    final _formKey = GlobalKey<FormState>();
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (width < 900) {
@@ -59,8 +73,9 @@ class SignUpPage extends ConsumerWidget {
       double height,
       WidgetRef ref,
       GlobalKey<FormState> _formKey) {
-    return Scaffold(
-      body: SizedBox(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: SizedBox(
         height: height,
         child: Stack(
           children: <Widget>[

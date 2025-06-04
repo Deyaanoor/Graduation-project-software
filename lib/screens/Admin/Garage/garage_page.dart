@@ -11,7 +11,7 @@ import 'package:flutter_provider/widgets/CustomDialog.dart';
 import 'package:flutter_provider/widgets/CustomPainter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_provider/providers/garage_provider.dart';
-import 'package:http/http.dart' as ref;
+import 'package:flutter_provider/providers/language_provider.dart';
 
 // String extension to add capitalize method
 extension StringCasingExtension on String {
@@ -24,7 +24,10 @@ extension StringCasingExtension on String {
 class GaragePage extends ConsumerWidget {
   GaragePage({super.key});
 
-  void _openAddForm(BuildContext context, WidgetRef ref) {
+  final searchQueryProvider = StateProvider<String>((ref) => '');
+
+  void _openAddForm(
+      BuildContext context, WidgetRef ref, Map<String, String> lang) {
     if (ResponsiveHelper.isMobile(context)) {
       Navigator.push(
         context,
@@ -67,15 +70,15 @@ class GaragePage extends ConsumerWidget {
               // ignore: use_build_context_synchronously
               context: context,
               type: MessageType.success,
-              title: 'Success',
-              content: 'Garage added successfully',
+              title: lang['success'] ?? 'Success',
+              content: lang['garageAdded'] ?? 'Garage added successfully',
             );
           } catch (e) {
             CustomDialogPage.show(
               context: context,
               type: MessageType.error,
-              title: 'Error',
-              content: 'An error occurred: $e',
+              title: lang['error'] ?? 'Error',
+              content: '${lang['errorOccurred'] ?? 'An error occurred'}: $e',
             );
           }
         }
@@ -127,9 +130,9 @@ class GaragePage extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const Text(
-                        'Add New Garage',
-                        style: TextStyle(
+                      Text(
+                        lang['addGarage'] ?? 'Add New Garage',
+                        style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
                         ),
@@ -140,7 +143,8 @@ class GaragePage extends ConsumerWidget {
                         controllers: _controllers,
                         onSubmit: _submitForm,
                         buildTextFormField: _buildTextFormField,
-                        buttonText: 'save',
+                        buttonText: lang['save'] ?? 'Save',
+                        lang: lang,
                       ),
                     ],
                   ),
@@ -153,12 +157,11 @@ class GaragePage extends ConsumerWidget {
     }
   }
 
-  final searchQueryProvider = StateProvider<String>((ref) => '');
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final garagesAsync = ref.watch(garagesProvider);
     final searchQuery = ref.watch(searchQueryProvider);
+    final lang = ref.watch(languageProvider);
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDarkMode ? Colors.grey[900]! : Colors.white;
@@ -176,31 +179,52 @@ class GaragePage extends ConsumerWidget {
           ),
           Column(
             children: [
-              _buildSearchBar(ref),
+              _buildSearchBar(ref, lang),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    icon: const Icon(Icons.add),
+                    label: Text(lang['addGarage'] ?? 'Add New Garage'),
+                    onPressed: () => _openAddForm(context, ref, lang),
+                  ),
+                ),
+              ),
               Expanded(
                 child: garagesAsync.when(
                   data: (garages) {
                     final filteredGarages = garages.where((garage) {
                       final name =
                           garage['name']?.toString().toLowerCase() ?? '';
-                      // final location =
-                      //     garage['location']?.toString().toLowerCase() ?? '';
                       final query = searchQuery.toLowerCase();
                       return name.contains(query);
                     }).toList();
 
                     if (filteredGarages.isEmpty) {
-                      return Center(child: Text('No results found.'));
+                      return Center(
+                          child:
+                              Text(lang['noResults'] ?? 'No results found.'));
                     }
 
-                    return _GarageTable(garages: filteredGarages, ref: ref);
+                    return _GarageTable(
+                        garages: filteredGarages, ref: ref, lang: lang);
                   },
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('Error: $e')),
+                  error: (e, _) =>
+                      Center(child: Text('${lang['error'] ?? 'Error'}: $e')),
                 ),
               ),
-              SizedBox(
+              const SizedBox(
                 height: 20,
               )
             ],
@@ -210,7 +234,7 @@ class GaragePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildSearchBar(WidgetRef ref) {
+  Widget _buildSearchBar(WidgetRef ref, Map<String, String> lang) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: TextField(
@@ -220,10 +244,8 @@ class GaragePage extends ConsumerWidget {
         decoration: InputDecoration(
           filled: true,
           fillColor: Colors.white.withOpacity(0.9),
-          hintText: 'Search garages...',
-          hintStyle: TextStyle(
-              color:
-                  const Color.fromARGB(255, 235, 186, 112)), // لون الhintText
+          hintText: lang['searchGarages'] ?? 'Search garages...',
+          hintStyle: const TextStyle(color: Color.fromARGB(255, 235, 186, 112)),
           prefixIcon: const Icon(Icons.search, color: Colors.orange),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
@@ -232,7 +254,7 @@ class GaragePage extends ConsumerWidget {
           contentPadding:
               const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
         ),
-        style: TextStyle(color: Colors.orange),
+        style: const TextStyle(color: Colors.orange),
       ),
     );
   }
@@ -241,8 +263,10 @@ class GaragePage extends ConsumerWidget {
 class _GarageTable extends StatelessWidget {
   final List<Map<String, dynamic>> garages;
   final WidgetRef ref;
+  final Map<String, String> lang;
 
-  const _GarageTable({required this.garages, required this.ref});
+  const _GarageTable(
+      {required this.garages, required this.ref, required this.lang});
 
   @override
   Widget build(BuildContext context) {
@@ -287,44 +311,39 @@ class _GarageTable extends StatelessWidget {
                   ),
                   columns: [
                     DataColumn2(
-                      label: _SimpleHeader('Garage Name', headerColor),
+                      label: _SimpleHeader(
+                          lang['garageName'] ?? 'Garage Name', headerColor),
                       size: ColumnSize.M,
                     ),
                     DataColumn2(
-                      label: _SimpleHeader('Owner Name', headerColor),
+                      label: _SimpleHeader(
+                          lang['ownerName'] ?? 'Owner Name', headerColor),
                       size: ColumnSize.M,
                     ),
-                    // DataColumn2(
-                    //   label: _SimpleHeader('Actions', headerColor),
-                    //   size: ColumnSize.M,
-                    // ),
                     DataColumn2(
-                      label: _SimpleHeader('Status', headerColor),
+                      label: _SimpleHeader(
+                          lang['status'] ?? 'Status', headerColor),
                       size: ColumnSize.M,
                     ),
                   ],
                   rows: List<DataRow2>.generate(
                     garages.length,
                     (index) => DataRow2(
-                      // تغيير اللون عند الـ hover
                       color: MaterialStateProperty.resolveWith<Color?>(
                         (Set<MaterialState> states) {
                           if (states.contains(MaterialState.hovered)) {
-                            return Colors.orange
-                                .withOpacity(0.3); // لون عند التمرير
+                            return Colors.orange.withOpacity(0.3);
                           }
                           return index.isEven
                               ? rowColor!.withOpacity(0.8)
                               : Colors.transparent;
                         },
                       ),
-
                       onSelectChanged: (selected) {
                         if (selected == true) {
                           _onRowTap(context, garages[index]);
                         }
                       },
-
                       cells: [
                         DataCell(
                           Text(
@@ -365,7 +384,6 @@ class _GarageTable extends StatelessWidget {
                             onChanged: (value) async {
                               if (value != null) {
                                 try {
-                                  print("garage is : $garages[$index]['id']");
                                   await updateGarageStatus(
                                       garages[index]['_id'], value);
                                   garages[index]['status'] = value;
@@ -373,51 +391,28 @@ class _GarageTable extends StatelessWidget {
                                       ref.read(refreshGaragesProvider);
                                   refreshGarages(ref);
                                 } catch (e) {
-                                  print('Error updating status: $e');
+                                  CustomDialogPage.show(
+                                    context: context,
+                                    type: MessageType.error,
+                                    title: lang['error'] ?? 'Error',
+                                    content:
+                                        '${lang['errorOccurred'] ?? 'An error occurred'}: $e',
+                                  );
                                 }
                               }
                             },
-                            items: const [
+                            items: [
                               DropdownMenuItem(
                                 value: 'Active',
-                                child: Text('فعال'),
+                                child: Text(lang['active'] ?? 'Active'),
                               ),
                               DropdownMenuItem(
                                 value: 'Inactive',
-                                child: Text('غير فعال'),
+                                child: Text(lang['inactive'] ?? 'Inactive'),
                               ),
                             ],
                           ),
                         ),
-
-                        // DataCell(
-                        //   Text(
-                        //     garages[index]['location'] ?? 'No Location',
-                        //     style: TextStyle(
-                        //       fontSize: 14,
-                        //       color: textColor?.withOpacity(0.8),
-                        //     ),
-                        //   ),
-                        // ),
-                        // DataCell(
-                        //   Row(
-                        //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        //     children: [
-                        //       IconButton(
-                        //         icon: Icon(Icons.edit_note,
-                        //             color: Colors.blue.shade300, size: 28),
-                        //         onPressed: () =>
-                        //             _editGarage(context, garages[index]),
-                        //       ),
-                        //       IconButton(
-                        //         icon: Icon(Icons.delete_forever,
-                        //             color: Colors.red.shade300, size: 28),
-                        //         onPressed: () =>
-                        //             _deleteGarage(context, garages[index]),
-                        //       ),
-                        //     ],
-                        //   ),
-                        // ),
                       ],
                     ),
                   ),

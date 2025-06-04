@@ -12,6 +12,7 @@ import 'package:flutter_provider/screens/Client/GarageRequestsPage.dart';
 import 'package:flutter_provider/screens/Client/RequestDetailsPage.dart';
 import 'package:flutter_provider/screens/Client/client_screen.dart';
 import 'package:flutter_provider/screens/Client/garageDetails.dart';
+import 'package:flutter_provider/screens/Owner/Employee/employee_garage_info_screen.dart';
 import 'package:flutter_provider/screens/Owner/Employee/employee_screen.dart';
 import 'package:flutter_provider/screens/Owner/OverviewPage.dart';
 import 'package:flutter_provider/screens/Technician/Home/mobile_appbar.dart';
@@ -32,6 +33,7 @@ import 'package:flutter_provider/screens/Technician/chat_bot_page.dart';
 import 'package:flutter_provider/screens/Technician/reports/ReportsListPage.dart';
 import 'package:flutter_provider/screens/Technician/reports/report.dart';
 import 'package:flutter_provider/screens/Technician/settings/SettingsPage.dart';
+import 'package:flutter_provider/screens/Admin/Garage/Dashboard.dart';
 
 class Home extends ConsumerWidget {
   const Home({super.key});
@@ -43,11 +45,11 @@ class Home extends ConsumerWidget {
     final lang = ref.watch(languageProvider);
 
     final userIdAsync = ref.watch(userIdProvider);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (selectedIndex == 0 && userIdAsync.value != null) {
-        ref.read(newsProvider.notifier).refreshNews(userIdAsync.value!);
-      }
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   if (selectedIndex == 0 && userIdAsync.value != null) {
+    //     ref.read(newsProvider.notifier).refreshNews(userIdAsync.value!);
+    //   }
+    // });
 
     return userIdAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -96,7 +98,12 @@ class Home extends ConsumerWidget {
   List<Widget> _getPagesByRole(String role, WidgetRef ref) {
     switch (role.toLowerCase()) {
       case 'admin':
-        return [GaragePage(), ContactUsInboxPage(), RegistrationRequests()];
+        return [
+          GaragePage(),
+          ContactUsInboxPage(),
+          RegistrationRequests(),
+          AdminDashboardPage()
+        ];
       case 'owner':
         return [
           OverviewPage(key: UniqueKey()),
@@ -115,6 +122,7 @@ class Home extends ConsumerWidget {
           ReportsPageList(key: UniqueKey()),
           RecordOptionsSection(),
           ReportPage(key: UniqueKey()),
+          EmployeeGarageInfoPage(key: UniqueKey()),
         ];
       case 'client':
         return [
@@ -168,11 +176,11 @@ class Home extends ConsumerWidget {
         color: const Color(0xFFFF8F00),
         backgroundColor: Colors.grey[200]!,
         items: <Widget>[
-          buildNavItem(Icons.auto_awesome, lang['dashboard'] ?? 'Dashboard', 1,
+          buildNavItem(Icons.auto_awesome, lang['dashboard'] ?? 'Dashboard', 0,
               selectedIndex),
-          buildNavItem(Icons.auto_awesome, lang['support'] ?? 'support', 2,
+          buildNavItem(Icons.auto_awesome, lang['support'] ?? 'support', 1,
               selectedIndex),
-          buildNavItem(Icons.auto_awesome, lang['request'] ?? 'request', 3,
+          buildNavItem(Icons.auto_awesome, lang['request'] ?? 'request', 2,
               selectedIndex),
         ],
         onTap: (index) =>
@@ -198,16 +206,22 @@ class Home extends ConsumerWidget {
           });
     } else if (userRole.toLowerCase() == 'employee') {
       return CurvedNavigationBar(
-        color: const Color(0xFFFF8F00),
-        backgroundColor: Colors.grey[200]!,
-        items: <Widget>[
-          buildNavItem(Icons.article, lang['news'] ?? 'News', 0, selectedIndex),
-          buildNavItem(Icons.calendar_today, lang['report'] ?? 'Report', 1,
-              selectedIndex),
-        ],
-        onTap: (index) =>
-            ref.read(selectedIndexProvider.notifier).state = index,
-      );
+          color: const Color(0xFFFF8F00),
+          backgroundColor: Colors.grey[200]!,
+          items: <Widget>[
+            buildNavItem(
+                Icons.article, lang['news'] ?? 'News', 0, selectedIndex),
+            buildNavItem(Icons.calendar_today, lang['report'] ?? 'Report', 1,
+                selectedIndex),
+            buildNavItem(Icons.calendar_today, lang['report'] ?? 'Report', 4,
+                selectedIndex),
+          ],
+          onTap: (index) {
+            if (index == 2) {
+              index = 4;
+            }
+            ref.read(selectedIndexProvider.notifier).state = index;
+          });
     }
     throw Exception('Unsupported user role: $userRole');
   }
@@ -391,6 +405,15 @@ class Home extends ConsumerWidget {
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 2,
               isExpanded: isExpanded,
             ),
+          if (userRole.toLowerCase() == 'admin')
+            _buildNavButton(
+              context: context,
+              icon: Icons.dashboard,
+              label: lang['Statics'] ?? 'Statics',
+              isSelected: selectedIndex == 3,
+              onTap: () => ref.read(selectedIndexProvider.notifier).state = 3,
+              isExpanded: isExpanded,
+            ),
           if (userRole.toLowerCase() == 'owner' ||
               userRole.toLowerCase() == 'employee')
             _buildNavButton(
@@ -477,6 +500,15 @@ class Home extends ConsumerWidget {
               label: lang['report'] ?? 'Reports',
               isSelected: selectedIndex == 1,
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 1,
+              isExpanded: isExpanded,
+            ),
+          if (userRole.toLowerCase() == 'employee')
+            _buildNavButton(
+              context: context,
+              icon: Icons.calendar_today,
+              label: lang['report'] ?? 'Reports',
+              isSelected: selectedIndex == 4,
+              onTap: () => ref.read(selectedIndexProvider.notifier).state = 4,
               isExpanded: isExpanded,
             ),
           if (userRole.toLowerCase() == 'owner')
@@ -661,6 +693,14 @@ class Home extends ConsumerWidget {
               buildDrawerItem(
                 context,
                 ref,
+                lang['Statics'] ?? 'Statics',
+                Icons.how_to_reg,
+                3,
+              ),
+            if (userInfo['role'].toLowerCase() == 'admin')
+              buildDrawerItem(
+                context,
+                ref,
                 lang['Garage Page'] ?? 'Garage Page',
                 Icons.garage,
                 0,
@@ -680,6 +720,14 @@ class Home extends ConsumerWidget {
                 lang['registrationRequests'] ?? 'registrationRequests',
                 Icons.how_to_reg,
                 2,
+              ),
+            if (userInfo['role'].toLowerCase() != 'admin')
+              buildDrawerItem(
+                context,
+                ref,
+                lang['contactUs'] ?? 'contact Us',
+                Icons.how_to_reg,
+                -2,
               ),
             buildDrawerItem(
               context,

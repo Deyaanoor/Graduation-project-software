@@ -1,0 +1,2 @@
+E:/Graduation-project-software/Graduation-project-software/android/app/.cxx/Debug/1c4l44z7/armeabi-v7a/CMakeFiles/edit_cache.dir
+E:/Graduation-project-software/Graduation-project-software/android/app/.cxx/Debug/1c4l44z7/armeabi-v7a/CMakeFiles/rebuild_cache.dir

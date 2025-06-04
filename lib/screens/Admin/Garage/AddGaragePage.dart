@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/screens/Admin/Garage/components/GarageForm.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_provider/widgets/CustomDialog.dart';
@@ -21,6 +22,7 @@ class _AddGaragePageState extends ConsumerState<AddGaragePage> {
   bool _isLoading = false;
 
   Future<void> _submitForm() async {
+    final lang = ref.watch(languageProvider);
     if (_formKey.currentState!.validate()) {
       try {
         _isLoading = true;
@@ -46,8 +48,8 @@ class _AddGaragePageState extends ConsumerState<AddGaragePage> {
         CustomDialogPage.show(
           context: context,
           type: MessageType.success,
-          title: 'Success',
-          content: 'تمت إضافة الجراج بنجاح',
+          title: lang['success'] ?? 'نجاح',
+          content: lang['garageAdded'] ?? 'تمت إضافة الجراج بنجاح',
         );
 
         Navigator.pop(context); // الرجوع للصفحة السابقة
@@ -60,9 +62,10 @@ class _AddGaragePageState extends ConsumerState<AddGaragePage> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(languageProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('إضافة جراج جديد'),
+        title: Text(lang['addGarage'] ?? 'إضافة جراج جديد'),
         backgroundColor: Colors.orange,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -82,8 +85,9 @@ class _AddGaragePageState extends ConsumerState<AddGaragePage> {
           ],
           onSubmit: _submitForm,
           buildTextFormField: _buildTextFormField,
-          buttonText: 'حفظ',
+          buttonText: lang['save'] ?? 'حفظ',
           isLoading: _isLoading,
+          lang: lang,
         ),
       ),
     );

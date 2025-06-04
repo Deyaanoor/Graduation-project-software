@@ -92,7 +92,7 @@ class _FreeMapPickerPageState extends State<FreeMapPickerPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Free Map Picker'),
+        title: Text('Map'),
         actions: [
           IconButton(
             icon: Icon(Icons.check),

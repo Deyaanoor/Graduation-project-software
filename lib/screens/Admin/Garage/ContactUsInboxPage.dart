@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/contactUs.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:data_table_2/data_table_2.dart';
 
@@ -26,7 +27,7 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
   @override
   Widget build(BuildContext context) {
     final messagesAsync = ref.watch(contactMessagesProvider);
-    print("message    :$messagesAsync");
+    final lang = ref.watch(languageProvider);
 
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final headerColor =
@@ -42,12 +43,12 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('حدث خطأ: $error',
+              Text('${lang['error'] ?? 'حدث خطأ'}: $error',
                   style: const TextStyle(color: Colors.red)),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () => ref.refresh(contactMessagesProvider),
-                child: const Text('إعادة المحاولة'),
+                child: Text(lang['retry'] ?? 'إعادة المحاولة'),
               ),
             ],
           ),
@@ -59,7 +60,7 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
           return Column(
             children: [
               const SizedBox(height: 16),
-              _buildSearchAndFilter(headerColor, isDarkMode),
+              _buildSearchAndFilter(headerColor, isDarkMode, lang),
               const SizedBox(height: 10),
               Expanded(
                 child: LayoutBuilder(
@@ -102,7 +103,9 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
                               DataColumn2(
                                 label: Center(
                                   child: _buildSortableHeader(
-                                      'المشكلة', headerColor, 0),
+                                      lang['problemType'] ?? 'المشكلة',
+                                      headerColor,
+                                      0),
                                 ),
                                 onSort: (columnIndex, ascending) =>
                                     _onSort(columnIndex, ascending),
@@ -111,7 +114,9 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
                               DataColumn2(
                                 label: Center(
                                   child: _buildSortableHeader(
-                                      "Sender", headerColor, 1),
+                                      lang['sender'] ?? "Sender",
+                                      headerColor,
+                                      1),
                                 ),
                                 onSort: (columnIndex, ascending) =>
                                     _onSort(columnIndex, ascending),
@@ -120,7 +125,9 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
                               DataColumn2(
                                 label: Center(
                                   child: _buildSortableHeader(
-                                      'الحالة', headerColor, 2),
+                                      lang['status'] ?? 'الحالة',
+                                      headerColor,
+                                      2),
                                 ),
                                 onSort: (columnIndex, ascending) =>
                                     _onSort(columnIndex, ascending),
@@ -146,7 +153,7 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
                                   ),
                                   onSelectChanged: (selected) {
                                     if (selected == true) {
-                                      _onMessageTap(context, msg);
+                                      _onMessageTap(context, msg, lang);
                                     }
                                   },
                                   cells: [
@@ -180,21 +187,24 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
                                             if (value != null &&
                                                 msg['_id'] != null) {
                                               _updateMessageStatus(
-                                                  msg['_id'], value);
+                                                  msg['_id'], value, lang);
                                             }
                                           },
-                                          items: const [
+                                          items: [
                                             DropdownMenuItem(
                                               value: 'pending',
-                                              child: Text('قيد الانتظار'),
+                                              child: Text(lang['pending'] ??
+                                                  'قيد الانتظار'),
                                             ),
                                             DropdownMenuItem(
                                               value: 'in progress',
-                                              child: Text('قيد المعالجة'),
+                                              child: Text(lang['inProgress'] ??
+                                                  'قيد المعالجة'),
                                             ),
                                             DropdownMenuItem(
                                               value: 'resolved',
-                                              child: Text('تم الحل'),
+                                              child: Text(lang['resolved'] ??
+                                                  'تم الحل'),
                                             ),
                                           ],
                                         ),
@@ -249,7 +259,11 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
     return msgs;
   }
 
-  Widget _buildSearchAndFilter(Color headerColor, bool isDarkMode) {
+  Widget _buildSearchAndFilter(
+    Color headerColor,
+    bool isDarkMode,
+    Map<String, dynamic> lang,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -264,7 +278,8 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
               decoration: InputDecoration(
                 filled: true,
                 fillColor: Colors.white.withOpacity(0.9),
-                hintText: 'ابحث بنوع المشكلة أو نصها...',
+                hintText:
+                    lang['searchProblem'] ?? 'ابحث بنوع المشكلة أو نصها...',
                 hintStyle:
                     const TextStyle(color: Color.fromARGB(255, 235, 186, 112)),
                 prefixIcon: const Icon(Icons.search, color: Colors.orange),
@@ -299,13 +314,18 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                 ),
-                items: const [
-                  DropdownMenuItem(value: 'All', child: Text('الكل')),
+                items: [
                   DropdownMenuItem(
-                      value: 'pending', child: Text('قيد الانتظار')),
+                      value: 'All', child: Text(lang['all'] ?? 'الكل')),
                   DropdownMenuItem(
-                      value: 'in progress', child: Text('قيد المعالجة')),
-                  DropdownMenuItem(value: 'resolved', child: Text('تم الحل')),
+                      value: 'pending',
+                      child: Text(lang['pending'] ?? 'قيد الانتظار')),
+                  DropdownMenuItem(
+                      value: 'in progress',
+                      child: Text(lang['inProgress'] ?? 'قيد المعالجة')),
+                  DropdownMenuItem(
+                      value: 'resolved',
+                      child: Text(lang['resolved'] ?? 'تم الحل')),
                 ],
                 icon: Icon(
                   Icons.arrow_drop_down,
@@ -363,7 +383,8 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
     });
   }
 
-  void _onMessageTap(BuildContext context, Map<String, dynamic> message) {
+  void _onMessageTap(BuildContext context, Map<String, dynamic> message,
+      Map<String, String> lang) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -377,7 +398,7 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'تفاصيل المشكلة',
+                lang['problemDetails'] ?? 'تفاصيل المشكلة',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.amber,
@@ -391,11 +412,14 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildDetailRow("نوع المشكلة", message['type'] ?? 'غير محدد'),
+              _buildDetailRow(lang['problemType'] ?? "نوع المشكلة",
+                  message['type'] ?? 'غير محدد'),
               const SizedBox(height: 10),
-              _buildDetailRow("نص المشكلة", message['message'] ?? 'بدون محتوى'),
+              _buildDetailRow(lang['problemText'] ?? "نص المشكلة",
+                  message['message'] ?? 'بدون محتوى'),
               const SizedBox(height: 10),
-              _buildDetailRow("الحالة", _getStatusText(message['status'])),
+              _buildDetailRow(lang['status'] ?? "الحالة",
+                  _getStatusText(message['status'], lang)),
             ],
           ),
         ),
@@ -411,7 +435,7 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
               ),
               onPressed: () => Navigator.pop(context),
               icon: const Icon(Icons.close),
-              label: const Text('إغلاق'),
+              label: Text(lang['close'] ?? 'إغلاق'),
             ),
           ),
         ],
@@ -443,34 +467,37 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
     );
   }
 
-  String _getStatusText(String? status) {
+  String _getStatusText(String? status, Map<String, String> lang) {
     switch (status) {
       case 'pending':
-        return 'قيد الانتظار';
+        return lang['pending'] ?? 'قيد الانتظار';
       case 'in progress':
-        return 'قيد المعالجة';
+        return lang['inProgress'] ?? 'قيد المعالجة';
       case 'resolved':
-        return 'تم الحل';
+        return lang['resolved'] ?? 'تم الحل';
       default:
-        return 'غير محدد';
+        return lang['notSpecified'] ?? 'غير محدد';
     }
   }
 
-  void _replyToMessage(BuildContext context, Map<String, dynamic> message) {
+  void _replyToMessage(BuildContext context, Map<String, dynamic> message,
+      Map<String, String> lang) {
     final replyController = TextEditingController();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('الرد على مشكلة: ${message['type'] ?? 'غير محدد'}'),
+        title: Text(
+            '${lang['replyTo'] ?? 'الرد على مشكلة'}: ${message['type'] ?? 'غير محدد'}'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('نص المشكلة: ${message['message']}'),
+            Text(
+                '${lang['problemText'] ?? 'نص المشكلة'}: ${message['message']}'),
             const SizedBox(height: 16),
             TextField(
               controller: replyController,
-              decoration: const InputDecoration(
-                hintText: 'اكتب ردك هنا...',
+              decoration: InputDecoration(
+                hintText: lang['writeReplyHere'] ?? 'اكتب ردك هنا...',
                 border: OutlineInputBorder(),
               ),
               maxLines: 5,
@@ -480,37 +507,44 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
+            child: Text(lang['cancel'] ?? 'إلغاء'),
           ),
           TextButton(
             onPressed: () {
               // يمكنك إضافة منطق إرسال الرد هنا
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('تم إرسال الرد بنجاح')),
+                SnackBar(
+                    content: Text(lang['replySent'] ?? 'تم إرسال الرد بنجاح')),
               );
             },
-            child: const Text('إرسال'),
+            child: Text(lang['send'] ?? 'إرسال'),
           ),
         ],
       ),
     );
   }
 
-  Future<void> _deleteMessage(BuildContext context, String messageId) async {
+  Future<void> _deleteMessage(
+    BuildContext context,
+    String messageId,
+    Map<String, dynamic> lang,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('حذف الرسالة'),
-        content: const Text('هل أنت متأكد من رغبتك في حذف هذه الرسالة؟'),
+        title: Text(lang['deleteMessage'] ?? 'حذف الرسالة'),
+        content: Text(lang['deleteMessageConfirm'] ??
+            'هل أنت متأكد من رغبتك في حذف هذه الرسالة؟'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('تراجع'),
+            child: Text(lang['undo'] ?? 'تراجع'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('حذف', style: TextStyle(color: Colors.red)),
+            child: Text(lang['delete'] ?? 'حذف',
+                style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -519,40 +553,52 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
     if (confirmed == true) {
       try {
         await ref.read(deleteContactMessageProvider)(messageId);
+        // ignore: unused_result
         ref.refresh(contactMessagesProvider);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تم حذف الرسالة بنجاح')),
+            SnackBar(
+                content:
+                    Text(lang['messageDeleted'] ?? 'تم حذف الرسالة بنجاح')),
           );
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('فشل في حذف الرسالة: $e')),
+            SnackBar(
+                content: Text(
+                    '${lang['deleteFailed'] ?? 'فشل في حذف الرسالة'}: $e')),
           );
         }
       }
     }
   }
 
-  Future<void> _updateMessageStatus(String messageId, String newStatus) async {
+  Future<void> _updateMessageStatus(
+    String messageId,
+    String newStatus,
+    Map<String, String> lang,
+  ) async {
     try {
       await ref.read(updateContactMessageStatusProvider)(
         messageId: messageId,
         status: newStatus,
       );
+      // ignore: unused_result
       ref.refresh(contactMessagesProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content:
-                  Text('تم تحديث الحالة إلى ${_getStatusText(newStatus)}')),
+              content: Text(
+                  '${lang['statusUpdated'] ?? 'تم تحديث الحالة'}: ${_getStatusText(newStatus, lang)}')),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('فشل في تحديث الحالة: $e')),
+          SnackBar(
+              content: Text(
+                  '${lang['statusUpdateFailed'] ?? 'فشل في تحديث الحالة'}: $e')),
         );
       }
     }

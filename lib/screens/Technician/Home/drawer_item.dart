@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/home_provider.dart';
+import 'package:flutter_provider/screens/Admin/Garage/ContactUsInboxPage.dart';
 import 'package:flutter_provider/screens/Technician/settings/SettingsPage.dart';
+import 'package:flutter_provider/screens/contactUs.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -34,6 +36,11 @@ Widget buildDrawerItem(
         if (selectedIndex == -1) {
           Navigator.push(
               context, MaterialPageRoute(builder: (context) => SettingsPage()));
+        } else if (selectedIndex == -2) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => ContactUsPage()),
+          );
         } else {
           ref.read(selectedIndexProvider.notifier).state = selectedIndex;
           Navigator.pop(context);

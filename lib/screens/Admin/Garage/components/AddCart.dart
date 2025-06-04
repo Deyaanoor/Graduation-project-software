@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 
-class AddCard extends StatelessWidget {
+class AddCard extends ConsumerWidget {
   final VoidCallback onTap;
 
-  const AddCard({required this.onTap});
+  const AddCard({required this.onTap, super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(languageProvider);
+
     return SizedBox(
       width: 300,
       height: 200,
@@ -25,10 +29,13 @@ class AddCard extends StatelessWidget {
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.add, size: 40, color: Colors.orange),
-                SizedBox(height: 8),
-                Text('Add Garage', style: TextStyle(color: Colors.orange)),
+              children: [
+                const Icon(Icons.add, size: 40, color: Colors.orange),
+                const SizedBox(height: 8),
+                Text(
+                  lang['addGarage'] ?? 'Add Garage',
+                  style: const TextStyle(color: Colors.orange),
+                ),
               ],
             ),
           ),

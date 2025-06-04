@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/garage_provider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/screens/Client/GarageRequestsPage.dart';
 import 'package:flutter_provider/screens/Client/ReportPage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +15,8 @@ class LegendaryTabBar extends ConsumerStatefulWidget {
 class _LegendaryTabBarState extends ConsumerState<LegendaryTabBar> {
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(languageProvider);
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -44,9 +47,15 @@ class _LegendaryTabBarState extends ConsumerState<LegendaryTabBar> {
                   labelColor: const Color.fromARGB(255, 247, 185, 52),
                   unselectedLabelColor:
                       Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                  tabs: const [
-                    Tab(icon: Icon(Icons.history), text: 'Service History'),
-                    Tab(icon: Icon(Icons.assignment), text: 'Requests'),
+                  tabs: [
+                    Tab(
+                      icon: const Icon(Icons.history),
+                      text: lang['serviceHistory'] ?? 'Service History',
+                    ),
+                    Tab(
+                      icon: const Icon(Icons.assignment),
+                      text: lang['requests'] ?? 'Requests',
+                    ),
                   ],
                 ),
               ),

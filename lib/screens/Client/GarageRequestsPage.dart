@@ -3,6 +3,7 @@ import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/garage_provider.dart';
 import 'package:flutter_provider/providers/home_provider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/providers/requestProvider.dart';
 import 'package:flutter_provider/screens/Client/RequestDetailsPage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -79,7 +80,7 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
 
     final userRole =
         userInfo != null ? userInfo['role'] ?? 'بدون اسم' : 'جاري التحميل...';
-
+    final lang = ref.watch(languageProvider);
     final AsyncValue<List<Map<String, dynamic>>> requestsAsync;
 
     if (userRole == 'owner') {
@@ -95,14 +96,14 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
     return Scaffold(
       appBar: (ResponsiveHelper.isMobile(context))
           ? AppBar(
-              title: const Text('طلبات الورشة'),
+              title: Text(lang['garageRequests'] ?? 'طلبات الورشة'),
               backgroundColor: Colors.orange,
             )
           : null,
       body: requestsAsync.when(
         data: (requests) {
           if (requests.isEmpty) {
-            return const Center(child: Text('لا توجد طلبات'));
+            return Center(child: Text(lang['noRequests'] ?? 'لا توجد طلبات'));
           }
 
           final filteredRequests = _filterRequests(requests);
@@ -113,7 +114,7 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
 
           return Column(
             children: [
-              _buildFilters(),
+              _buildFilters(lang),
               Expanded(
                 child: Container(
                   width: ResponsiveHelper.isMobile(context)
@@ -133,25 +134,27 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
                               Expanded(
                                 flex: 2,
                                 child: Text(
-                                  userRole == 'owner' ? 'Name' : 'رقم الطلب',
+                                  userRole == 'owner'
+                                      ? (lang['name'] ?? 'Name')
+                                      : (lang['requestNumber'] ?? 'رقم الطلب'),
                                   style: const TextStyle(
                                       fontWeight: FontWeight.bold),
                                 ),
                               ),
                               Expanded(
                                   flex: 3,
-                                  child: Text('Date',
+                                  child: Text(lang['date'] ?? 'Date',
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold))),
                               Expanded(
                                   flex: 2,
-                                  child: Text('Status',
+                                  child: Text(lang['status'] ?? 'Status',
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold))),
                               userRole == 'owner'
                                   ? Expanded(
                                       flex: 2,
-                                      child: Text('Actions',
+                                      child: Text(lang['actions'] ?? 'Actions',
                                           style: TextStyle(
                                               fontWeight: FontWeight.bold)))
                                   : const SizedBox(),
@@ -214,14 +217,14 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
                                         IconButton(
                                           icon: Icon(Icons.edit,
                                               color: Colors.orange),
-                                          onPressed: () =>
-                                              _handleAction('edit', request),
+                                          onPressed: () => _handleAction(
+                                              'edit', request, lang),
                                         ),
                                         IconButton(
                                           icon: Icon(Icons.delete,
                                               color: Colors.red),
-                                          onPressed: () =>
-                                              _handleAction('delete', request),
+                                          onPressed: () => _handleAction(
+                                              'delete', request, lang),
                                         ),
                                       ],
                                     ),
@@ -243,15 +246,6 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
       ),
-      floatingActionButton: userRole == 'client'
-          ? FloatingActionButton(
-              backgroundColor: Colors.orange,
-              onPressed: () async {
-                await _showAddRequestDialog(userId, garageId!);
-              },
-              child: const Icon(Icons.add, color: Colors.white),
-            )
-          : null,
     );
   }
 
@@ -268,7 +262,9 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
     }
   }
 
-  Widget _buildFilters() {
+  Widget _buildFilters(
+    Map<String, dynamic> lang,
+  ) {
     return Padding(
       padding: const EdgeInsets.all(12.0),
       child: Card(
@@ -283,7 +279,7 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
               Expanded(
                 child: TextField(
                   decoration: InputDecoration(
-                    labelText: 'بحث باسم المستخدم',
+                    labelText: lang['searchByUserName'] ?? 'بحث باسم المستخدم',
                     prefixIcon: const Icon(Icons.search, color: Colors.orange),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -305,16 +301,20 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
                   border: Border.all(color: Colors.orange),
                 ),
                 child: DropdownButton<String>(
-                  hint: const Text('فلترة بالحالة'),
+                  hint: Text(lang['filterByStatus'] ?? 'فلترة بالحالة'),
                   value: _selectedStatus,
                   underline: const SizedBox(),
                   icon: const Icon(Icons.arrow_drop_down, color: Colors.orange),
-                  items: ['pending', 'success', 'failed'].map((status) {
-                    return DropdownMenuItem(
-                      value: status,
-                      child: Text(status),
-                    );
-                  }).toList(),
+                  items: [
+                    DropdownMenuItem(
+                        value: 'pending',
+                        child: Text(lang['pending'] ?? 'معلق')),
+                    DropdownMenuItem(
+                        value: 'success',
+                        child: Text(lang['success'] ?? 'ناجح')),
+                    DropdownMenuItem(
+                        value: 'failed', child: Text(lang['failed'] ?? 'فشل')),
+                  ],
                   onChanged: (value) => setState(() => _selectedStatus = value),
                 ),
               ),
@@ -322,7 +322,7 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
               IconButton(
                 icon: const Icon(Icons.date_range, color: Colors.orange),
                 onPressed: () => _selectDateRange(context),
-                tooltip: 'اختر نطاق تاريخي',
+                tooltip: lang['selectDateRange'] ?? 'اختر نطاق تاريخي',
               ),
               if (_startDate != null || _endDate != null)
                 IconButton(
@@ -331,7 +331,7 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
                     _startDate = null;
                     _endDate = null;
                   }),
-                  tooltip: 'مسح الفلترة',
+                  tooltip: lang['clearFilter'] ?? 'مسح الفلترة',
                 ),
             ],
           ),
@@ -340,7 +340,11 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
     );
   }
 
-  Future<void> _showAddRequestDialog(String userId, String garageId) async {
+  Future<void> _showAddRequestDialog(
+    String userId,
+    String garageId,
+    Map<String, dynamic> lang,
+  ) async {
     return showDialog(
       context: context,
       builder: (context) {
@@ -358,8 +362,8 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'إضافة طلب جديد',
+                Text(
+                  lang['addNewRequest'] ?? 'إضافة طلب جديد',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -370,7 +374,7 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
                 TextField(
                   controller: messageController,
                   decoration: InputDecoration(
-                    labelText: 'الرسالة',
+                    labelText: lang['message'] ?? 'الرسالة',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -386,7 +390,7 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
                     controller: locationController
                       ..text = currentLocation ?? '',
                     decoration: InputDecoration(
-                      labelText: 'الموقع',
+                      labelText: lang['location'] ?? 'الموقع',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -408,7 +412,7 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
                         ),
                       ),
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('إلغاء'),
+                      child: Text(lang['cancel'] ?? 'إلغاء'),
                     ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
@@ -439,22 +443,23 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
                             Navigator.pop(context);
                             messageController.clear();
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('تم إضافة الطلب بنجاح'),
+                              SnackBar(
+                                content: Text(lang['requestAdded'] ??
+                                    'تم إضافة الطلب بنجاح'),
                                 backgroundColor: Colors.green,
                               ),
                             );
                           } catch (e) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('خطأ: $e'),
+                                content: Text('${lang['error'] ?? 'خطأ'}: $e'),
                                 backgroundColor: Colors.red,
                               ),
                             );
                           }
                         }
                       },
-                      child: const Text('حفظ',
+                      child: Text(lang['save'] ?? 'حفظ',
                           style: TextStyle(color: Colors.white)),
                     ),
                   ],
@@ -536,7 +541,11 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
             : ref.read(selectedIndexProvider.notifier).state = 4;
   }
 
-  void _handleAction(String action, Map<String, dynamic> request) async {
+  void _handleAction(
+    String action,
+    Map<String, dynamic> request,
+    Map<String, dynamic> lang,
+  ) async {
     final List<String> statusOptions = ['pending', 'success'];
     final userId = ref.watch(userIdProvider).value;
     if (action == 'edit') {
@@ -544,7 +553,7 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: Text('تحديث الحالة'),
+            title: Text(lang['updateStatus'] ?? 'تحديث الحالة'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: statusOptions.map((status) {
@@ -568,11 +577,15 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('تم تحديث الحالة بنجاح')),
+            SnackBar(
+                content:
+                    Text(lang['statusUpdated'] ?? 'تم تحديث الحالة بنجاح')),
           );
         } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('فشل في تحديث الحالة')),
+            SnackBar(
+                content:
+                    Text(lang['statusUpdateFailed'] ?? 'فشل في تحديث الحالة')),
           );
         }
       }
@@ -580,15 +593,16 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
       final confirm = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('تأكيد الحذف'),
-          content: Text('هل أنت متأكد من حذف هذا الطلب؟'),
+          title: Text(lang['confirmDelete'] ?? 'تأكيد الحذف'),
+          content: Text(
+              lang['deleteRequestMsg'] ?? 'هل أنت متأكد من حذف هذا الطلب؟'),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text('إلغاء')),
+                child: Text(lang['cancel'] ?? 'إلغاء')),
             TextButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: Text('حذف')),
+                child: Text(lang['delete'] ?? 'حذف')),
           ],
         ),
       );
@@ -600,11 +614,11 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
           ref.invalidate(getRequestsProvider(userId!));
 
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('تم الحذف بنجاح')),
+            SnackBar(content: Text(lang['deleted'] ?? 'تم الحذف بنجاح')),
           );
         } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('فشل في الحذف')),
+            SnackBar(content: Text(lang['deleteFailed'] ?? 'فشل في الحذف')),
           );
         }
       }

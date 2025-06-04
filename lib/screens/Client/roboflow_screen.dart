@@ -8,21 +8,23 @@ import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 
-class RoboflowScreen extends StatefulWidget {
+class RoboflowScreen extends ConsumerStatefulWidget {
   const RoboflowScreen({super.key});
 
   @override
-  State<RoboflowScreen> createState() => _RoboflowScreenState();
+  ConsumerState<RoboflowScreen> createState() => _RoboflowScreenState();
 }
 
-class _RoboflowScreenState extends State<RoboflowScreen> {
+class _RoboflowScreenState extends ConsumerState<RoboflowScreen> {
   Uint8List? _originalImageBytes;
   Uint8List? _analyzedImageBytes;
   List<dynamic> _predictions = [];
   bool _isLoading = false;
   final _httpClient = http.Client();
+
   Future<void> _pickAndAnalyzeImage(ImageSource source) async {
     try {
       final pickedFile = await ImagePicker().pickImage(source: source);
@@ -52,6 +54,7 @@ class _RoboflowScreenState extends State<RoboflowScreen> {
   }
 
   void _showImageSourceOptions() {
+    final lang = ref.read(languageProvider);
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -60,16 +63,16 @@ class _RoboflowScreenState extends State<RoboflowScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(Icons.camera_alt),
-                title: Text('التقاط صورة'),
+                leading: const Icon(Icons.camera_alt),
+                title: Text(lang['takePhoto'] ?? 'التقاط صورة'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickAndAnalyzeImage(ImageSource.camera);
                 },
               ),
               ListTile(
-                leading: Icon(Icons.photo_library),
-                title: Text('اختيار من المعرض'),
+                leading: const Icon(Icons.photo_library),
+                title: Text(lang['chooseFromGallery'] ?? 'اختيار من المعرض'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickAndAnalyzeImage(ImageSource.gallery);
@@ -90,51 +93,64 @@ class _RoboflowScreenState extends State<RoboflowScreen> {
     }
   }
 
-  String fuzzyLogic(String symbol, double confidence) {
-    String message = getWarningMessage(symbol);
+  String fuzzyLogic(
+      String symbol, double confidence, Map<String, String> lang) {
+    String message = getWarningMessage(symbol, lang);
 
     if (confidence >= 0.9) {
-      message = getWarningMessage(symbol);
+      message = getWarningMessage(symbol, lang);
     } else if (confidence >= 0.7) {
       message =
-          "${getWarningMessage(symbol)}\nThere might be an issue with '$symbol'.\n\nIt is recommended to check your vehicle.";
+          "${getWarningMessage(symbol, lang)}\n${lang['possibleIssue'] ?? "There might be an issue with"} '$symbol'.\n\n${lang['recommendedCheck'] ?? "It is recommended to check your vehicle."}";
     } else if (confidence >= 0.5) {
       message =
-          "${getWarningMessage(symbol)}\nThe analysis is uncertain.\n\nThe likelihood of accurately identifying the issue with '$symbol' is low, but it is recommended to have the vehicle inspected.";
+          "${getWarningMessage(symbol, lang)}\n${lang['analysisUncertain'] ?? "The analysis is uncertain."}\n\n${lang['lowLikelihood'] ?? "The likelihood of accurately identifying the issue with"} '$symbol' ${lang['isLow'] ?? "is low, but it is recommended to have the vehicle inspected."}";
     } else {
       message =
-          "${getWarningMessage(symbol)}\nUncertain warning.\n\nIt’s best to check your vehicle just in case.";
+          "${getWarningMessage(symbol, lang)}\n${lang['uncertainWarning'] ?? "Uncertain warning."}\n\n${lang['bestToCheck'] ?? "It’s best to check your vehicle just in case."}";
     }
 
     return message;
   }
 
-  String getWarningMessage(String symbol) {
+  String getWarningMessage(String symbol, Map<String, String> lang) {
     switch (symbol) {
       case 'Anti Lock Braking System':
-        return '🚨 ABS Warning:\nPossible issue with the anti-lock braking system.\nThis may affect braking safety. Please visit a service center.';
+        return lang['absWarning'] ??
+            '🚨 ABS Warning:\nPossible issue with the anti-lock braking system.\nThis may affect braking safety. Please visit a service center.';
       case 'Braking System Issue':
-        return '🛑 Brake Alert:\nThere’s a problem with the braking system.\nAvoid driving and seek immediate inspection.';
+        return lang['brakeAlert'] ??
+            '🛑 Brake Alert:\nThere’s a problem with the braking system.\nAvoid driving and seek immediate inspection.';
       case 'Charging System Issue':
-        return '🔋 Charging Warning:\nIssue detected in the battery charging system.\nCheck alternator and battery to avoid sudden shutdown.';
+        return lang['chargingWarning'] ??
+            '🔋 Charging Warning:\nIssue detected in the battery charging system.\nCheck alternator and battery to avoid sudden shutdown.';
       case 'Check Engine':
-        return '⚠️ Engine Alert:\nA potential problem was found in the engine.\nHave it diagnosed by a professional.';
+        return lang['engineAlert'] ??
+            '⚠️ Engine Alert:\nA potential problem was found in the engine.\nHave it diagnosed by a professional.';
       case 'Electronic Stability Problem (ESP)':
-        return '🌀 ESP Warning:\nThere’s a fault in the Electronic Stability Program.\nMay affect control on slippery roads. Drive carefully.';
+        return lang['espWarning'] ??
+            '🌀 ESP Warning:\nThere’s a fault in the Electronic Stability Program.\nMay affect control on slippery roads. Drive carefully.';
       case 'Engine Overheating Warning Light':
-        return '🔥 Overheating Alert:\nEngine temperature is too high.\nStop your vehicle and check coolant levels immediately.';
+        return lang['overheatingAlert'] ??
+            '🔥 Overheating Alert:\nEngine temperature is too high.\nStop your vehicle and check coolant levels immediately.';
       case 'Low Engine Oil Warning Light':
-        return '🛢️ Oil Warning:\nEngine oil level is low.\nAdd oil to prevent serious engine damage.';
+        return lang['oilWarning'] ??
+            '🛢️ Oil Warning:\nEngine oil level is low.\nAdd oil to prevent serious engine damage.';
       case 'Low Tire Pressure Warning Light':
-        return '⚠️ Tire Pressure:\nLow air pressure detected in tires.\nCheck and inflate tires to recommended levels.';
+        return lang['tirePressure'] ??
+            '⚠️ Tire Pressure:\nLow air pressure detected in tires.\nCheck and inflate tires to recommended levels.';
       case 'Master warning light':
-        return '❗ General Warning:\nAn issue has been detected.\nCheck vehicle info screen or consult a technician.';
+        return lang['generalWarning'] ??
+            '❗ General Warning:\nAn issue has been detected.\nCheck vehicle info screen or consult a technician.';
       case 'SRS-Airbag':
-        return '🎈 Airbag System:\nA fault was found in the airbag system.\nAirbags may not deploy during an accident. Service is required.';
+        return lang['airbagSystem'] ??
+            '🎈 Airbag System:\nA fault was found in the airbag system.\nAirbags may not deploy during an accident. Service is required.';
       case 'Seat Belt Reminder':
-        return '🔔 Seat Belt Reminder:\nPlease fasten your seatbelt.\nDriving without it is unsafe and illegal.';
+        return lang['seatBeltReminder'] ??
+            '🔔 Seat Belt Reminder:\nPlease fasten your seatbelt.\nDriving without it is unsafe and illegal.';
       default:
-        return '❓ Unknown Warning:\nThe symbol is not recognized.\nPlease refer to your vehicle manual or a mechanic.';
+        return lang['unknownWarning'] ??
+            '❓ Unknown Warning:\nThe symbol is not recognized.\nPlease refer to your vehicle manual or a mechanic.';
     }
   }
 
@@ -152,8 +168,10 @@ class _RoboflowScreenState extends State<RoboflowScreen> {
   }
 
   void _handleResponse(http.Response response, Uint8List originalImage) async {
-    if (response.statusCode != 200)
+    final lang = ref.read(languageProvider);
+    if (response.statusCode != 200) {
       throw Exception('Failed to analyze image: ${response.statusCode}');
+    }
 
     final jsonResponse = json.decode(response.body);
     if (jsonResponse['error'] != null) throw Exception(jsonResponse['error']);
@@ -181,7 +199,7 @@ class _RoboflowScreenState extends State<RoboflowScreen> {
       final symbol = prediction['class'];
       final confidence = prediction['confidence'] ?? 0.0;
 
-      String message = fuzzyLogic(symbol, confidence);
+      String message = fuzzyLogic(symbol, confidence, lang);
 
       // Draw bounding box
       final rect = Rect.fromCenter(
@@ -255,19 +273,22 @@ class _RoboflowScreenState extends State<RoboflowScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(languageProvider);
     final isDesktop = ResponsiveHelper.isDesktop(context);
 
     return Scaffold(
-      body: isDesktop ? _buildDesktopLayout(context) : _buildMobileLayout(),
+      body: isDesktop
+          ? _buildDesktopLayout(context, lang)
+          : _buildMobileLayout(lang),
     );
   }
 
-  Widget _buildDesktopLayout(BuildContext context) {
+  Widget _buildDesktopLayout(BuildContext context, Map<String, String> lang) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
-          Center(child: _buildSelectImageButton()),
+          Center(child: _buildSelectImageButton(lang)),
           const SizedBox(height: 20),
           Expanded(
             child: Row(
@@ -277,7 +298,7 @@ class _RoboflowScreenState extends State<RoboflowScreen> {
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
-                        _buildImageSection(),
+                        _buildImageSection(lang),
                       ],
                     ),
                   ),
@@ -285,7 +306,7 @@ class _RoboflowScreenState extends State<RoboflowScreen> {
                 const SizedBox(width: 20),
                 Expanded(
                   flex: 1,
-                  child: _buildDetectionDetailsScrollable(),
+                  child: _buildDetectionDetailsScrollable(lang),
                 ),
               ],
             ),
@@ -295,22 +316,22 @@ class _RoboflowScreenState extends State<RoboflowScreen> {
     );
   }
 
-  Widget _buildMobileLayout() {
+  Widget _buildMobileLayout(Map<String, String> lang) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
-          Center(child: _buildSelectImageButton()),
+          Center(child: _buildSelectImageButton(lang)),
           const SizedBox(height: 20),
-          _buildImageSection(),
+          _buildImageSection(lang),
           const SizedBox(height: 20),
-          _buildDetectionDetails(),
+          _buildDetectionDetails(lang),
         ],
       ),
     );
   }
 
-  Widget _buildDetectionDetailsScrollable() {
+  Widget _buildDetectionDetailsScrollable(Map<String, String> lang) {
     if (_predictions.isEmpty) return const SizedBox();
 
     return Card(
@@ -321,9 +342,10 @@ class _RoboflowScreenState extends State<RoboflowScreen> {
           itemCount: _predictions.length,
           itemBuilder: (context, index) {
             final prediction = _predictions[index];
-            final symbol = prediction['class'] ?? 'Unknown';
+            final symbol =
+                prediction['class'] ?? (lang['unknown'] ?? 'Unknown');
             final confidence = prediction['confidence'] ?? 0.0;
-            final message = fuzzyLogic(symbol, confidence);
+            final message = fuzzyLogic(symbol, confidence, lang);
 
             return ListTile(
               leading: CircleAvatar(
@@ -344,14 +366,14 @@ class _RoboflowScreenState extends State<RoboflowScreen> {
                 ),
               ),
               subtitle: Text(
-                'Confidence: ${(confidence * 100).toStringAsFixed(1)}%',
+                '${lang['confidence'] ?? 'Confidence'}: ${(confidence * 100).toStringAsFixed(1)}%',
                 style: const TextStyle(
                   fontSize: 14,
                   color: Colors.grey,
                 ),
               ),
               onTap: () {
-                showPredictionDetails(context, message);
+                showPredictionDetails(context, message, lang);
               },
             );
           },
@@ -360,23 +382,24 @@ class _RoboflowScreenState extends State<RoboflowScreen> {
     );
   }
 
-  void showPredictionDetails(BuildContext context, String message) {
+  void showPredictionDetails(
+      BuildContext context, String message, Map<String, String> lang) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Prediction Details"),
+        title: Text(lang['predictionDetails'] ?? "Prediction Details"),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("OK"),
+            child: Text(lang['ok'] ?? "OK"),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSelectImageButton() {
+  Widget _buildSelectImageButton(Map<String, String> lang) {
     return ElevatedButton(
       onPressed: _isLoading ? null : selectImage,
       style: ElevatedButton.styleFrom(
@@ -391,12 +414,12 @@ class _RoboflowScreenState extends State<RoboflowScreen> {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: const [
-          Icon(Icons.image, size: 24),
-          SizedBox(width: 8),
+        children: [
+          const Icon(Icons.image, size: 24),
+          const SizedBox(width: 8),
           Text(
-            'Select Image',
-            style: TextStyle(
+            lang['selectImage'] ?? 'Select Image',
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               letterSpacing: 1,
@@ -407,16 +430,16 @@ class _RoboflowScreenState extends State<RoboflowScreen> {
     );
   }
 
-  Widget _buildImageSection() {
+  Widget _buildImageSection(Map<String, String> lang) {
     if (_isLoading) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 40),
+          padding: const EdgeInsets.symmetric(vertical: 40),
           child: Column(
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Analyzing Image...'),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(lang['analyzingImage'] ?? 'Analyzing Image...'),
             ],
           ),
         ),
@@ -426,7 +449,8 @@ class _RoboflowScreenState extends State<RoboflowScreen> {
     return Column(
       children: [
         if (_analyzedImageBytes != null)
-          _buildImageCard('Analyzed Image', _analyzedImageBytes!),
+          _buildImageCard(
+              lang['analyzedImage'] ?? 'Analyzed Image', _analyzedImageBytes!),
       ],
     );
   }
@@ -485,11 +509,11 @@ class _RoboflowScreenState extends State<RoboflowScreen> {
     return completer.future;
   }
 
-  Widget _buildDetectionDetails() {
+  Widget _buildDetectionDetails(Map<String, String> lang) {
     if (_predictions.isEmpty) return const SizedBox();
 
     return SizedBox(
-      height: 200,
+      height: 400,
       child: Card(
         elevation: 4,
         child: Scrollbar(
@@ -498,9 +522,10 @@ class _RoboflowScreenState extends State<RoboflowScreen> {
             itemCount: _predictions.length,
             itemBuilder: (context, index) {
               final prediction = _predictions[index];
-              final symbol = prediction['class'] ?? 'Unknown';
+              final symbol =
+                  prediction['class'] ?? (lang['unknown'] ?? 'Unknown');
               final confidence = prediction['confidence'] ?? 0.0;
-              final message = fuzzyLogic(symbol, confidence);
+              final message = fuzzyLogic(symbol, confidence, lang);
 
               return ListTile(
                 leading: CircleAvatar(
@@ -514,21 +539,21 @@ class _RoboflowScreenState extends State<RoboflowScreen> {
                   ),
                 ),
                 title: Text(
-                  prediction['class'] ?? 'Unknown',
+                  symbol,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 subtitle: Text(
-                  'Confidence: ${((prediction['confidence'] ?? 0) * 100).toStringAsFixed(1)}%',
+                  '${lang['confidence'] ?? 'Confidence'}: ${(confidence * 100).toStringAsFixed(1)}%',
                   style: const TextStyle(
                     fontSize: 14,
                     color: Colors.grey,
                   ),
                 ),
                 onTap: () {
-                  showPredictionDetails(context, message);
+                  showPredictionDetails(context, message, lang);
                 },
               );
             },

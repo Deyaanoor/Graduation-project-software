@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/garage_provider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/providers/requestRegister.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -40,18 +41,19 @@ class _RegistrationRequestsState extends ConsumerState<RegistrationRequests> {
     final textColor = isDarkMode ? Colors.white : Colors.grey[900];
     final rowColor = isDarkMode ? Colors.grey[850] : Colors.orange[50];
     final backgroundColor = isDarkMode ? Colors.grey[900] : Colors.white;
-
+    final lang = ref.watch(languageProvider);
     return Scaffold(
       body: getAllRequests.when(
         loading: () => Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('حدث خطأ: $error')),
+        error: (error, _) =>
+            Center(child: Text('${lang['error'] ?? 'حدث خطأ'}: $error')),
         data: (requests) {
           List<Map<String, dynamic>> filteredRequests =
               _getFilteredRequests(requests);
           return Column(
             children: [
               const SizedBox(height: 16),
-              _buildSearchAndFilter(headerColor, isDarkMode),
+              _buildSearchAndFilter(headerColor, isDarkMode, lang),
               const SizedBox(height: 10),
               Expanded(
                 child: LayoutBuilder(
@@ -92,7 +94,9 @@ class _RegistrationRequestsState extends ConsumerState<RegistrationRequests> {
                               DataColumn2(
                                 label: Center(
                                   child: _buildSortableHeader(
-                                      'اسم الكراج', headerColor, 0),
+                                      lang['garageName'] ?? 'الكراج',
+                                      headerColor,
+                                      0),
                                 ),
                                 onSort: (columnIndex, ascending) =>
                                     _onSort(columnIndex, ascending),
@@ -101,7 +105,9 @@ class _RegistrationRequestsState extends ConsumerState<RegistrationRequests> {
                               DataColumn2(
                                 label: Center(
                                   child: _buildSortableHeader(
-                                      'المالك', headerColor, 1),
+                                      lang['owner'] ?? 'المالك',
+                                      headerColor,
+                                      1),
                                 ),
                                 onSort: (columnIndex, ascending) =>
                                     _onSort(columnIndex, ascending),
@@ -109,7 +115,8 @@ class _RegistrationRequestsState extends ConsumerState<RegistrationRequests> {
                               ),
                               DataColumn2(
                                 label: Center(
-                                  child: _SimpleHeader('الحالة', headerColor),
+                                  child: _SimpleHeader(
+                                      lang['status'] ?? 'الحالة', headerColor),
                                 ),
                                 size: ColumnSize.S,
                               ),
@@ -136,7 +143,8 @@ class _RegistrationRequestsState extends ConsumerState<RegistrationRequests> {
                                   ),
                                   onSelectChanged: (selected) {
                                     if (selected == true) {
-                                      _showRequestDetails(context, request);
+                                      _showRequestDetails(
+                                          context, request, lang);
                                     }
                                   },
                                   cells: [
@@ -165,7 +173,8 @@ class _RegistrationRequestsState extends ConsumerState<RegistrationRequests> {
                                     ),
                                     DataCell(
                                       Center(
-                                          child: _buildStatusWidget(request)),
+                                          child: _buildStatusWidget(
+                                              request, lang)),
                                     ),
                                   ],
                                 );
@@ -185,7 +194,10 @@ class _RegistrationRequestsState extends ConsumerState<RegistrationRequests> {
     );
   }
 
-  Widget _buildStatusWidget(Map<String, dynamic> request) {
+  Widget _buildStatusWidget(
+    Map<String, dynamic> request,
+    Map<String, String> lang,
+  ) {
     final isResolved = request['status'] == 'accepted';
     final isRejected = request['status'] == 'rejected';
 
@@ -197,7 +209,9 @@ class _RegistrationRequestsState extends ConsumerState<RegistrationRequests> {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
-          isResolved ? 'تم القبول' : 'مرفوض',
+          isResolved
+              ? (lang['accepted'] ?? 'تم القبول')
+              : (lang['rejected'] ?? 'مرفوض'),
           style: TextStyle(
             color: isResolved ? Colors.green.shade800 : Colors.red.shade800,
             fontWeight: FontWeight.bold,
@@ -268,7 +282,8 @@ class _RegistrationRequestsState extends ConsumerState<RegistrationRequests> {
   }
 
   void _updateRequestStatus(String id, String status) async {
-    final url = Uri.parse('http://localhost:5000/request_register/$id/status');
+    final url = Uri.parse(
+        'https://graduation-project-software.onrender.com/request_register/$id/status');
 
     try {
       final response = await http.put(
@@ -336,7 +351,11 @@ class _RegistrationRequestsState extends ConsumerState<RegistrationRequests> {
     return requests;
   }
 
-  Widget _buildSearchAndFilter(Color headerColor, bool isDarkMode) {
+  Widget _buildSearchAndFilter(
+    Color headerColor,
+    bool isDarkMode,
+    Map<String, String> lang,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -353,7 +372,8 @@ class _RegistrationRequestsState extends ConsumerState<RegistrationRequests> {
                 fillColor: isDarkMode
                     ? Colors.grey[800]
                     : Colors.orange.withOpacity(0.1),
-                hintText: 'ابحث باسم الكراج أو صاحبه...',
+                hintText: lang['searchGarageOrOwner'] ??
+                    'ابحث باسم الكراج أو صاحبه...',
                 hintStyle: const TextStyle(color: Colors.orange),
                 prefixIcon: const Icon(Icons.search, color: Colors.orange),
                 border: OutlineInputBorder(
@@ -369,7 +389,7 @@ class _RegistrationRequestsState extends ConsumerState<RegistrationRequests> {
             items: ['All', 'pending', 'accepted', 'rejected']
                 .map((status) => DropdownMenuItem(
                       value: status,
-                      child: Text(_translateStatus(status),
+                      child: Text(_translateStatus(status, lang),
                           style: TextStyle(color: headerColor)),
                     ))
                 .toList(),
@@ -386,21 +406,25 @@ class _RegistrationRequestsState extends ConsumerState<RegistrationRequests> {
     );
   }
 
-  String _translateStatus(String status) {
+  String _translateStatus(String status, Map<String, String> lang) {
     switch (status) {
       case 'pending':
-        return 'قيد الانتظار';
+        return lang['pending'] ?? 'قيد الانتظار';
       case 'accepted':
-        return 'تم القبول';
+        return lang['accepted'] ?? 'تم القبول';
       case 'rejected':
-        return 'مرفوض';
+        return lang['rejected'] ?? 'مرفوض';
       case 'All':
       default:
-        return 'الكل';
+        return lang['all'] ?? 'الكل';
     }
   }
 
-  void _showRequestDetails(BuildContext context, Map<String, dynamic> request) {
+  void _showRequestDetails(
+    BuildContext context,
+    Map<String, dynamic> request,
+    Map<String, String> lang,
+  ) {
     final userInfo = request['userInfo'] as Map<String, dynamic>;
     final isWideScreen = MediaQuery.of(context).size.width > 600;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -443,39 +467,39 @@ class _RegistrationRequestsState extends ConsumerState<RegistrationRequests> {
                   child: Column(
                     children: [
                       _infoTile(
-                        label: 'المالك',
+                        label: lang['owner'] ?? 'المالك',
                         value: userInfo['name'],
                         icon: Icons.person,
                       ),
                       _infoTile(
-                        label: 'البريد الإلكتروني',
+                        label: lang['email'] ?? 'البريد الإلكتروني',
                         value: userInfo['email'],
                         icon: Icons.email,
                       ),
                       _infoTile(
-                        label: 'رقم الهاتف',
+                        label: lang['phoneNumber'] ?? 'رقم الهاتف',
                         value: userInfo['phoneNumber'],
                         icon: Icons.phone_android,
                       ),
                       _infoTile(
-                        label: 'الموقع',
+                        label: lang['location'] ?? 'الموقع',
                         value: request['garageLocation'],
                         icon: Icons.location_on,
                       ),
                       _infoTile(
-                        label: 'الحالة',
+                        label: lang['status'] ?? 'الحالة',
                         value: request['status'],
                         icon: Icons.info_outline,
                       ),
                       if (request['subscriptionType'] != null)
                         _infoTile(
-                          label: 'نوع الاشتراك',
+                          label: lang['subscriptionType'] ?? 'نوع الاشتراك',
                           value: request['subscriptionType'],
                           icon: Icons.subscriptions,
                         ),
                       if (request['createdAt'] != null)
                         _infoTile(
-                          label: 'تاريخ الإنشاء',
+                          label: lang['createdAt'] ?? 'تاريخ الإنشاء',
                           value:
                               request['createdAt'].toString().substring(0, 10),
                           icon: Icons.calendar_today,
@@ -490,7 +514,7 @@ class _RegistrationRequestsState extends ConsumerState<RegistrationRequests> {
                 child: ElevatedButton.icon(
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.close),
-                  label: const Text("إغلاق"),
+                  label: Text(lang['close'] ?? "إغلاق"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: orangeColor,
                     padding: const EdgeInsets.symmetric(vertical: 14),

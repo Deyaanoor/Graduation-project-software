@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/garage_provider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/screens/Admin/Garage/components/EditGaragePage.dart';
 import 'package:flutter_provider/screens/Admin/Garage/GarageDetailsPage.dart';
 import 'package:flutter_provider/widgets/AlertToDelete.dart';
@@ -23,6 +24,8 @@ class _GarageCardState extends ConsumerState<GarageCard> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(languageProvider);
+
     return InkWell(
       onTap: () {
         setState(() {
@@ -75,7 +78,7 @@ class _GarageCardState extends ConsumerState<GarageCard> {
                         color: Colors.orange, size: 24),
                     const SizedBox(width: 8),
                     Text(
-                      'Location:',
+                      lang['location'] ?? 'Location:',
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
@@ -102,7 +105,7 @@ class _GarageCardState extends ConsumerState<GarageCard> {
                       Expanded(
                         child: _buildActionButton(
                           icon: Icons.visibility,
-                          label: 'View',
+                          label: lang['view'] ?? 'View',
                           onPressed: () {
                             if (ResponsiveHelper.isDesktop(context)) {
                               showDialog(
@@ -141,7 +144,7 @@ class _GarageCardState extends ConsumerState<GarageCard> {
                       Expanded(
                         child: _buildActionButton(
                           icon: Icons.edit,
-                          label: 'Edit',
+                          label: lang['edit'] ?? 'Edit',
                           onPressed: () {
                             if (ResponsiveHelper.isDesktop(context)) {
                               showDialog(
@@ -178,7 +181,7 @@ class _GarageCardState extends ConsumerState<GarageCard> {
                         color: Colors.grey[300],
                       ),
                       Expanded(
-                        child: _deleteFunction(context),
+                        child: _deleteFunction(context, lang),
                       ),
                     ],
                   ),
@@ -191,17 +194,18 @@ class _GarageCardState extends ConsumerState<GarageCard> {
     );
   }
 
-  Widget _deleteFunction(BuildContext context) {
+  Widget _deleteFunction(BuildContext context, Map<String, String> lang) {
     return _buildActionButton(
       icon: Icons.delete,
-      label: 'Delete',
+      label: lang['delete'] ?? 'Delete',
       onPressed: () async {
         final confirm = await showDialog(
           context: context,
           builder: (_) => AlertToDelete(
             context: context,
-            title: 'تأكيد الحذف',
-            content: 'هل أنت متأكد أنك تريد حذف هذا الجراج؟',
+            title: lang['confirmDelete'] ?? 'تأكيد الحذف',
+            content: lang['deleteGarageMsg'] ??
+                'هل أنت متأكد أنك تريد حذف هذا الجراج؟',
           ),
         );
 
@@ -221,13 +225,14 @@ class _GarageCardState extends ConsumerState<GarageCard> {
             CustomDialogPage.show(
               context: context,
               type: MessageType.success,
-              title: 'Success',
-              content: 'تم حذف الجراج بنجاح',
+              title: lang['success'] ?? 'نجاح',
+              content: lang['garageDeleted'] ?? 'تم حذف الجراج بنجاح',
             );
           } catch (e) {
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('فشل الحذف: $e')),
+              SnackBar(
+                  content: Text('${lang['deleteFailed'] ?? 'فشل الحذف'}: $e')),
             );
           }
         }

@@ -3,29 +3,40 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
+final String _baseUrl = '${dotenv.env['API_URL']}/notifications';
+
+// بروفايدر الإشعارات
 final notificationsProvider = StateNotifierProvider<NotificationsNotifier,
     AsyncValue<List<Map<String, dynamic>>>>(
-  (ref) => NotificationsNotifier(),
+  (ref) => NotificationsNotifier(ref),
 );
-final unreadCountStateProvider = StateProvider<int>((ref) => 0);
+
+// بروفايدر عدد الإشعارات غير المقروءة (يُجلب تلقائيًا من السيرفر)
+final unreadCountProvider =
+    FutureProvider.family<int, String>((ref, adminId) async {
+  final response = await http.get(Uri.parse('$_baseUrl/count-unread/$adminId'));
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    return data['unreadCount'] ?? 0;
+  } else {
+    throw Exception('فشل تحميل عدد الإشعارات غير المقروءة');
+  }
+});
 
 class NotificationsNotifier
     extends StateNotifier<AsyncValue<List<Map<String, dynamic>>>> {
-  NotificationsNotifier() : super(const AsyncValue.loading());
+  final Ref ref;
+  NotificationsNotifier(this.ref) : super(const AsyncValue.loading());
 
-  static String _baseUrl = '${dotenv.env['API_URL']}/notifications';
-  int _unreadCount = 0;
-  int get unreadCount => _unreadCount;
+  // جلب الإشعارات
   Future<void> fetchNotifications({required String adminId}) async {
     try {
       state = const AsyncValue.loading();
       final response = await http.get(Uri.parse('$_baseUrl/$adminId'));
-
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
         final List<Map<String, dynamic>> notifications =
             List<Map<String, dynamic>>.from(data['notifications'] ?? []);
-
         state = AsyncValue.data(notifications);
       } else {
         throw Exception('Failed to load notifications: ${response.statusCode}');
@@ -35,7 +46,8 @@ class NotificationsNotifier
     }
   }
 
-  Future<String?> sendNotification({
+  // إرسال إشعار جديد
+  Future<void> sendNotification({
     required String adminId,
     required String senderName,
     String? reportId,
@@ -47,17 +59,13 @@ class NotificationsNotifier
     String? garageId,
     String type = 'report',
   }) async {
-    if (adminId.length != 24) {
-      return null;
-    }
-
+    if (adminId.length != 24) return;
     try {
       final Map<String, dynamic> body = {
         'adminId': adminId,
         'senderName': senderName,
         'type': type,
       };
-
       if (type == 'report') {
         body['reportId'] = reportId;
         body['newsbody'] = 'تقرير جديد من $senderName';
@@ -70,42 +78,29 @@ class NotificationsNotifier
         body['messageBody'] = messageBody;
         body['garageId'] = garageId;
       }
-
       final response = await http.post(
         Uri.parse('$_baseUrl/send-notification'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
       );
+      // بعد الإرسال، جلب الإشعارات وتحديث العدد
+      await fetchNotifications(adminId: adminId);
+      ref.invalidate(unreadCountProvider(adminId));
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
       rethrow;
     }
   }
 
-  Future<void> markNotificationAsRead(String notificationId) async {
-    try {
-      final response = await http.put(
-        Uri.parse('$_baseUrl/read/$notificationId'),
-      );
-
-      if (response.statusCode == 200) {
-      } else {
-        throw Exception(
-            'Failed to mark notification as read: ${response.statusCode}');
-      }
-    } catch (e, stack) {
-      state = AsyncValue.error(e, stack);
-      rethrow;
-    }
-  }
-
-  Future<void> deleteNotification(String notificationId) async {
+  // حذف إشعار
+  Future<void> deleteNotification(String notificationId, String adminId) async {
     try {
       final response = await http.delete(
         Uri.parse('$_baseUrl/delete/$notificationId'),
       );
-
       if (response.statusCode == 200) {
+        await fetchNotifications(adminId: adminId);
+        ref.invalidate(unreadCountProvider(adminId));
       } else {
         throw Exception(
             'Failed to delete notification: ${response.statusCode}');
@@ -116,26 +111,23 @@ class NotificationsNotifier
     }
   }
 
-  Future<void> fetchUnreadCount({
-    required String adminId,
-    required WidgetRef ref,
-  }) async {
+  // تعليم إشعار كمقروء
+  Future<void> markNotificationAsRead(
+      String notificationId, String adminId) async {
     try {
-      final response =
-          await http.get(Uri.parse('$_baseUrl/count-unread/$adminId'));
-
+      final response = await http.put(
+        Uri.parse('$_baseUrl/read/$notificationId'),
+      );
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final count = data['unreadCount'] ?? 0;
-        _unreadCount = count;
-        ref.read(unreadCountStateProvider.notifier).state = count;
+        await fetchNotifications(adminId: adminId);
+        ref.invalidate(unreadCountProvider(adminId));
       } else {
-        throw Exception('فشل تحميل عدد الإشعارات غير المقروءة');
+        throw Exception(
+            'Failed to mark notification as read: ${response.statusCode}');
       }
-    } catch (e) {
-      print('❌ خطأ في جلب عدد الإشعارات: $e');
-      _unreadCount = 0;
-      ref.read(unreadCountStateProvider.notifier).state = 0;
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+      rethrow;
     }
   }
 }

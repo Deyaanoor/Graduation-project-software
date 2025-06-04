@@ -21,27 +21,26 @@ class DesktopCustomAppBar extends ConsumerStatefulWidget
       _DesktopCustomAppBarState();
 }
 
-class _DesktopCustomAppBarState extends ConsumerState<DesktopCustomAppBar> {
+class _DesktopCustomAppBarState extends ConsumerState<DesktopCustomAppBar>
+    with RouteAware {
   bool showNotifications = false;
   OverlayEntry? _overlayEntry;
 
   @override
-  void initState() {
-    super.initState();
-    Future.microtask(() {
-      final userId = ref.read(userIdProvider).value;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
-      if (userId != null) {
-        ref
-            .read(notificationsProvider.notifier)
-            .fetchUnreadCount(adminId: userId, ref: ref);
-      }
-    });
+    // لما ترجع للصفحة، نفذ التحديث
+    final userId = ref.read(userIdProvider).value;
+    if (userId != null) {
+      ref.watch(unreadCountProvider(userId));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final unreadCount = ref.watch(unreadCountStateProvider);
+    final userId = ref.watch(userIdProvider).value;
+    final unreadCount = ref.watch(unreadCountProvider(userId!));
     final screenWidth = MediaQuery.of(context).size.width;
 
     return AppBar(
@@ -172,7 +171,18 @@ class _DesktopCustomAppBarState extends ConsumerState<DesktopCustomAppBar> {
                     ),
                   const Spacer(),
                   if (screenWidth > 600)
-                    _buildDesktopActions(context, widget.userInfo, unreadCount)
+                    unreadCount.when(
+                      data: (count) =>
+                          _buildDesktopActions(context, widget.userInfo, count),
+                      loading: () => const SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white),
+                      ),
+                      error: (err, stack) =>
+                          Icon(Icons.error, color: Colors.red),
+                    )
                   else
                     _buildMobileMenu(context),
                 ],
@@ -238,11 +248,6 @@ class _DesktopCustomAppBarState extends ConsumerState<DesktopCustomAppBar> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
-            const SizedBox(width: 10),
-            IconButton(
-              icon: const Icon(Icons.search, color: Colors.white, size: 30),
-              onPressed: () {},
             ),
             const SizedBox(width: 10),
             if (userInfo['role'] == 'owner' || userInfo['role'] == 'employee')

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/garage_provider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/screens/map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -12,10 +13,11 @@ class GarageDetailsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final garageAsyncValue = ref.watch(garageByIdProvider(garageId));
+    final lang = ref.watch(languageProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Garage Details'),
+        title: Text(lang['garageDetails'] ?? 'Garage Details'),
         backgroundColor: Colors.orange,
         elevation: 4,
       ),
@@ -24,18 +26,24 @@ class GarageDetailsPage extends ConsumerWidget {
         child: SingleChildScrollView(
           child: garageAsyncValue.when(
             loading: () => Center(child: CircularProgressIndicator()),
-            error: (error, _) => Center(child: Text('Error: $error')),
+            error: (error, _) =>
+                Center(child: Text('${lang['error'] ?? 'Error'}: $error')),
             data: (garage) {
-              final garageName = garage['name'] ?? 'غير متوفر';
-              final ownerName = garage['owner']['name'] ?? 'غير متوفر';
-              final ownerEmail = garage['owner']['email'] ?? 'غير متوفر';
-              final location = garage['location'] ?? 'غير متوفر';
-              final ownerPhone = garage['owner']['phoneNumber'] ?? 'غير متوفر';
+              final garageName =
+                  garage['name'] ?? (lang['notAvailable'] ?? 'غير متوفر');
+              final ownerName = garage['owner']['name'] ??
+                  (lang['notAvailable'] ?? 'غير متوفر');
+              final ownerEmail = garage['owner']['email'] ??
+                  (lang['notAvailable'] ?? 'غير متوفر');
+              final location =
+                  garage['location'] ?? (lang['notAvailable'] ?? 'غير متوفر');
+              final ownerPhone = garage['owner']['phoneNumber'] ??
+                  (lang['notAvailable'] ?? 'غير متوفر');
               final startSub = garage['subscriptionStartDate'];
               final endSub = garage['subscriptionEndDate'];
 
-              String startformattedDate = 'غير متوفر';
-              String endformattedDate = 'غير متوفر';
+              String startformattedDate = lang['notAvailable'] ?? 'غير متوفر';
+              String endformattedDate = lang['notAvailable'] ?? 'غير متوفر';
 
               if (startSub != null &&
                   startSub is String &&
@@ -62,25 +70,26 @@ class GarageDetailsPage extends ConsumerWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSectionTitle('Garage Information'),
+                  _buildSectionTitle(
+                      lang['garageInformation'] ?? 'Garage Information'),
                   _buildInfoCard(
                     icon: Icons.business,
-                    title: 'Garage Name',
+                    title: lang['garageName'] ?? 'Garage Name',
                     content: garageName,
                   ),
                   _buildInfoCard(
                     icon: Icons.person,
-                    title: 'Owner Name',
+                    title: lang['ownerName'] ?? 'Owner Name',
                     content: ownerName,
                   ),
                   _buildInfoCard(
                     icon: Icons.email,
-                    title: 'Owner Email',
+                    title: lang['ownerEmail'] ?? 'Owner Email',
                     content: ownerEmail,
                   ),
                   _buildInfoCard(
                       icon: Icons.location_on,
-                      title: 'Location',
+                      title: lang['location'] ?? 'Location',
                       content: location,
                       onTap: () async {
                         await Navigator.push(
@@ -92,22 +101,23 @@ class GarageDetailsPage extends ConsumerWidget {
                       }),
                   _buildInfoCard(
                     icon: Icons.phone,
-                    title: 'phone number',
+                    title: lang['phoneNumber'] ?? 'Phone Number',
                     content: ownerPhone,
                   ),
                   _buildInfoCard(
                     icon: Icons.calendar_today,
-                    title: 'Subscription date',
+                    title: lang['subscriptionDate'] ?? 'Subscription date',
                     content: startformattedDate.isNotEmpty
                         ? startformattedDate
-                        : 'غير متوفر',
+                        : (lang['notAvailable'] ?? 'غير متوفر'),
                   ),
                   _buildInfoCard(
                     icon: Icons.calendar_month,
-                    title: 'Subscription end date',
+                    title:
+                        lang['subscriptionEndDate'] ?? 'Subscription end date',
                     content: endformattedDate.isNotEmpty
                         ? endformattedDate
-                        : 'غير متوفر',
+                        : (lang['notAvailable'] ?? 'غير متوفر'),
                   ),
                 ],
               );

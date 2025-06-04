@@ -3,10 +3,11 @@ import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/auth/check_verification_provider.dart';
 import 'package:flutter_provider/widgets/custom_snackbar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 
 class CheckVerificationPage extends ConsumerStatefulWidget {
   final String email;
-  final String password; // 👈 نمرر كلمة السر للتسجيل
+  final String password;
 
   const CheckVerificationPage({
     super.key,
@@ -24,26 +25,35 @@ class _CheckVerificationPageState extends ConsumerState<CheckVerificationPage> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(languageProvider);
     final isVerifiedAsync = ref.watch(checkVerificationProvider(widget.email));
 
     isVerifiedAsync.whenData((isVerified) {
       if (isVerified && !hasLoggedIn) {
         hasLoggedIn = true;
-        handleLogin(context, TextEditingController(text: widget.email),
-            TextEditingController(text: widget.password), ref);
+        handleLogin(
+          context,
+          TextEditingController(text: widget.email),
+          TextEditingController(text: widget.password),
+          ref,
+          lang,
+        );
       }
     });
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Email Verification')),
+      appBar: AppBar(
+          title: Text(lang['emailVerification'] ?? 'Email Verification')),
       body: Center(
         child: isVerifiedAsync.when(
           data: (isVerified) => Text(
-            isVerified ? '✅ Verified. Logging in...' : '❌ Not Verified yet.',
+            isVerified
+                ? (lang['verifiedLoggingIn'] ?? '✅ Verified. Logging in...')
+                : (lang['notVerifiedYet'] ?? '❌ Not Verified yet.'),
             style: const TextStyle(fontSize: 20),
           ),
           loading: () => const CircularProgressIndicator(),
-          error: (e, _) => Text('Error: $e'),
+          error: (e, _) => Text('${lang['error'] ?? 'Error'}: $e'),
         ),
       ),
     );
@@ -54,6 +64,7 @@ class _CheckVerificationPageState extends ConsumerState<CheckVerificationPage> {
     TextEditingController emailController,
     TextEditingController passwordController,
     WidgetRef ref,
+    Map<String, dynamic> lang,
   ) async {
     final credentials = {
       'email': emailController.text,
@@ -75,7 +86,7 @@ class _CheckVerificationPageState extends ConsumerState<CheckVerificationPage> {
     } catch (e) {
       CustomSnackBar.showErrorSnackBar(
         context,
-        'Login failed',
+        lang['loginFailed'] ?? 'Login failed',
       );
     }
   }

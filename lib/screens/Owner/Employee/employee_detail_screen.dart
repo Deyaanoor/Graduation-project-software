@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/employeeProvider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
+import 'package:flutter_provider/providers/overviewProvider.dart';
 import 'package:flutter_provider/widgets/custom_button.dart';
 import 'package:flutter_provider/widgets/custom_text_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,15 +42,17 @@ class _EmployeeDetailScreenState extends ConsumerState<EmployeeDetailScreen> {
   }
 
   void _showDiscardChangesDialog() {
+    final lang = ref.watch(languageProvider);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Discard Changes?'),
-        content: const Text('Are you sure you want to discard changes?'),
+        title: Text(lang['discardChanges'] ?? 'Discard Changes?'),
+        content: Text(lang['discardChangesMsg'] ??
+            'Are you sure you want to discard changes?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(lang['cancel'] ?? 'Cancel'),
           ),
           TextButton(
             onPressed: () {
@@ -56,7 +60,8 @@ class _EmployeeDetailScreenState extends ConsumerState<EmployeeDetailScreen> {
               setState(() => isEditing = false);
               Navigator.pop(context);
             },
-            child: const Text('Discard', style: TextStyle(color: Colors.red)),
+            child: Text(lang['discard'] ?? 'Discard',
+                style: const TextStyle(color: Colors.red)),
           )
         ],
       ),
@@ -64,6 +69,7 @@ class _EmployeeDetailScreenState extends ConsumerState<EmployeeDetailScreen> {
   }
 
   Future<void> _saveChanges() async {
+    final lang = ref.watch(languageProvider);
     try {
       final updatedData = {
         'name': nameController.text,
@@ -78,35 +84,40 @@ class _EmployeeDetailScreenState extends ConsumerState<EmployeeDetailScreen> {
         userId!,
       );
       ref.invalidate(employeesProvider(userId));
-
+      ref.invalidate(employeeSalaryProvider(userId));
       setState(() => isEditing = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Changes saved successfully!')),
+        SnackBar(
+            content:
+                Text(lang['changesSaved'] ?? 'Changes saved successfully!')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
+        SnackBar(content: Text('${lang['error'] ?? 'Error'}: ${e.toString()}')),
       );
     }
   }
 
   void _confirmDelete() {
+    final lang = ref.watch(languageProvider);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Employee?'),
-        content: const Text('Are you sure you want to delete this employee?'),
+        title: Text(lang['deleteEmployee'] ?? 'Delete Employee?'),
+        content: Text(lang['deleteEmployeeMsg'] ??
+            'Are you sure you want to delete this employee?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(lang['cancel'] ?? 'Cancel'),
           ),
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
               await _deleteEmployee();
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(lang['delete'] ?? 'Delete',
+                style: const TextStyle(color: Colors.red)),
           )
         ],
       ),
@@ -114,22 +125,26 @@ class _EmployeeDetailScreenState extends ConsumerState<EmployeeDetailScreen> {
   }
 
   Future<void> _deleteEmployee() async {
+    final lang = ref.watch(languageProvider);
     try {
       final userId = ref.watch(userIdProvider).value;
       await ref.read(deleteEmployeeProvider)(widget.employee['email'], userId!);
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Employee deleted successfully!')),
+        SnackBar(
+            content: Text(
+                lang['employeeDeleted'] ?? 'Employee deleted successfully!')),
       );
       ref.watch(employeesProvider(userId));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
+        SnackBar(content: Text('${lang['error'] ?? 'Error'}: ${e.toString()}')),
       );
     }
   }
 
   Widget _buildFormContent() {
+    final lang = ref.watch(languageProvider);
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 500),
       child: SingleChildScrollView(
@@ -148,32 +163,28 @@ class _EmployeeDetailScreenState extends ConsumerState<EmployeeDetailScreen> {
                   children: [
                     CustomTextField(
                       controller: nameController,
-                      label: 'Name',
+                      label: lang['name'] ?? 'Name',
                       icon: Icons.person,
-                      // enabled: isEditing,
                     ),
                     const SizedBox(height: 16),
                     CustomTextField(
                       controller: emailController,
-                      label: 'Email',
+                      label: lang['email'] ?? 'Email',
                       icon: Icons.email,
-                      // enabled: isEditing,
                     ),
                     const SizedBox(height: 16),
                     CustomTextField(
                       controller: phoneController,
-                      label: 'Phone',
+                      label: lang['phoneNumber'] ?? 'Phone',
                       icon: Icons.phone,
                       inputType: TextInputType.phone,
-                      // enabled: isEditing,
                     ),
                     const SizedBox(height: 16),
                     CustomTextField(
                       controller: salaryController,
-                      label: 'Salary',
+                      label: lang['salary'] ?? 'Salary',
                       icon: Icons.attach_money,
                       inputType: TextInputType.number,
-                      // enabled: isEditing,
                     ),
                     const SizedBox(height: 24),
                     _buildActionButtons(),
@@ -188,6 +199,7 @@ class _EmployeeDetailScreenState extends ConsumerState<EmployeeDetailScreen> {
   }
 
   Widget _buildActionButtons() {
+    final lang = ref.watch(languageProvider);
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth > 400;
@@ -202,7 +214,7 @@ class _EmployeeDetailScreenState extends ConsumerState<EmployeeDetailScreen> {
                 width: isWide ? null : double.infinity,
                 child: CustomButton(
                   onPressed: () => setState(() => isEditing = true),
-                  text: 'Edit',
+                  text: lang['edit'] ?? 'Edit',
                   backgroundColor: Colors.orange,
                 ),
               ),
@@ -212,7 +224,7 @@ class _EmployeeDetailScreenState extends ConsumerState<EmployeeDetailScreen> {
                 width: isWide ? null : double.infinity,
                 child: CustomButton(
                   onPressed: _saveChanges,
-                  text: 'Save Changes',
+                  text: lang['saveChanges'] ?? 'Save Changes',
                   backgroundColor: Colors.orange,
                 ),
               ),
@@ -220,7 +232,7 @@ class _EmployeeDetailScreenState extends ConsumerState<EmployeeDetailScreen> {
                 width: isWide ? null : double.infinity,
                 child: CustomButton(
                   onPressed: _showDiscardChangesDialog,
-                  text: 'Cancel',
+                  text: lang['cancel'] ?? 'Cancel',
                   backgroundColor: Colors.red,
                 ),
               ),
@@ -233,6 +245,7 @@ class _EmployeeDetailScreenState extends ConsumerState<EmployeeDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(languageProvider);
     final isDesktop = ResponsiveHelper.isDesktop(context);
     final screenSize = MediaQuery.of(context).size;
 
@@ -267,7 +280,7 @@ class _EmployeeDetailScreenState extends ConsumerState<EmployeeDetailScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Employee Details',
+                    Text(lang['employeeDetails'] ?? 'Employee Details',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               color: Colors.orange,
                               fontWeight: FontWeight.bold,
@@ -290,7 +303,7 @@ class _EmployeeDetailScreenState extends ConsumerState<EmployeeDetailScreen> {
     } else {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Employee Details'),
+          title: Text(lang['employeeDetails'] ?? 'Employee Details'),
           backgroundColor: Colors.orange,
           actions: [
             IconButton(

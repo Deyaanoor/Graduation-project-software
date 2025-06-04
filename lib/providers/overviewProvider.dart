@@ -6,7 +6,7 @@ import 'dart:convert';
 final String _apiUrl = '${dotenv.env['API_URL']}/overview';
 
 final monthlyReportsCountProvider =
-    FutureProvider.family.autoDispose<int, String>((ref, userId) async {
+    FutureProvider.family<int, String>((ref, userId) async {
   final response = await http.post(
     Uri.parse('$_apiUrl/reports-count'),
     body: json.encode({'userId': userId}),
@@ -22,7 +22,7 @@ final monthlyReportsCountProvider =
 
 // دالة لتحميل عدد الموظفين
 final employeeCountProvider =
-    FutureProvider.family.autoDispose<int, String>((ref, userId) async {
+    FutureProvider.family<int, String>((ref, userId) async {
   final response = await http.post(
     Uri.parse('$_apiUrl/employee-count'),
     body: json.encode({'userId': userId}),
@@ -38,7 +38,7 @@ final employeeCountProvider =
 
 // دالة لتحميل راتب الموظفين الإجمالي
 final employeeSalaryProvider =
-    FutureProvider.family.autoDispose<double, String>((ref, userId) async {
+    FutureProvider.family<double, String>((ref, userId) async {
   final response = await http.post(
     Uri.parse('$_apiUrl/employee-salary'),
     body: json.encode({'userId': userId}),
@@ -46,7 +46,16 @@ final employeeSalaryProvider =
   );
   if (response.statusCode == 200) {
     final data = json.decode(response.body);
-    return data['totalSalary'];
+    final totalSalary = data['totalSalary'];
+    if (totalSalary == null) {
+      return 0.0;
+    }
+    // This line ensures the return type is always double
+    return (totalSalary is int)
+        ? totalSalary.toDouble()
+        : (totalSalary is double)
+            ? totalSalary
+            : double.tryParse(totalSalary.toString()) ?? 0.0;
   } else {
     throw Exception('Failed to load employee salary');
   }
@@ -54,7 +63,7 @@ final employeeSalaryProvider =
 
 // دالة لتحميل ملخص الشهر
 final monthlySummaryProvider =
-    FutureProvider.family.autoDispose<double, String>((ref, userId) async {
+    FutureProvider.family<double, String>((ref, userId) async {
   final response = await http.post(
     Uri.parse('$_apiUrl/MonthlySummary'),
     body: json.encode({'userId': userId}),
@@ -62,14 +71,24 @@ final monthlySummaryProvider =
   );
   if (response.statusCode == 200) {
     final data = json.decode(response.body);
-    return data['netProfit'];
+    final netProfit = data['netProfit'];
+    if (netProfit == null) {
+      return 0.0;
+    }
+    // This line ensures the return type is always double
+    return (netProfit is int)
+        ? netProfit.toDouble()
+        : (netProfit is double)
+            ? netProfit
+            : double.tryParse(netProfit.toString()) ?? 0.0;
   } else {
     throw Exception('Failed to load monthly summary');
   }
 });
 
-final modelsSummaryProvider = FutureProvider.family
-    .autoDispose<List<Map<String, dynamic>>, String>((ref, userId) async {
+final modelsSummaryProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, String>(
+        (ref, userId) async {
   final response = await http.post(
     Uri.parse('$_apiUrl/get-models-summary'), // غير الرابط حسب مكانك
     body: json.encode({'userId': userId}),
@@ -90,8 +109,9 @@ final modelsSummaryProvider = FutureProvider.family
   }
 });
 
-final topEmployeesProvider = FutureProvider.family
-    .autoDispose<List<Map<String, dynamic>>, String>((ref, userId) async {
+final topEmployeesProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, String>(
+        (ref, userId) async {
   final response = await http.post(
     Uri.parse('$_apiUrl/top-employees'),
     body: json.encode({'userId': userId}),
@@ -112,8 +132,9 @@ final topEmployeesProvider = FutureProvider.family
   }
 });
 
-final reportsProvider = FutureProvider.family
-    .autoDispose<List<Map<String, dynamic>>, String>((ref, userId) async {
+final reportsProviderOverview =
+    FutureProvider.family<List<Map<String, dynamic>>, String>(
+        (ref, userId) async {
   final response = await http.post(
     Uri.parse('$_apiUrl/reports'), // غير $_apiUrl حسب متغيرك
     body: json.encode({'userId': userId}),

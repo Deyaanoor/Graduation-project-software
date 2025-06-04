@@ -1,0 +1,2 @@
+E:/project flutter/Graduation-project-software/android/app/.cxx/Debug/5q2d5iu3/arm64-v8a/CMakeFiles/edit_cache.dir
+E:/project flutter/Graduation-project-software/android/app/.cxx/Debug/5q2d5iu3/arm64-v8a/CMakeFiles/rebuild_cache.dir

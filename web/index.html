@@ -32,6 +32,22 @@
             console.error("Service Worker registration failed:", err);
           });
       }
+  function initializeWebFCM() {
+    if (window.flutterWebRenderer) {
+      try {
+        // Dynamically import the web_fcm.dart module
+        import('web_fcm.dart').then((module) => {
+          module.setupWebFCM()
+        });
+      } catch (e) {
+        console.error('Error initializing Web FCM:', e);
+      }
+    }
+  }
+
+  // Initialize when page loads
+  document.addEventListener('DOMContentLoaded', initializeWebFCM);
+      
     </script>
   </body>
 </html>

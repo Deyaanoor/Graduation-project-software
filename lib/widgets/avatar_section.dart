@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // تأكد من إضافة الحزمة
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
@@ -28,7 +29,10 @@ class _AvatarSectionState extends ConsumerState<AvatarSection> {
   Uint8List? _selectedImageWebBytes;
   bool isLoading = false;
 
-  Future<void> _pickImage(ImageSource source) async {
+  Future<void> _pickImage(
+    ImageSource source,
+    Map<String, String> lang,
+  ) async {
     try {
       if (kIsWeb) {
         FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -68,14 +72,14 @@ class _AvatarSectionState extends ConsumerState<AvatarSection> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('فشل في اختيار الصورة'),
+          content: Text(lang['pickImageFailed'] ?? 'فشل في اختيار الصورة'),
           backgroundColor: Colors.red,
         ),
       );
     }
   }
 
-  void _showImageSourceDialog(BuildContext context) {
+  void _showImageSourceDialog(BuildContext context, Map<String, String> lang) {
     showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
@@ -84,9 +88,9 @@ class _AvatarSectionState extends ConsumerState<AvatarSection> {
           children: [
             ListTile(
               leading: Icon(Icons.photo_library, color: Colors.orange.shade800),
-              title: Text('اختر من المعرض'),
+              title: Text(lang['chooseFromGallery'] ?? 'اختر من المعرض'),
               onTap: () {
-                _pickImage(ImageSource.gallery);
+                _pickImage(ImageSource.gallery, lang);
                 Navigator.pop(context);
               },
             ),
@@ -94,9 +98,9 @@ class _AvatarSectionState extends ConsumerState<AvatarSection> {
                 defaultTargetPlatform == TargetPlatform.iOS)
               ListTile(
                 leading: Icon(Icons.camera_alt, color: Colors.orange.shade800),
-                title: Text('التقاط صورة جديدة'),
+                title: Text(lang['takeNewPhoto'] ?? 'التقاط صورة جديدة'),
                 onTap: () {
-                  _pickImage(ImageSource.camera);
+                  _pickImage(ImageSource.camera, lang);
                   Navigator.pop(context);
                 },
               ),
@@ -106,11 +110,14 @@ class _AvatarSectionState extends ConsumerState<AvatarSection> {
     );
   }
 
-  Future<void> _updateAvatar() async {
+  Future<void> _updateAvatar(
+    Map<String, String> lang,
+  ) async {
     if (_selectedImage == null && _selectedImageWebBytes == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('يرجى اختيار صورة لتحديث الصورة الرمزية'),
+          content: Text(lang['pleasePickImage'] ??
+              'يرجى اختيار صورة لتحديث الصورة الرمزية'),
           backgroundColor: Colors.red,
         ),
       );
@@ -135,10 +142,12 @@ class _AvatarSectionState extends ConsumerState<AvatarSection> {
         isLoading = false;
       });
 
+      ref.invalidate(getUserInfoProvider(widget.userId!));
+
       // عرض رسالة نجاح
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('تم تحديث الصورة بنجاح'),
+          content: Text(lang['avatarUpdated'] ?? 'تم تحديث الصورة بنجاح'),
           backgroundColor: Colors.green,
         ),
       );
@@ -146,10 +155,10 @@ class _AvatarSectionState extends ConsumerState<AvatarSection> {
       setState(() {
         isLoading = false;
       });
-      print('خطأ في رفع الصورة: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('فشل في تحديث الصورة: $e'),
+          content: Text(
+              '${lang['avatarUpdateFailed'] ?? 'فشل في تحديث الصورة'}: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -159,11 +168,12 @@ class _AvatarSectionState extends ConsumerState<AvatarSection> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = widget.desktopMode;
+    final lang = ref.watch(languageProvider);
 
     return Column(
       children: [
         GestureDetector(
-          onTap: () => _showImageSourceDialog(context),
+          onTap: () => _showImageSourceDialog(context, lang),
           child: Container(
             padding: EdgeInsets.all(isDesktop ? 12 : 8),
             decoration: BoxDecoration(
@@ -231,7 +241,7 @@ class _AvatarSectionState extends ConsumerState<AvatarSection> {
         if (isDesktop) ...[
           SizedBox(height: 20),
           Text(
-            widget.userData['name'] ?? 'غير معروف',
+            widget.userData['name'] ?? lang['unknown'] ?? 'غير معروف',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -240,7 +250,7 @@ class _AvatarSectionState extends ConsumerState<AvatarSection> {
           ),
           SizedBox(height: 8),
           Text(
-            'الحساب الشخصي',
+            lang['profile'] ?? 'الحساب الشخصي',
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey.shade600,
@@ -250,8 +260,8 @@ class _AvatarSectionState extends ConsumerState<AvatarSection> {
         isLoading
             ? CircularProgressIndicator()
             : ElevatedButton(
-                onPressed: _updateAvatar,
-                child: Text('تحديث الصورة'),
+                onPressed: () => _updateAvatar(lang),
+                child: Text(lang['updateAvatar'] ?? 'تحديث الصورة'),
               ),
       ],
     );

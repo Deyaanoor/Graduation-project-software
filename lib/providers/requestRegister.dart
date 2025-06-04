@@ -1,8 +1,9 @@
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
-const String apiUrl = 'http://localhost:5000/request_register';
+final String apiUrl = '${dotenv.env['API_URL']}/request_register';
 
 final applyGarageProvider =
     FutureProvider.family<void, Map<String, dynamic>>((ref, garageData) async {

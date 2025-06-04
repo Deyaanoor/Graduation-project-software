@@ -9,6 +9,7 @@ import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/home_provider.dart';
 import 'package:flutter_provider/providers/notifications_provider.dart';
+import 'package:flutter_provider/providers/overviewProvider.dart';
 import 'package:flutter_provider/screens/Technician/reports/components/image_upload_section.dart';
 import 'package:flutter_provider/screens/Technician/reports/components/repair_section.dart';
 import 'package:flutter_provider/widgets/AIDesktopButton%20.dart';
@@ -105,33 +106,24 @@ class _ReportPageState extends ConsumerState<ReportPage> {
   }
 
   Future<void> initImagesFromUrls(List<String> urls) async {
-    print(">> Loading URLs: $urls");
     for (String url in urls) {
       try {
-        print(">> Downloading $url");
         XFile xfile = await urlToXFile(url);
-        print(">> Got file: ${xfile.path}");
         _images.add(xfile);
       } catch (e) {
         print("❌ Error downloading image: $e");
       }
     }
     setState(() {});
-    print(">> _images now contains: $_images");
   }
 
   Future<XFile> urlToXFile(String url) async {
-    print(">> Fetching URL: $url");
-
     final response = await http.get(Uri.parse(url));
-    print(">> Response status: ${response.statusCode}");
 
     if (response.statusCode == 200) {
       if (kIsWeb) {
-        // ✅ في الويب: لا يمكننا استخدام File، فنستخدم XFile.memory
         return XFile.fromData(response.bodyBytes, name: "web_image.jpg");
       } else {
-        // ✅ في Android/iOS: نستخدم المسار المؤقت
         final dir = await getTemporaryDirectory();
         final filePath =
             '${dir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
@@ -195,12 +187,21 @@ class _ReportPageState extends ConsumerState<ReportPage> {
       }
 
       final available = await _speech.initialize();
+      print('Speech available: $available');
       if (available) {
         setState(() => _isListening = true);
+        final locales = await _speech.locales();
+        print('Supported locales: $locales');
         _speech.listen(
-          onResult: (result) => setState(() {
-            _repairDescController.text = result.recognizedWords;
-          }),
+          onResult: (result) {
+            setState(() {
+              print('recognizedWords: ${result.recognizedWords}');
+              _repairDescController.text = result.recognizedWords;
+              _repairDescController.selection = TextSelection.fromPosition(
+                TextPosition(offset: _repairDescController.text.length),
+              );
+            });
+          },
           localeId: currentLang,
         );
       }
@@ -635,6 +636,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
           mechanicName: userName,
           userId: userId!,
         );
+        ref.read(reportsProvider.notifier).fetchReports(userId: userId);
 
         await ref.read(notificationsProvider.notifier).sendNotification(
               adminId: userId,
@@ -651,6 +653,8 @@ class _ReportPageState extends ConsumerState<ReportPage> {
           );
           _resetForm();
         }
+        ref.invalidate(modelsSummaryProvider(userId));
+        ref.invalidate(reportsProviderOverview(userId));
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -662,6 +666,8 @@ class _ReportPageState extends ConsumerState<ReportPage> {
   }
 
   Future<void> _updateReport() async {
+    final userId = ref.watch(userIdProvider).value;
+
     final lang = ref.read(languageProvider);
     final reportsNotifier = ref.read(reportsProvider.notifier);
     final selectedReport = ref.read(selectedReportProvider);
@@ -742,6 +748,9 @@ class _ReportPageState extends ConsumerState<ReportPage> {
           _resetForm();
           ref.read(isEditModeProvider.notifier).state =
               false; // تفعيل وضع التعديل
+        }
+        if (userId != null) {
+          ref.read(reportsProvider.notifier).fetchReports(userId: userId);
         }
       } else {
         if (mounted) {

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/clientProvider.dart';
 import 'package:flutter_provider/providers/garage_provider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/providers/notifications_provider.dart';
 import 'package:flutter_provider/providers/requestProvider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -91,12 +92,13 @@ class _EmergencyRequestPageState extends ConsumerState<EmergencyRequestPage> {
         userInfo != null ? userInfo['name'] ?? 'بدون اسم' : 'جاري التحميل...';
     final subscribedGarages = ref.watch(clientGaragesProvider(userId!));
     final allGarages = ref.watch(garageLocationsProvider);
+    final lang = ref.watch(languageProvider);
 
     return Scaffold(
       body: _currentPosition == null
           ? const Center(child: CircularProgressIndicator())
           : _buildResponsiveLayout(
-              allGarages, subscribedGarages, userId, userName),
+              allGarages, subscribedGarages, userId, userName, lang),
     );
   }
 
@@ -105,6 +107,7 @@ class _EmergencyRequestPageState extends ConsumerState<EmergencyRequestPage> {
     AsyncValue<List<dynamic>> subscribedGarages,
     String userId,
     String userName,
+    Map<String, dynamic> lang,
   ) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -114,8 +117,8 @@ class _EmergencyRequestPageState extends ConsumerState<EmergencyRequestPage> {
           children: [
             Expanded(child: _buildMapSection(allGarages)),
             Expanded(
-                child:
-                    _buildContentSection(subscribedGarages, userId, userName)),
+                child: _buildContentSection(
+                    subscribedGarages, userId, userName, lang)),
           ],
         );
       },
@@ -185,16 +188,18 @@ class _EmergencyRequestPageState extends ConsumerState<EmergencyRequestPage> {
     AsyncValue<List<dynamic>> subscribedGarages,
     String userId,
     String userName,
+    Map<String, dynamic> lang,
   ) {
     return subscribedGarages.when(
-      data: (subscribed) => _buildMainContent(subscribed, userId, userName),
+      data: (subscribed) =>
+          _buildMainContent(subscribed, userId, userName, lang),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => Center(child: Text('خطأ في البيانات: $error')),
     );
   }
 
-  Widget _buildMainContent(
-      List<dynamic> subscribedGarages, String userId, String userName) {
+  Widget _buildMainContent(List<dynamic> subscribedGarages, String userId,
+      String userName, Map<String, dynamic> lang) {
     final allGarages = ref.watch(garageLocationsProvider);
     final subscribedIds = subscribedGarages.map((g) => g['garageId']).toSet();
 
@@ -203,9 +208,9 @@ class _EmergencyRequestPageState extends ConsumerState<EmergencyRequestPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            _buildGarageList(all, subscribedIds),
-            _buildRequestForm(),
-            _buildSubmitButton(userId, userName),
+            _buildGarageList(all, subscribedIds, lang),
+            _buildRequestForm(lang),
+            _buildSubmitButton(userId, userName, lang),
           ],
         ),
       ),
@@ -214,13 +219,14 @@ class _EmergencyRequestPageState extends ConsumerState<EmergencyRequestPage> {
     );
   }
 
-  Widget _buildGarageList(List<dynamic> garages, Set<dynamic> subscribedIds) {
+  Widget _buildGarageList(List<dynamic> garages, Set<dynamic> subscribedIds,
+      Map<String, dynamic> lang) {
     final sortedGarages = _sortGaragesByDistance(garages);
 
     return Column(
       children: [
-        const Text(
-          'الكراجات القريبة',
+        Text(
+          lang['available_garages'] ?? 'الكراجات المتاحة',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
@@ -257,25 +263,29 @@ class _EmergencyRequestPageState extends ConsumerState<EmergencyRequestPage> {
     );
   }
 
-  Widget _buildRequestForm() {
+  Widget _buildRequestForm(
+    Map<String, dynamic> lang,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: TextField(
         controller: _messageController,
         maxLines: 4,
-        decoration: const InputDecoration(
-          labelText: 'وصف المشكلة',
+        decoration: InputDecoration(
+          labelText: lang['emergency_details'] ?? 'تفاصيل الطوارئ',
           border: OutlineInputBorder(),
-          hintText: 'أدخل تفاصيل الطوارئ...',
+          hintText: lang['enter_details'] ?? 'أدخل تفاصيل الطوارئ هنا',
         ),
       ),
     );
   }
 
-  Widget _buildSubmitButton(String userId, String userName) {
+  Widget _buildSubmitButton(
+      String userId, String userName, Map<String, dynamic> lang) {
     return ElevatedButton.icon(
       icon: const Icon(Icons.send, size: 24),
-      label: const Text('إرسال الطلب', style: TextStyle(fontSize: 18)),
+      label: Text(lang['submit_request'] ?? 'إرسال الطلب',
+          style: TextStyle(fontSize: 18)),
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.deepOrange,
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
@@ -283,16 +293,20 @@ class _EmergencyRequestPageState extends ConsumerState<EmergencyRequestPage> {
           borderRadius: BorderRadius.circular(30),
         ),
       ),
-      onPressed: () => _handleSubmit(userId, userName),
+      onPressed: () => _handleSubmit(userId, userName, lang),
     );
   }
 
-  Future<void> _handleSubmit(String userId, String userName) async {
+  Future<void> _handleSubmit(
+    String userId,
+    String userName,
+    Map<String, dynamic> lang,
+  ) async {
     if (_messageController.text.isEmpty || _selectedGarageId == null) {
-      _showErrorSnackBar('الرجاء تعبئة جميع الحقول');
+      _showErrorSnackBar(
+          lang['enter_message'] ?? 'يرجى إدخال رسالة و اختيار كراج');
       return;
     }
-    print("userIddddddddddddddddddddddddddd: $userId");
 
     try {
       await ref.read(addRequestProvider).call({
@@ -318,13 +332,14 @@ class _EmergencyRequestPageState extends ConsumerState<EmergencyRequestPage> {
 
       _messageController.clear();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('تم إرسال الطلب بنجاح'),
+        SnackBar(
+          content: Text(lang['request_sent'] ?? 'تم إرسال الطلب بنجاح'),
           backgroundColor: Colors.green,
         ),
       );
     } catch (e) {
-      _showErrorSnackBar('فشل في الإرسال: ${e.toString()}');
+      _showErrorSnackBar(
+          '${lang['error_sending_request'] ?? 'حدث خطأ أثناء إرسال الطلب'}: ${e.toString()}');
     }
   }
 }

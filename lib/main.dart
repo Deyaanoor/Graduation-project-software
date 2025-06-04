@@ -1,97 +1,35 @@
-// import 'dart:html' as html;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/screens/Admin/Garage/apply_Request.dart';
-
 import 'package:flutter_provider/screens/Admin/Garage/garage_page.dart';
-import 'package:flutter_provider/screens/Owner/notifications/notifications_screen.dart';
-import 'package:flutter_provider/screens/auth/forgotPassword.dart';
-import 'package:flutter_provider/screens/Client/roboflow_screen.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-
-import 'package:flutter_provider/providers/language_provider.dart';
-
 import 'package:flutter_provider/screens/Admin/Garage/theamDark_mode.dart';
+import 'package:flutter_provider/screens/Client/roboflow_screen.dart';
+import 'package:flutter_provider/screens/Owner/notifications/notifications_screen.dart';
 import 'package:flutter_provider/screens/Technician/AttendancePage.dart';
 import 'package:flutter_provider/screens/Technician/Home/home.dart';
 import 'package:flutter_provider/screens/Technician/SparePartsPage.dart';
 import 'package:flutter_provider/screens/Technician/reports/report.dart';
 import 'package:flutter_provider/screens/Technician/settings/AccountSettingsPage.dart';
 import 'package:flutter_provider/screens/Technician/settings/SettingsPage.dart';
+import 'package:flutter_provider/screens/auth/forgotPassword.dart';
 import 'package:flutter_provider/screens/auth/logIn.dart';
 import 'package:flutter_provider/screens/auth/signUp.dart';
 import 'package:flutter_provider/screens/auth/welcomePage.dart';
+import 'package:flutter_provider/screens/contactUs.dart';
 
-// const firebaseConfig = FirebaseOptions(
-//   apiKey: "AIzaSyAOinh9_tjJiKPaFEpephsFZsg2B7arPnE",
-//   authDomain: "graduation-notifications.firebaseapp.com",
-//   projectId: "graduation-notifications",
-//   storageBucket: "graduation-notifications.appspot.com",
-//   messagingSenderId: "551572470898",
-//   appId: "1:551572470898:web:f7a8b6ea8ab00522e156eb",
-// );
+// 👇 استيراد ذكي حسب المنصة (موبايل أو ويب)
+import 'package:flutter_provider/fcm_setup.dart';
 
-// Future<void> main() async {
-//   WidgetsFlutterBinding.ensureInitialized();
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 
-//   if (kIsWeb) {
-//     await Firebase.initializeApp(options: firebaseConfig);
-//   } else {
-//     await Firebase.initializeApp();
-//   }
-
-//   await dotenv.load();
-
-//   if (kIsWeb) {
-//     await setupWebFCM();
-//   }
-
-//   runApp(const ProviderScope(child: MyApp()));
-// }
-
-// Future<void> setupWebFCM() async {
-//   final messaging = FirebaseMessaging.instance;
-
-//   // ✅ طلب إذن إشعارات عبر dart:html
-//   if (html.Notification.supported) {
-//     final permission = await html.Notification.requestPermission();
-//     print('🔔 html.Notification permission: $permission');
-
-//     if (permission != 'granted') {
-//       print('❌ الإذن غير ممنوح من المستخدم.');
-//       return;
-//     }
-//   }
-
-//   // ✅ تسجيل Service Worker
-//   try {
-//     final registration = await html.window.navigator.serviceWorker
-//         ?.register('/firebase-messaging-sw.js');
-//     print('✅ تم تسجيل Service Worker بنجاح: $registration');
-//   } catch (e) {
-//     print('❌ فشل تسجيل Service Worker: $e');
-//     return;
-//   }
-
-//   NotificationSettings settings = await messaging.requestPermission();
-//   print('🔐 FirebaseMessaging permission: ${settings.authorizationStatus}');
-
-//   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-//     print('📩 إشعار في المقدمة: ${message.notification?.title}');
-//     if (html.Notification.permission == 'granted' &&
-//         message.notification != null) {
-//       html.Notification(
-//         message.notification!.title ?? 'إشعار جديد',
-//         body: message.notification!.body ?? '',
-//         icon: message.notification!.android?.imageUrl ??
-//             '../assets/icon/app_icon.png',
-//       );
-//     }
-//   });
-// }
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
 
 const firebaseConfig = FirebaseOptions(
   apiKey: "AIzaSyAOinh9_tjJiKPaFEpephsFZsg2B7arPnE",
@@ -116,62 +54,79 @@ Future<void> main() async {
     await Firebase.initializeApp();
   }
 
-  await dotenv.load();
+  await dotenv.load(fileName: "assets/.env");
 
+  // ✅ استدعاء setupFCM() حسب المنصة
   if (kIsWeb) {
-    await setupWebFCM();
+    await setupFCM(); // من ملف fcm_setup_web.dart
   } else {
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    setupMobileFCM();
+    _setupMobileFCM();
+  }
+  if (!kIsWeb) {
+    Stripe.publishableKey =
+        'pk_test_51RWJeyQTAIRgjFlHR21qAmTBlJeWUkti5WTptCBFw2uvkb5scxDtBPc5GFRCW97TdyIbICG7PHszNuSEfaz8pj5E00aQMqv5Rm'; // مفتاحك التجريبي
   }
 
   runApp(const ProviderScope(child: MyApp()));
 }
 
-Future<void> setupWebFCM() async {
-  // final messaging = FirebaseMessaging.instance;
+// 🔧 إعداد FCM للموبايل
+void _setupMobileFCM() async {
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
 
-  // if (html.Notification.supported) {
-  //   final permission = await html.Notification.requestPermission();
-  //   print('🔔 html.Notification permission: $permission');
-  //   if (permission != 'granted') return;
-  // }
+  await messaging.setForegroundNotificationPresentationOptions(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
 
-  // try {
-  //   final registration = await html.window.navigator.serviceWorker
-  //       ?.register('/firebase-messaging-sw.js');
-  //   print('✅ تم تسجيل Service Worker بنجاح: $registration');
-  // } catch (e) {
-  //   print('❌ فشل تسجيل Service Worker: $e');
-  // }
+  const AndroidNotificationChannel channel = AndroidNotificationChannel(
+    'high_importance_channel',
+    'High Importance Notifications',
+    description: 'This channel is used for important notifications.',
+    importance: Importance.high,
+  );
 
-  // NotificationSettings settings = await messaging.requestPermission();
-  // print('🔐 Web FCM permission: ${settings.authorizationStatus}');
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(channel);
 
-  // FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-  //   print('📩 إشعار Web (Foreground): ${message.notification?.title}');
-  //   if (html.Notification.permission == 'granted' &&
-  //       message.notification != null) {
-  //     html.Notification(
-  //       message.notification!.title ?? 'إشعار جديد',
-  //       body: message.notification!.body ?? '',
-  //       icon: message.notification!.android?.imageUrl ??
-  //           '../assets/icon/app_icon.png',
-  //     );
-  //   }
-  // });
-}
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
 
-void setupMobileFCM() {
+  const InitializationSettings initializationSettings = InitializationSettings(
+    android: initializationSettingsAndroid,
+  );
+
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    print('📥 إشعار Mobile (Foreground): ${message.notification?.title}');
-    // أضف عرض Snackbar أو إشعار محلي إذا أردت
+    RemoteNotification? notification = message.notification;
+    AndroidNotification? android = message.notification?.android;
+
+    if (notification != null && android != null) {
+      flutterLocalNotificationsPlugin.show(
+        notification.hashCode,
+        notification.title,
+        notification.body,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            channel.id,
+            channel.name,
+            channelDescription: channel.description,
+            importance: Importance.high,
+            priority: Priority.high,
+            icon: '@mipmap/ic_launcher',
+          ),
+        ),
+      );
+    }
   });
 
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    print(
-        '📲 تم فتح التطبيق من إشعار (Mobile): ${message.notification?.title}');
-    // أضف التنقل لصفحة معينة إذا لزم
+    print('📲 فتحنا الإشعار: ${message.notification?.title}');
   });
 }
 
@@ -212,6 +167,7 @@ class MyApp extends ConsumerWidget {
         '/notifications': (context) => const NotificationsPage(),
         '/forgot-password': (context) => const ForgotPasswordScreen(),
         '/roboflow': (context) => const RoboflowScreen(),
+        '/contactUs': (context) => const ContactUsPage(),
       },
     );
   }

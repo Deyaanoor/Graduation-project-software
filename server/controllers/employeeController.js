@@ -159,10 +159,81 @@ const updateEmployee = async (req, res) => {
     res.status(500).json({ message: 'Error updating employee or user' });
   }
 };
+const getEmployeeGarageInfo = async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const db = await connectDB();
+
+    const employeesCollection = db.collection('employees');
+    const garagesCollection = db.collection('garages');
+    const usersCollection = db.collection('users');
+    const reportsCollection = db.collection('reports'); // 👈 جدول التقارير
+
+    // 1. جلب بيانات الموظف
+    const employee = await employeesCollection.findOne({ _id: new ObjectId(userId) });
+
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+
+    const { salary, garage_id, name: employeeName } = employee;
+
+    if (!garage_id) {
+      return res.status(404).json({ message: 'Garage ID not assigned to employee' });
+    }
+
+    // 2. جلب بيانات الكراج
+    const garage = await garagesCollection.findOne({ _id: new ObjectId(garage_id) });
+
+    if (!garage) {
+      return res.status(404).json({ message: 'Garage not found' });
+    }
+
+    const { name: garageName, owner_id } = garage;
+
+    if (!owner_id) {
+      return res.status(404).json({ message: 'Owner ID not found in garage' });
+    }
+
+    // 3. جلب بيانات صاحب الكراج
+    const ownerUser = await usersCollection.findOne({ _id: new ObjectId(owner_id) });
+
+    if (!ownerUser) {
+      return res.status(404).json({ message: 'Owner user not found' });
+    }
+
+    // 4. جلب عدد التقارير حسب اسم الموظف
+    const reportCount = await reportsCollection.countDocuments({ mechanicName: employeeName });
+
+    // 5. تحضير الرد
+    const responseData = {
+      employeeName,
+      salary,
+      reportCount, // 👈 تمت إضافتها
+      garage: {
+        id: garage_id,
+        name: garageName,
+      },
+      ownerInfo: {
+        name: ownerUser.name,
+        email: ownerUser.email,
+        phoneNumber: ownerUser.phoneNumber,
+      },
+    };
+
+    res.status(200).json(responseData);
+  } catch (error) {
+    console.error('Error in getEmployeeGarageInfo:', error);
+    res.status(500).json({ message: 'Failed to fetch employee garage info' });
+  }
+};
+
 
 module.exports = {
   addEmployee,
   getAllEmployees,
   deleteEmployee,
   updateEmployee,
+  getEmployeeGarageInfo
 };

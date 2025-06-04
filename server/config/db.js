@@ -13,17 +13,17 @@ const connectDB = async () => {
       },
     });
 
-    
     await client.connect();
-
-    const dbName = process.env.DB_NAME || "ProSoftware"; 
+    const uRI = process.env.MONGO_URI;
+    const dbName = process.env.DB_NAME || "ProSoftware";
     const db = client.db(dbName);
 
     console.log(`✅ Connected to MongoDB Atlas! Database: ${db.databaseName}`);
+    console.log(`URI ${uRI}`);
     return db;
   } catch (error) {
     console.error("❌ MongoDB Connection Error:", error);
-    process.exit(1); 
+    process.exit(1);
   }
 };
 

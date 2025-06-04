@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/garage_provider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/providers/reports_provider.dart';
 import 'package:flutter_provider/screens/Technician/reports/ReportDetailsPage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -79,6 +80,7 @@ class _ClientReportsPageState extends ConsumerState<ClientReportsPage> {
   Widget build(BuildContext context) {
     final userId = ref.watch(userIdProvider).value;
     final garageId = ref.watch(garageIdProvider);
+    final lang = ref.watch(languageProvider);
 
     if (userId == null || garageId == null) {
       return Scaffold(
@@ -90,10 +92,12 @@ class _ClientReportsPageState extends ConsumerState<ClientReportsPage> {
     return Scaffold(
       body: reportsState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('حدث خطأ: $error')),
+        error: (error, _) =>
+            Center(child: Text('${lang['error'] ?? 'حدث خطأ'}: $error')),
         data: (reports) {
           if (reports.isEmpty) {
-            return const Center(child: Text('لا توجد تقارير حالياً'));
+            return Center(
+                child: Text(lang['noReports'] ?? 'لا توجد تقارير حالياً'));
           }
           filterReports(reports);
 
@@ -104,7 +108,8 @@ class _ClientReportsPageState extends ConsumerState<ClientReportsPage> {
                 TextField(
                   controller: searchController,
                   decoration: InputDecoration(
-                    hintText: 'بحث باسم الميكانيكي أو نوع المركبة...',
+                    hintText: lang['searchByMechanicOrCar'] ??
+                        'بحث باسم الميكانيكي أو نوع المركبة...',
                     prefixIcon: const Icon(Icons.search),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -131,10 +136,12 @@ class _ClientReportsPageState extends ConsumerState<ClientReportsPage> {
                       }
                     },
                     child: filteredReports.isEmpty
-                        ? const Center(child: Text('لا توجد تقارير حالياً'))
+                        ? Center(
+                            child: Text(
+                                lang['noReports'] ?? 'لا توجد تقارير حالياً'))
                         : MediaQuery.of(context).size.width < 600
-                            ? _buildMobileList()
-                            : _buildDesktopTable(),
+                            ? _buildMobileList(lang)
+                            : _buildDesktopTable(lang),
                   ),
                 ),
               ],
@@ -145,7 +152,7 @@ class _ClientReportsPageState extends ConsumerState<ClientReportsPage> {
     );
   }
 
-  Widget _buildMobileList() {
+  Widget _buildMobileList(Map<String, dynamic> lang) {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
       itemCount: filteredReports.length,
@@ -185,7 +192,8 @@ class _ClientReportsPageState extends ConsumerState<ClientReportsPage> {
                       const Icon(Icons.directions_car,
                           size: 18, color: Colors.blue),
                       const SizedBox(width: 8),
-                      Text("نوع السيارة: ${report['make'] ?? ''}"),
+                      Text(
+                          "${lang['carMake'] ?? 'نوع السيارة'}: ${report['make'] ?? ''}"),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -194,7 +202,8 @@ class _ClientReportsPageState extends ConsumerState<ClientReportsPage> {
                       const Icon(Icons.attach_money,
                           size: 18, color: Colors.green),
                       const SizedBox(width: 8),
-                      Text("التكلفة: ${report['cost']} \$"),
+                      Text(
+                          "${lang['cost'] ?? 'التكلفة'}: ${report['cost']} \$"),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -204,7 +213,7 @@ class _ClientReportsPageState extends ConsumerState<ClientReportsPage> {
                           size: 18, color: Colors.purple),
                       const SizedBox(width: 8),
                       Text(
-                          "التاريخ: ${DateFormat('yyyy-MM-dd').format(report['date'] ?? DateTime.now())}"),
+                          "${lang['date'] ?? 'التاريخ'}: ${DateFormat('yyyy-MM-dd').format(report['date'] ?? DateTime.now())}"),
                     ],
                   ),
                 ],
@@ -216,7 +225,7 @@ class _ClientReportsPageState extends ConsumerState<ClientReportsPage> {
     );
   }
 
-  Widget _buildDesktopTable() {
+  Widget _buildDesktopTable(Map<String, dynamic> lang) {
     return Center(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 1200),
@@ -238,11 +247,11 @@ class _ClientReportsPageState extends ConsumerState<ClientReportsPage> {
             ),
             columns: [
               DataColumn(
-                label: const Row(
+                label: Row(
                   children: [
-                    Icon(Icons.person, color: Colors.orange),
-                    SizedBox(width: 8),
-                    Text('الميكانيكي'),
+                    const Icon(Icons.person, color: Colors.orange),
+                    const SizedBox(width: 8),
+                    Text(lang['mechanicName'] ?? 'الميكانيكي'),
                   ],
                 ),
                 onSort: (columnIndex, ascending) {
@@ -253,11 +262,11 @@ class _ClientReportsPageState extends ConsumerState<ClientReportsPage> {
                 },
               ),
               DataColumn(
-                label: const Row(
+                label: Row(
                   children: [
-                    Icon(Icons.directions_car, color: Colors.blue),
-                    SizedBox(width: 8),
-                    Text('نوع السيارة'),
+                    const Icon(Icons.directions_car, color: Colors.blue),
+                    const SizedBox(width: 8),
+                    Text(lang['carMake'] ?? 'نوع السيارة'),
                   ],
                 ),
                 onSort: (columnIndex, ascending) {
@@ -268,11 +277,11 @@ class _ClientReportsPageState extends ConsumerState<ClientReportsPage> {
                 },
               ),
               DataColumn(
-                label: const Row(
+                label: Row(
                   children: [
-                    Icon(Icons.attach_money, color: Colors.green),
-                    SizedBox(width: 8),
-                    Text('التكلفة'),
+                    const Icon(Icons.attach_money, color: Colors.green),
+                    const SizedBox(width: 8),
+                    Text(lang['cost'] ?? 'التكلفة'),
                   ],
                 ),
                 onSort: (columnIndex, ascending) {
@@ -283,11 +292,11 @@ class _ClientReportsPageState extends ConsumerState<ClientReportsPage> {
                 },
               ),
               DataColumn(
-                label: const Row(
+                label: Row(
                   children: [
-                    Icon(Icons.calendar_today, color: Colors.purple),
-                    SizedBox(width: 8),
-                    Text('التاريخ'),
+                    const Icon(Icons.calendar_today, color: Colors.purple),
+                    const SizedBox(width: 8),
+                    Text(lang['date'] ?? 'التاريخ'),
                   ],
                 ),
                 onSort: (columnIndex, ascending) {

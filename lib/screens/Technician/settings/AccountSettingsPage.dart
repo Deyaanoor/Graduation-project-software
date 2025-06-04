@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/widgets/avatar_section.dart';
 import 'package:flutter_provider/widgets/edit_dialog.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,6 +41,8 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(languageProvider);
+
     if (userId == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -52,8 +55,8 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
       data: (userData) {
         return Scaffold(
           body: ResponsiveHelper.isMobile(context)
-              ? _buildMobileLayout(context, userData)
-              : _buildDesktopLayout(context, userData),
+              ? _buildMobileLayout(context, userData, lang)
+              : _buildDesktopLayout(context, userData, lang),
         );
       },
       loading: () =>
@@ -65,7 +68,10 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
   }
 
   Widget _buildMobileLayout(
-      BuildContext context, Map<String, dynamic> userData) {
+    BuildContext context,
+    Map<String, dynamic> userData,
+    Map<String, String> lang,
+  ) {
     return SingleChildScrollView(
       padding: EdgeInsets.all(20),
       child: Column(
@@ -75,14 +81,18 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
             userId: userId!,
           ),
           SizedBox(height: 30),
-          _buildProfileCard(context, isMobile: true, userData: userData),
+          _buildProfileCard(context,
+              isMobile: true, userData: userData, lang: lang),
         ],
       ),
     );
   }
 
   Widget _buildDesktopLayout(
-      BuildContext context, Map<String, dynamic> userData) {
+    BuildContext context,
+    Map<String, dynamic> userData,
+    Map<String, String> lang,
+  ) {
     return Center(
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 1200),
@@ -104,7 +114,7 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
               Expanded(
                 flex: 2,
                 child: _buildProfileCard(context,
-                    isMobile: false, userData: userData),
+                    isMobile: false, userData: userData, lang: lang),
               ),
             ],
           ),
@@ -117,6 +127,7 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
     BuildContext context, {
     required bool isMobile,
     required Map<String, dynamic> userData,
+    required Map<String, String> lang,
   }) {
     return Card(
       elevation: isMobile ? 4 : 8,
@@ -129,7 +140,7 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
           children: [
             _buildEditableField(
               context,
-              label: 'الاسم الكامل',
+              label: lang['fullName'] ?? 'Full Name',
               key: 'name',
               value: userData['name'] ?? 'غير معروف',
               icon: Icons.person_outline_rounded,
@@ -138,7 +149,7 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
             Divider(height: isMobile ? 30 : 40, color: Colors.grey.shade200),
             _buildEditableField(
               context,
-              label: 'البريد الإلكتروني',
+              label: lang['email'] ?? 'Email',
               key: 'email',
               value: userData['email'] ?? 'غير معروف',
               icon: Icons.email_outlined,
@@ -147,7 +158,7 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
             Divider(height: isMobile ? 30 : 40, color: Colors.grey.shade200),
             _buildEditableField(
               context,
-              label: ' الهاتف',
+              label: lang['phone'] ?? 'Phone Number',
               key: 'phoneNumber',
               value: userData['phoneNumber'] ?? 'غير متوفر',
               icon: Icons.phone_android_outlined,

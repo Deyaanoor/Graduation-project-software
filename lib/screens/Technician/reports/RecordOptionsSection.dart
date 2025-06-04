@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/home_provider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/providers/reports_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -20,10 +21,6 @@ class _RecordOptionsSectionState extends ConsumerState<RecordOptionsSection> {
   final Color _primaryColor = Colors.orange;
   String _searchType = 'owner';
   String _searchQuery = '';
-  final List<Map<String, dynamic>> _searchTypes = [
-    {'value': 'owner', 'label': 'بحث بالمالك'},
-    {'value': 'plate', 'label': 'بحث برقم اللوحة'},
-  ];
 
   @override
   void initState() {
@@ -86,7 +83,8 @@ class _RecordOptionsSectionState extends ConsumerState<RecordOptionsSection> {
     });
   }
 
-  Widget _buildWebMasterpiece() {
+  Widget _buildWebMasterpiece(
+      Map<String, dynamic> lang, List<Map<String, dynamic>> _searchTypes) {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -129,11 +127,12 @@ class _RecordOptionsSectionState extends ConsumerState<RecordOptionsSection> {
           ],
         ),
       ),
-      floatingActionButton: buildAddReportButton(),
+      floatingActionButton: buildAddReportButton(lang),
     );
   }
 
-  Widget _buildMobileMasterpiece() {
+  Widget _buildMobileMasterpiece(
+      Map<String, dynamic> lang, List<Map<String, dynamic>> _searchTypes) {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -171,11 +170,13 @@ class _RecordOptionsSectionState extends ConsumerState<RecordOptionsSection> {
           ],
         ),
       ),
-      floatingActionButton: buildAddReportButton(),
+      floatingActionButton: buildAddReportButton(lang),
     );
   }
 
-  Widget buildAddReportButton() {
+  Widget buildAddReportButton(
+    Map<String, dynamic> lang,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 40),
       child: FloatingActionButton.extended(
@@ -184,7 +185,7 @@ class _RecordOptionsSectionState extends ConsumerState<RecordOptionsSection> {
           ref.read(selectedIndexProvider.notifier).state = 3;
         },
         label: Text(
-          'Add new report',
+          lang['addReport'] ?? 'إضافة تقرير',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         icon: Icon(Icons.add),
@@ -199,9 +200,15 @@ class _RecordOptionsSectionState extends ConsumerState<RecordOptionsSection> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(languageProvider);
+    final List<Map<String, dynamic>> _searchTypes = [
+      {'value': 'owner', 'label': lang['searchByOwner'] ?? 'بحث بالمالك'},
+      {'value': 'plate', 'label': lang['searchByPlate'] ?? 'بحث برقم اللوحة'},
+    ];
+
     return ResponsiveHelper.isDesktop(context)
-        ? _buildWebMasterpiece()
-        : _buildMobileMasterpiece();
+        ? _buildWebMasterpiece(lang, _searchTypes)
+        : _buildMobileMasterpiece(lang, _searchTypes);
   }
 }
 
@@ -228,6 +235,8 @@ class _TopSearchSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(languageProvider);
+
     return Align(
       alignment: Alignment.topCenter,
       child: Padding(
@@ -280,7 +289,7 @@ class _TopSearchSection extends ConsumerWidget {
                   onChanged: onChanged,
                   style: TextStyle(color: color, fontSize: 18),
                   decoration: InputDecoration(
-                    hintText: 'ابحث بالسجل أو المستخدم...',
+                    hintText: lang['search'] ?? 'بحث...',
                     prefixIcon: Icon(Icons.search, color: color),
                     suffixIcon: IconButton(
                       icon: Icon(Icons.close, color: color),
@@ -300,7 +309,7 @@ class _TopSearchSection extends ConsumerWidget {
   }
 }
 
-class _MobileSearchSection extends StatelessWidget {
+class _MobileSearchSection extends ConsumerStatefulWidget {
   final TextEditingController controller;
   final List<Map<String, dynamic>> results;
   final Function(Map<String, dynamic>) onItemSelected;
@@ -322,7 +331,23 @@ class _MobileSearchSection extends StatelessWidget {
   });
 
   @override
+  ConsumerState<_MobileSearchSection> createState() =>
+      _MobileSearchSectionState();
+}
+
+class _MobileSearchSectionState extends ConsumerState<_MobileSearchSection> {
+  @override
   Widget build(BuildContext context) {
+    final color = widget.color;
+    final controller = widget.controller;
+    final results = widget.results;
+    final onItemSelected = widget.onItemSelected;
+    final onClose = widget.onClose;
+    final searchType = widget.searchType;
+    final onSearchTypeChanged = widget.onSearchTypeChanged;
+    final searchTypes = widget.searchTypes;
+    final lang = ref.watch(languageProvider);
+
     return Positioned.fill(
       child: Container(
         decoration: BoxDecoration(
@@ -357,7 +382,7 @@ class _MobileSearchSection extends StatelessWidget {
                             decoration: InputDecoration(
                               filled: true,
                               fillColor: color.withOpacity(0.1),
-                              hintText: 'اكتب للبحث...',
+                              hintText: lang['search'] ?? 'بحث...',
                               prefixIcon: Icon(Icons.search, color: color),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(15),
