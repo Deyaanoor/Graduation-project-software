@@ -32,6 +32,7 @@ import 'package:flutter_provider/screens/Technician/chat_bot_page.dart';
 import 'package:flutter_provider/screens/Technician/reports/ReportsListPage.dart';
 import 'package:flutter_provider/screens/Technician/reports/report.dart';
 import 'package:flutter_provider/screens/Technician/settings/SettingsPage.dart';
+import 'package:flutter_provider/screens/Admin/Garage/Dashboard.dart';
 
 class Home extends ConsumerWidget {
   const Home({super.key});
@@ -96,7 +97,12 @@ class Home extends ConsumerWidget {
   List<Widget> _getPagesByRole(String role, WidgetRef ref) {
     switch (role.toLowerCase()) {
       case 'admin':
-        return [GaragePage(), ContactUsInboxPage(), RegistrationRequests()];
+        return [
+          GaragePage(),
+          ContactUsInboxPage(),
+          RegistrationRequests(),
+          AdminDashboardPage()
+        ];
       case 'owner':
         return [
           OverviewPage(key: UniqueKey()),
@@ -391,6 +397,15 @@ class Home extends ConsumerWidget {
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 2,
               isExpanded: isExpanded,
             ),
+          if (userRole.toLowerCase() == 'admin')
+            _buildNavButton(
+              context: context,
+              icon: Icons.dashboard,
+              label: lang['Statics'] ?? 'Statics',
+              isSelected: selectedIndex == 3,
+              onTap: () => ref.read(selectedIndexProvider.notifier).state = 3,
+              isExpanded: isExpanded,
+            ),
           if (userRole.toLowerCase() == 'owner' ||
               userRole.toLowerCase() == 'employee')
             _buildNavButton(
@@ -656,6 +671,14 @@ class Home extends ConsumerWidget {
                 lang['EmergencyRequest'] ?? 'Emergency Request',
                 Icons.request_quote_sharp,
                 6,
+              ),
+            if (userInfo['role'].toLowerCase() == 'admin')
+              buildDrawerItem(
+                context,
+                ref,
+                lang['Statics'] ?? 'Statics',
+                Icons.how_to_reg,
+                3,
               ),
             if (userInfo['role'].toLowerCase() == 'admin')
               buildDrawerItem(

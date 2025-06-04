@@ -13,6 +13,7 @@ const contactUsRoutes = require("./routes/contactUsRoutes");
 const clientRoutes = require("./routes/clientRouter");
 const requestRoutes = require("./routes/requestRouter");
 const request_register = require("./routes/applyRequestRoutes");
+const admin_dashboard_stats = require("./routes/admin-dashboard-statsRoutes");
 dotenv.config({ path: "../assets/.env" });
 console.log("Server time:", new Date().toISOString());
 
@@ -40,5 +41,5 @@ app.use("/contactMessages", contactUsRoutes);
 app.use("/clients", clientRoutes);
 app.use("/requests", requestRoutes);
 app.use("/request_register", request_register);
-
+app.use("/admin_dashboard_stats", admin_dashboard_stats);
 app.listen(port, () => console.log(`🚀 Server running on port ${port}`));
