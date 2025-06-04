@@ -17,7 +17,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
     try {
       // 👇 اتصل بالسيرفر تبعك وأطلب clientSecret
       final response = await http.post(
-        Uri.parse('http://<YOUR-IP>:<PORT>/api/payment/create-payment-intent'),
+        Uri.parse(
+          'https://graduation-project-software.onrender.com/payments/create-payment-intent',
+        ),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'amount': 1000}), // يعني 10 دولار
       );
@@ -41,13 +43,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
       // 👇 عرض شاشة الدفع
       await Stripe.instance.presentPaymentSheet();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("✅ تم الدفع بنجاح!")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("✅ تم الدفع بنجاح!")));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("❌ خطأ في الدفع: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("❌ خطأ في الدفع: $e")));
     }
   }
 

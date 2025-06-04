@@ -15,9 +15,9 @@ android {
  compileOptions {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
-    coreLibraryDesugaringEnabled true
-
+    coreLibraryDesugaringEnabled = true
 }
+
 kotlinOptions {
     jvmTarget = "11"
 }
@@ -31,10 +31,18 @@ kotlinOptions {
     }
 
     buildTypes {
-        release {
-            signingConfig = signingConfigs.debug
-        }
+     release {
+        signingConfig = signingConfigs.debug
+
+        // Enable minify and shrinking to trigger R8 and Proguard
+        minifyEnabled true
+        shrinkResources true
+
+        // استخدم قواعد proguard المخصصة مع الافتراضية
+        proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
     }
+}
+
 }
 
 flutter {
@@ -44,10 +52,12 @@ flutter {
 dependencies {
     // Firebase BoM
     implementation platform('com.google.firebase:firebase-bom:33.12.0')
-    
+    implementation 'com.google.android.material:material:1.9.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+
     // Firebase Messaging
     implementation 'com.google.firebase:firebase-messaging-ktx'
-coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
+coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
 
       
 }

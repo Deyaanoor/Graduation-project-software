@@ -4,6 +4,7 @@ import 'package:flutter_provider/providers/requestRegister.dart';
 import 'package:flutter_provider/screens/PaymentDialog.dart';
 import 'package:flutter_provider/screens/map.dart';
 import 'package:flutter_provider/widgets/custom_snackbar.dart';
+import 'package:flutter_provider/widgets/payment_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_provider/widgets/custom_button.dart';
 import 'package:flutter_provider/widgets/custom_text_field.dart';
@@ -44,15 +45,34 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (width < 900) {
-            return _buildMobileView(context, garageNameController,
-                garageLocationController, selectedSubscription, (value) {
-              selectedSubscription = value!;
-            }, height, ref, _formKey, userId);
+            return _buildMobileView(
+              context,
+              garageNameController,
+              garageLocationController,
+              selectedSubscription,
+              (value) {
+                selectedSubscription = value!;
+              },
+              height,
+              ref,
+              _formKey,
+              userId,
+            );
           } else {
-            return _buildDesktopView(context, garageNameController,
-                garageLocationController, selectedSubscription, (value) {
-              selectedSubscription = value!;
-            }, height, width, ref, _formKey, userId);
+            return _buildDesktopView(
+              context,
+              garageNameController,
+              garageLocationController,
+              selectedSubscription,
+              (value) {
+                selectedSubscription = value!;
+              },
+              height,
+              width,
+              ref,
+              _formKey,
+              userId,
+            );
           }
         },
       ),
@@ -60,15 +80,16 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
   }
 
   Widget _buildMobileView(
-      BuildContext context,
-      TextEditingController garageNameController,
-      TextEditingController garageLocationController,
-      String selectedSubscription,
-      ValueChanged<String?> onSubscriptionChanged,
-      double height,
-      WidgetRef ref,
-      GlobalKey<FormState> _formKey,
-      String? userId) {
+    BuildContext context,
+    TextEditingController garageNameController,
+    TextEditingController garageLocationController,
+    String selectedSubscription,
+    ValueChanged<String?> onSubscriptionChanged,
+    double height,
+    WidgetRef ref,
+    GlobalKey<FormState> _formKey,
+    String? userId,
+  ) {
     return Scaffold(
       body: SizedBox(
         height: height,
@@ -116,7 +137,8 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                           final LatLng? result = await Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (_) => FreeMapPickerPage()),
+                              builder: (_) => FreeMapPickerPage(),
+                            ),
                           );
 
                           if (result != null) {
@@ -127,8 +149,24 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                       ),
                       SizedBox(height: 20),
                       _buildSubscriptionDropdown(
-                          selectedSubscription, onSubscriptionChanged),
+                        selectedSubscription,
+                        onSubscriptionChanged,
+                      ),
                       SizedBox(height: 30),
+                      CustomButton(
+                        text: "Apply",
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PaymentScreen(),
+                            ),
+                          );
+                        },
+                        isGradient: true,
+                      ),
+                      SizedBox(height: 30),
+
                       CustomButton(
                         text: "Apply",
                         onPressed: () {
@@ -161,16 +199,17 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
   }
 
   Widget _buildDesktopView(
-      BuildContext context,
-      TextEditingController garageNameController,
-      TextEditingController garageLocationController,
-      String selectedSubscription,
-      ValueChanged<String?> onSubscriptionChanged,
-      double height,
-      double width,
-      WidgetRef ref,
-      GlobalKey<FormState> _formKey,
-      String? userId) {
+    BuildContext context,
+    TextEditingController garageNameController,
+    TextEditingController garageLocationController,
+    String selectedSubscription,
+    ValueChanged<String?> onSubscriptionChanged,
+    double height,
+    double width,
+    WidgetRef ref,
+    GlobalKey<FormState> _formKey,
+    String? userId,
+  ) {
     return Center(
       child: Container(
         constraints: BoxConstraints(
@@ -195,10 +234,7 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                 width: width * 0.3,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [
-                      Colors.orange.shade700,
-                      Colors.orange.shade400,
-                    ],
+                    colors: [Colors.orange.shade700, Colors.orange.shade400],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -264,7 +300,8 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                             final LatLng? result = await Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (_) => FreeMapPickerPage()),
+                                builder: (_) => FreeMapPickerPage(),
+                              ),
                             );
 
                             if (result != null) {
@@ -275,7 +312,9 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                         ),
                         SizedBox(height: 20),
                         _buildSubscriptionDropdown(
-                            selectedSubscription, onSubscriptionChanged),
+                          selectedSubscription,
+                          onSubscriptionChanged,
+                        ),
                         SizedBox(height: 30),
                         CustomButton(
                           text: "Apply",
@@ -309,7 +348,9 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
   }
 
   Widget _buildSubscriptionDropdown(
-      String selectedValue, ValueChanged<String?> onChanged) {
+    String selectedValue,
+    ValueChanged<String?> onChanged,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -325,24 +366,13 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
         DropdownButtonFormField<String>(
           value: selectedValue,
           decoration: InputDecoration(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 15),
           ),
           items: [
-            DropdownMenuItem(
-              value: 'trial',
-              child: Text('Trial'),
-            ),
-            DropdownMenuItem(
-              value: '6months',
-              child: Text('6 Months'),
-            ),
-            DropdownMenuItem(
-              value: '1year',
-              child: Text('1 Year'),
-            ),
+            DropdownMenuItem(value: 'trial', child: Text('Trial')),
+            DropdownMenuItem(value: '6months', child: Text('6 Months')),
+            DropdownMenuItem(value: '1year', child: Text('1 Year')),
           ],
           onChanged: onChanged,
           validator: (value) {
@@ -360,7 +390,9 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
     return InkWell(
       onTap: () {
         Navigator.push(
-            context, MaterialPageRoute(builder: (context) => LoginPage()));
+          context,
+          MaterialPageRoute(builder: (context) => LoginPage()),
+        );
       },
       child: Container(
         padding: const EdgeInsets.all(20),
@@ -407,10 +439,14 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
     try {
       ref.read(applyGarageProvider(garageData).future);
       CustomSnackBar.showSuccessSnackBar(
-          context, "Application submitted successfully.");
+        context,
+        "Application submitted successfully.",
+      );
     } catch (e) {
       CustomSnackBar.showErrorSnackBar(
-          context, "Application failed: ${e.toString()}");
+        context,
+        "Application failed: ${e.toString()}",
+      );
     }
   }
 }

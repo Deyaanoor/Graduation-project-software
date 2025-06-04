@@ -43,17 +43,19 @@ class _CheckVerificationPageState extends ConsumerState<CheckVerificationPage> {
 
     return Scaffold(
       appBar: AppBar(
-          title: Text(lang['emailVerification'] ?? 'Email Verification')),
+        title: Text(lang['emailVerification'] ?? 'Email Verification'),
+      ),
       body: Center(
         child: isVerifiedAsync.when(
-          data: (isVerified) => Text(
-            isVerified
-                ? (lang['verifiedLoggingIn'] ?? '✅ Verified. Logging in...')
-                : (lang['notVerifiedYet'] ?? '❌ Not Verified yet.'),
-            style: const TextStyle(fontSize: 20),
-          ),
+          data:
+              (isVerified) => Text(
+                isVerified
+                    ? (lang['verifiedLoggingIn'] ?? '✅ Verified. Logging in...')
+                    : (lang['notVerifiedYet'] ?? '❌ Not Verified yet.'),
+                style: const TextStyle(fontSize: 20),
+              ),
           loading: () => const CircularProgressIndicator(),
-          error: (e, _) => Text('${lang['error'] ?? 'Error'}: $e'),
+          error: (e, _) => Text(''),
         ),
       ),
     );
