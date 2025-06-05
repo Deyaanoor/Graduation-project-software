@@ -18,6 +18,7 @@ const paymentRoutes = require('./routes/paymentRoutes');
 dotenv.config({ path: "../assets/.env" });
 console.log("Server time:", new Date().toISOString());
 
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -44,4 +45,25 @@ app.use("/requests", requestRoutes);
 app.use("/request_register", request_register);
 app.use("/admin_dashboard_stats", admin_dashboard_stats);
 app.use('/payments', paymentRoutes);
+app.post('/payments/create-payment-intent', async (req, res) => {
+  try {
+    const { amount, currency = 'usd' } = req.body;
+
+    // Create a PaymentIntent with the order amount and currency
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: parseInt(amount),
+      currency: currency,
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
+
+    res.json({
+      clientSecret: paymentIntent.client_secret,
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 app.listen(port, () => console.log(`🚀 Server running on port ${port}`));
