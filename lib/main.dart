@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/screens/Admin/Garage/apply_Request.dart';
 import 'package:flutter_provider/screens/Admin/Garage/garage_page.dart';
+import 'package:flutter_provider/screens/Admin/Garage/plan_Page.dart';
 import 'package:flutter_provider/screens/Admin/Garage/theamDark_mode.dart';
 import 'package:flutter_provider/screens/Client/roboflow_screen.dart';
 import 'package:flutter_provider/screens/Owner/notifications/notifications_screen.dart';
@@ -169,6 +170,7 @@ class MyApp extends ConsumerWidget {
         '/forgot-password': (context) => const ForgotPasswordScreen(),
         '/roboflow': (context) => const RoboflowScreen(),
         '/contactUs': (context) => const ContactUsPage(),
+        '/plan': (context) => const PlansPage(),
       },
     );
   }

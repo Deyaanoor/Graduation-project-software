@@ -5,6 +5,7 @@ import 'package:flutter_provider/providers/news_provider.dart';
 import 'package:flutter_provider/providers/reports_provider.dart';
 import 'package:flutter_provider/screens/Admin/Garage/ContactUsInboxPage.dart';
 import 'package:flutter_provider/screens/Admin/Garage/garage_page.dart';
+import 'package:flutter_provider/screens/Admin/Garage/plan_Page.dart';
 import 'package:flutter_provider/screens/Admin/Garage/registrationRequests.dart';
 import 'package:flutter_provider/screens/Client/ClientGaragesPage.dart';
 import 'package:flutter_provider/screens/Client/EmergencyRequestPage.dart';
@@ -102,7 +103,8 @@ class Home extends ConsumerWidget {
           GaragePage(),
           ContactUsInboxPage(),
           RegistrationRequests(),
-          AdminDashboardPage()
+          AdminDashboardPage(),
+          PlansPage(),
         ];
       case 'owner':
         return [
@@ -414,6 +416,15 @@ class Home extends ConsumerWidget {
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 3,
               isExpanded: isExpanded,
             ),
+          if (userRole.toLowerCase() == 'admin')
+            _buildNavButton(
+              context: context,
+              icon: Icons.event_note,
+              label: lang['plan'] ?? 'Plans',
+              isSelected: selectedIndex == 4,
+              onTap: () => ref.read(selectedIndexProvider.notifier).state = 4,
+              isExpanded: isExpanded,
+            ),
           if (userRole.toLowerCase() == 'owner' ||
               userRole.toLowerCase() == 'employee')
             _buildNavButton(
@@ -720,6 +731,14 @@ class Home extends ConsumerWidget {
                 lang['registrationRequests'] ?? 'registrationRequests',
                 Icons.how_to_reg,
                 2,
+              ),
+            if (userInfo['role'].toLowerCase() == 'admin')
+              buildDrawerItem(
+                context,
+                ref,
+                lang['plan'] ?? 'Plans',
+                Icons.how_to_reg,
+                4,
               ),
             if (userInfo['role'].toLowerCase() != 'admin')
               buildDrawerItem(

@@ -161,8 +161,8 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                             final paymentResult = await Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const PaymentScreen(
-                                  amount: '1000', // 10 دولار
+                                builder: (context) => PaymentScreen(
+                                  selectedSubscription: selectedSubscription,
                                   currency: 'USD',
                                 ),
                               ),
@@ -324,8 +324,9 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                               final paymentResult = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const PaymentScreen(
-                                    amount: '1000', // 10 دولار
+                                  builder: (context) => PaymentScreen(
+                                    selectedSubscription:
+                                        selectedSubscription, // 10 دولار
                                     currency: 'USD',
                                   ),
                                 ),

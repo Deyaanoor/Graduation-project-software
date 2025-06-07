@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' as material;
+import 'package:flutter_provider/providers/plan_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class PaymentScreen extends StatefulWidget {
-  final String amount;
+class PaymentScreen extends ConsumerStatefulWidget {
+  final String selectedSubscription;
   final String currency;
   const PaymentScreen({
     Key? key,
-    required this.amount,
+    required this.selectedSubscription,
     this.currency = 'USD',
   }) : super(key: key);
 
   @override
-  State<PaymentScreen> createState() => _PaymentScreenState();
+  ConsumerState<PaymentScreen> createState() => _PaymentScreenState();
 }
 
-class _PaymentScreenState extends State<PaymentScreen> {
+class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   Map<String, dynamic>? paymentIntentData;
   bool isLoading = false;
 
@@ -30,7 +33,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     try {
       await Stripe.instance.applySettings();
     } catch (e) {
-      print('خطأ في تهيئة Stripe: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('خطأ في تهيئة Stripe: $e')),
@@ -39,42 +41,35 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
   }
 
-  Future<void> makePayment() async {
+  Future<void> makePayment(double planPrice) async {
     try {
       setState(() {
         isLoading = true;
       });
 
-      print('بدء عملية الدفع...');
-
-      // 1. إنشاء PaymentIntent على السيرفر
       final response = await http.post(
-        Uri.parse('https://graduation-project-software.onrender.com/payments/create-payment-intent'),
+        Uri.parse(
+            'https://graduation-project-software.onrender.com/payments/create-payment-intent'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
         body: jsonEncode({
-          'amount': widget.amount,
+          'amount': planPrice,
           'currency': widget.currency,
         }),
       );
-
-      print('استجابة السيرفر: ${response.statusCode} - ${response.body}');
 
       if (response.statusCode != 200) {
         throw Exception('فشل في إنشاء PaymentIntent: ${response.body}');
       }
 
       final jsonResponse = jsonDecode(response.body);
-      print('PaymentIntent Response: $jsonResponse');
 
       if (!jsonResponse.containsKey('clientSecret')) {
         throw Exception('لم يتم استلام clientSecret من السيرفر');
       }
 
-      // 2. تهيئة شاشة الدفع
-      print('جاري تهيئة شاشة الدفع...');
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
           paymentIntentClientSecret: jsonResponse['clientSecret'],
@@ -88,20 +83,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
         ),
       );
 
-      // 3. عرض شاشة الدفع
-      print('جاري عرض شاشة الدفع...');
       try {
         await Stripe.instance.presentPaymentSheet();
       } catch (e) {
-        print('خطأ في عرض شاشة الدفع: $e');
         throw Exception('فشل في عرض شاشة الدفع: $e');
       }
 
-      // 4. التحقق من حالة الدفع
-      print('جاري التحقق من حالة الدفع...');
-      final paymentIntent = await Stripe.instance.retrievePaymentIntent(jsonResponse['clientSecret']);
-      print('حالة الدفع: ${paymentIntent.status}');
-      
+      final paymentIntent = await Stripe.instance
+          .retrievePaymentIntent(jsonResponse['clientSecret']);
+
       if (paymentIntent.status == PaymentIntentsStatus.Succeeded) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -113,7 +103,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
         throw Exception('فشل في إتمام عملية الدفع: ${paymentIntent.status}');
       }
     } catch (e) {
-      print('خطأ في عملية الدفع: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -140,35 +129,112 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('الدفع'),
-        centerTitle: true,
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'المبلغ: ${widget.amount} ${widget.currency}',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 20),
-            if (isLoading)
-              const CircularProgressIndicator()
-            else
-              ElevatedButton(
-                onPressed: makePayment,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                ),
-                child: const Text(
-                  'ادفع الآن',
-                  style: TextStyle(fontSize: 18),
-                ),
+    final planPriceAsync =
+        ref.watch(getPlanByNameProvider(widget.selectedSubscription));
+
+    return planPriceAsync.when(
+      data: (planPrice) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final bgColor = isDark ? const Color(0xFF121212) : Colors.white;
+        final primaryColor = Colors.orange;
+
+        return Scaffold(
+          backgroundColor: bgColor,
+          appBar: AppBar(
+            title: const Text('الدفع'),
+            centerTitle: true,
+            backgroundColor: primaryColor,
+            foregroundColor: Colors.white,
+          ),
+          body: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  material.Card(
+                    elevation: 8,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 30, horizontal: 20),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: isDark
+                              ? [Colors.orange.shade700, Colors.orange.shade400]
+                              : [
+                                  Colors.orange.shade300,
+                                  Colors.orange.shade600
+                                ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.payment_rounded,
+                            size: 50,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(height: 15),
+                          Text(
+                            '${widget.selectedSubscription} Plan',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            '$planPrice ${widget.currency}',
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  isLoading
+                      ? const CircularProgressIndicator()
+                      : ElevatedButton.icon(
+                          onPressed: () => makePayment(planPrice),
+                          icon: const Icon(Icons.lock),
+                          label: const Text(
+                            'ادفع الآن',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            backgroundColor: primaryColor,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 40, vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 5,
+                          ),
+                        ),
+                ],
               ),
-          ],
-        ),
+            ),
+          ),
+        );
+      },
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stack) => Scaffold(
+        body: Center(child: Text('حدث خطأ: $error')),
       ),
     );
   }
