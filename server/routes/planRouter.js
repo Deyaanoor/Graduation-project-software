@@ -8,8 +8,8 @@ const {
 } = require('../controllers/planController');
 
 router.get('/', getAllPlans);
-router.post('/plans/init', createPlans);          
-router.put('/plans/:name', updatePlan);           
-router.get('/plans/:name', getPlanByName);        
+router.post('/plans/init', createPlans);
+router.put('/plans/:name', updatePlan);
+router.get('/plans/:name', getPlanByName);
 
 module.exports = router;
