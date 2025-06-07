@@ -157,7 +157,6 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                         text: "Apply",
                         onPressed: () async {
                           if (_formKey.currentState!.validate()) {
-                            // فتح صفحة الدفع أولاً
                             final paymentResult = await Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -325,8 +324,7 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => PaymentScreen(
-                                    selectedSubscription:
-                                        selectedSubscription, // 10 دولار
+                                    selectedSubscription: selectedSubscription,
                                     currency: 'USD',
                                   ),
                                 ),

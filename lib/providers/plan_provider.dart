@@ -8,7 +8,7 @@ final String apiBaseUrl = dotenv.env['API_URL'] ?? '';
 // GET plan by name
 final getPlanByNameProvider =
     FutureProvider.family<double, String>((ref, name) async {
-  final url = Uri.parse('$apiBaseUrl/plans/$name');
+  final url = Uri.parse('$apiBaseUrl/plans/plans/$name');
   final response = await http.get(url);
 
   if (response.statusCode == 200) {
@@ -22,7 +22,7 @@ final getPlanByNameProvider =
 final updatePlanProvider = Provider<Future<void> Function(String, double)>(
   (ref) {
     return (String name, double price) async {
-      final url = Uri.parse('$apiBaseUrl/plans/$name');
+      final url = Uri.parse('$apiBaseUrl/plans/plans/$name');
       final response = await http.put(
         url,
         headers: {'Content-Type': 'application/json'},

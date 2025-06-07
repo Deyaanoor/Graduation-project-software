@@ -367,19 +367,13 @@ class EmployeeGarageInfoPage extends ConsumerWidget {
   }
 
   void _launchEmail(BuildContext context, String email) async {
-    final Uri emailUri = Uri(
-      scheme: 'mailto',
-      path: email,
-    );
-
-    if (await canLaunchUrl(emailUri)) {
-      final bool launched =
-          await launchUrl(emailUri, mode: LaunchMode.externalApplication);
-      if (!launched) {
+    final Uri url = Uri.parse('mailto:$email');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      if (context.mounted) {
         _showError(context, 'تعذر فتح تطبيق البريد الإلكتروني');
       }
-    } else {
-      _showError(context, 'تعذر فتح تطبيق البريد الإلكتروني');
     }
   }
 

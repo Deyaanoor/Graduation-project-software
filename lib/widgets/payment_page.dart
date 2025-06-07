@@ -132,6 +132,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     final planPriceAsync =
         ref.watch(getPlanByNameProvider(widget.selectedSubscription));
 
+    print('Selected Subscription: ${widget.selectedSubscription}');
+    print('Currency: ${planPriceAsync}');
     return planPriceAsync.when(
       data: (planPrice) {
         final isDark = Theme.of(context).brightness == Brightness.dark;

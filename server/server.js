@@ -7,7 +7,7 @@ const reportsRoutes = require("./routes/reportRouter");
 const userRoutes = require("./routes/userRouter");
 const employeeRoutes = require("./routes/employeeRouter");
 const garageRoutes = require("./routes/garageRouter");
-// const notificationsRoutes = require("./routes/notificationsRoutes");
+const notificationsRoutes = require("./routes/notificationsRoutes");
 const overviewRoutes = require("./routes/overviewRoutes");
 const contactUsRoutes = require("./routes/contactUsRoutes");
 const clientRoutes = require("./routes/clientRouter");
@@ -20,7 +20,7 @@ const plansRoutes = require('./routes/planRouter');
 dotenv.config({ path: "../assets/.env" });
 console.log("Server time:", new Date().toISOString());
 
-// const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -39,7 +39,7 @@ app.use("/reports", reportsRoutes);
 app.use("/users", userRoutes);
 app.use("/employees", employeeRoutes);
 app.use("/garages", garageRoutes);
-// app.use("/notifications", notificationsRoutes);
+app.use("/notifications", notificationsRoutes);
 app.use("/overview", overviewRoutes);
 app.use("/contactMessages", contactUsRoutes);
 app.use("/clients", clientRoutes);
