@@ -155,30 +155,30 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                       SizedBox(height: 30),
                       CustomButton(
                         text: "Apply",
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => PaymentScreen(),
-                            ),
-                          );
-                        },
-                        isGradient: true,
-                      ),
-                      SizedBox(height: 30),
-
-                      CustomButton(
-                        text: "Apply",
-                        onPressed: () {
+                        onPressed: () async {
                           if (_formKey.currentState!.validate()) {
-                            handleApply(
+                            // فتح صفحة الدفع أولاً
+                            final paymentResult = await Navigator.push(
                               context,
-                              ref,
-                              garageNameController,
-                              garageLocationController,
-                              selectedSubscription,
-                              userId,
+                              MaterialPageRoute(
+                                builder: (context) => const PaymentScreen(
+                                  amount: '1000', // 10 دولار
+                                  currency: 'USD',
+                                ),
+                              ),
                             );
+
+                            // إذا نجح الدفع، قم بتقديم الطلب
+                            if (paymentResult == true) {
+                              handleApply(
+                                context,
+                                ref,
+                                garageNameController,
+                                garageLocationController,
+                                selectedSubscription,
+                                userId,
+                              );
+                            }
                           }
                         },
                         isGradient: true,
@@ -318,16 +318,30 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                         SizedBox(height: 30),
                         CustomButton(
                           text: "Apply",
-                          onPressed: () {
+                          onPressed: () async {
                             if (_formKey.currentState!.validate()) {
-                              handleApply(
+                              // فتح صفحة الدفع أولاً
+                              final paymentResult = await Navigator.push(
                                 context,
-                                ref,
-                                garageNameController,
-                                garageLocationController,
-                                selectedSubscription,
-                                userId,
+                                MaterialPageRoute(
+                                  builder: (context) => const PaymentScreen(
+                                    amount: '1000', // 10 دولار
+                                    currency: 'USD',
+                                  ),
+                                ),
                               );
+
+                              // إذا نجح الدفع، قم بتقديم الطلب
+                              if (paymentResult == true) {
+                                handleApply(
+                                  context,
+                                  ref,
+                                  garageNameController,
+                                  garageLocationController,
+                                  selectedSubscription,
+                                  userId,
+                                );
+                              }
                             }
                           },
                           isGradient: true,

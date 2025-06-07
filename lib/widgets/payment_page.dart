@@ -23,16 +23,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   void initState() {
     super.initState();
-    // تهيئة Stripe عند فتح الصفحة
     initializeStripe();
   }
 
   Future<void> initializeStripe() async {
     try {
-      // تأكد من أن Stripe مهيأ بشكل صحيح
       await Stripe.instance.applySettings();
     } catch (e) {
       print('خطأ في تهيئة Stripe: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('خطأ في تهيئة Stripe: $e')),
+        );
+      }
     }
   }
 
@@ -41,6 +44,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
       setState(() {
         isLoading = true;
       });
+
+      print('بدء عملية الدفع...');
 
       // 1. إنشاء PaymentIntent على السيرفر
       final response = await http.post(
@@ -55,6 +60,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
         }),
       );
 
+      print('استجابة السيرفر: ${response.statusCode} - ${response.body}');
+
       if (response.statusCode != 200) {
         throw Exception('فشل في إنشاء PaymentIntent: ${response.body}');
       }
@@ -62,7 +69,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
       final jsonResponse = jsonDecode(response.body);
       print('PaymentIntent Response: $jsonResponse');
 
+      if (!jsonResponse.containsKey('clientSecret')) {
+        throw Exception('لم يتم استلام clientSecret من السيرفر');
+      }
+
       // 2. تهيئة شاشة الدفع
+      print('جاري تهيئة شاشة الدفع...');
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
           paymentIntentClientSecret: jsonResponse['clientSecret'],
@@ -72,37 +84,50 @@ class _PaymentScreenState extends State<PaymentScreen> {
             colors: PaymentSheetAppearanceColors(
               primary: Colors.blue,
             ),
-            shapes: PaymentSheetShape(
-              borderRadius: 10,
-              shadow: PaymentSheetShadowParams(color: Colors.black),
-            ),
           ),
         ),
       );
 
       // 3. عرض شاشة الدفع
-      await Stripe.instance.presentPaymentSheet();
+      print('جاري عرض شاشة الدفع...');
+      try {
+        await Stripe.instance.presentPaymentSheet();
+      } catch (e) {
+        print('خطأ في عرض شاشة الدفع: $e');
+        throw Exception('فشل في عرض شاشة الدفع: $e');
+      }
 
       // 4. التحقق من حالة الدفع
+      print('جاري التحقق من حالة الدفع...');
       final paymentIntent = await Stripe.instance.retrievePaymentIntent(jsonResponse['clientSecret']);
+      print('حالة الدفع: ${paymentIntent.status}');
       
       if (paymentIntent.status == PaymentIntentsStatus.Succeeded) {
-        // تم الدفع بنجاح
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('✅ تم الدفع بنجاح!')),
           );
-          Navigator.pop(context, true); // إرجاع true للصفحة السابقة
+          Navigator.pop(context, true);
         }
       } else {
-        throw Exception('فشل في إتمام عملية الدفع');
+        throw Exception('فشل في إتمام عملية الدفع: ${paymentIntent.status}');
       }
     } catch (e) {
       print('خطأ في عملية الدفع: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ خطأ في عملية الدفع: $e')),
+          SnackBar(
+            content: Text('❌ خطأ في عملية الدفع: ${e.toString()}'),
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'حسناً',
+              onPressed: () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              },
+            ),
+          ),
         );
+        Navigator.pop(context, false);
       }
     } finally {
       if (mounted) {
