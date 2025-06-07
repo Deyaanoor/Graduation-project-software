@@ -65,7 +65,8 @@ Future<void> main() async {
   }
   if (!kIsWeb) {
     Stripe.publishableKey =
-        'pk_test_51RWJeyQTAIRgjFlHR21qAmTBlJeWUkti5WTptCBFw2uvkb5scxDtBPc5GFRCW97TdyIbICG7PHszNuSEfaz8pj5E00aQMqv5Rm'; // مفتاحك التجريبي
+        'pk_test_51RWJeyQTAIRgjFlHR21qAmTBlJeWUkti5WTptCBFw2uvkb5scxDtBPc5GFRCW97TdyIbICG7PHszNuSEfaz8pj5E00aQMqv5Rm';
+    await Stripe.instance.applySettings();
   }
 
   runApp(const ProviderScope(child: MyApp()));
