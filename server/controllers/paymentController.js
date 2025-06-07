@@ -12,9 +12,12 @@ exports.createPaymentIntent = async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency: 'usd',
+      automatic_payment_methods: { enabled: true },
     });
 
-    res.json({ clientSecret: paymentIntent.client_secret });
+    res.json({ clientSecret: paymentIntent.client_secret,paymentIntentId: paymentIntent.id,
+
+     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

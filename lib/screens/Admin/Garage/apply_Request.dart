@@ -51,7 +51,9 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
               garageLocationController,
               selectedSubscription,
               (value) {
-                selectedSubscription = value!;
+                setState(() {
+                  selectedSubscription = value!;
+                });
               },
               height,
               ref,
@@ -65,7 +67,9 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
               garageLocationController,
               selectedSubscription,
               (value) {
-                selectedSubscription = value!;
+                setState(() {
+                  selectedSubscription = value!;
+                });
               },
               height,
               width,
@@ -319,7 +323,6 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                           text: "Apply",
                           onPressed: () async {
                             if (_formKey.currentState!.validate()) {
-                              // فتح صفحة الدفع أولاً
                               final paymentResult = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -330,7 +333,6 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                                 ),
                               );
 
-                              // إذا نجح الدفع، قم بتقديم الطلب
                               if (paymentResult == true) {
                                 handleApply(
                                   context,
@@ -440,8 +442,6 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
       CustomSnackBar.showErrorSnackBar(context, "User not authenticated.");
       return;
     }
-
-    // افتح نافذة الدفع هنا
 
     final garageData = {
       'garageName': garageNameController.text,

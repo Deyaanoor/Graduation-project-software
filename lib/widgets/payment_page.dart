@@ -55,7 +55,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           'Accept': 'application/json',
         },
         body: jsonEncode({
-          'amount': planPrice,
+          'amount': planPrice.toInt().toString(),
           'currency': widget.currency,
         }),
       );
@@ -93,12 +93,10 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           .retrievePaymentIntent(jsonResponse['clientSecret']);
 
       if (paymentIntent.status == PaymentIntentsStatus.Succeeded) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('✅ تم الدفع بنجاح!')),
-          );
-          Navigator.pop(context, true);
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ تم الدفع بنجاح!')),
+        );
+        Navigator.pop(context, true);
       } else {
         throw Exception('فشل في إتمام عملية الدفع: ${paymentIntent.status}');
       }
