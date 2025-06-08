@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/providers/overviewProvider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -35,6 +36,7 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(languageProvider);
     final userIdAsync = ref.watch(userIdProvider);
 
     return userIdAsync.when(
@@ -62,25 +64,25 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
                       runSpacing: 16,
                       children: [
                         _buildSummaryCard(
-                          'عدد التصليحات هذا الشهر',
+                          lang['monthlyRepairs'] ?? 'عدد التصليحات هذا الشهر',
                           Icons.build,
                           monthlyReportsCount.value?.toString() ?? '-',
                           context,
                         ),
                         _buildSummaryCard(
-                          'عدد الموظفين',
+                          lang['employeeCount'] ?? 'عدد الموظفين',
                           Icons.engineering,
                           employeeCount.value?.toString() ?? '-',
                           context,
                         ),
                         _buildSummaryCard(
-                          'مجموع الرواتب',
+                          lang['totalSalaries'] ?? 'مجموع الرواتب',
                           Icons.attach_money,
                           '${employeeSalary.value?.toString() ?? '-'} \$',
                           context,
                         ),
                         _buildSummaryCard(
-                          'الإجمالي الشهري',
+                          lang['monthlyTotal'] ?? 'الإجمالي الشهري',
                           Icons.bar_chart,
                           '${monthlySummary.value?.toString() ?? '-'} \$',
                           context,
@@ -98,15 +100,15 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
                               Expanded(
                                 child: modelsSummaryAsync.when(
                                   data: (modelsSummary) => _buildChartCard(
-                                    'موديلات السيارات',
-                                    _buildPieChart(modelsSummary),
+                                    lang['carModels'] ?? 'موديلات السيارات',
+                                    _buildPieChart(modelsSummary, lang),
                                     context,
                                   ),
                                   loading: () => const Center(
                                       child: CircularProgressIndicator()),
                                   error: (err, stack) => Center(
                                       child: Text(
-                                          'خطأ في تحميل بيانات الموديلات: $err')),
+                                          '${lang['modelsLoadError'] ?? 'خطأ في تحميل بيانات الموديلات'}: $err')),
                                 ),
                               ),
                               const SizedBox(width: 16),
@@ -115,8 +117,9 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
                                 child: topEmployeesAsync.when(
                                   data: (topEmployees) {
                                     return _buildChartCard(
-                                      'نشاط الموظفين',
-                                      _buildBarChart(topEmployees),
+                                      lang['employeeActivity'] ??
+                                          'نشاط الموظفين',
+                                      _buildBarChart(topEmployees, lang),
                                       context,
                                     );
                                   },
@@ -124,7 +127,7 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
                                       child: CircularProgressIndicator()),
                                   error: (err, stack) => Center(
                                       child: Text(
-                                          'خطأ في تحميل نشاط الموظفين: $err')),
+                                          '${lang['employeeActivityLoadError'] ?? 'خطأ في تحميل نشاط الموظفين'}: $err')),
                                 ),
                               ),
                             ],
@@ -134,22 +137,22 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
                             children: [
                               modelsSummaryAsync.when(
                                 data: (modelsSummary) => _buildChartCard(
-                                  'موديلات السيارات',
-                                  _buildPieChart(modelsSummary),
+                                  lang['carModels'] ?? 'موديلات السيارات',
+                                  _buildPieChart(modelsSummary, lang),
                                   context,
                                 ),
                                 loading: () => const Center(
                                     child: CircularProgressIndicator()),
                                 error: (err, stack) => Center(
                                     child: Text(
-                                        'خطأ في تحميل بيانات الموديلات: $err')),
+                                        '${lang['modelsLoadError'] ?? 'خطأ في تحميل بيانات الموديلات'}: $err')),
                               ),
                               const SizedBox(height: 16),
                               topEmployeesAsync.when(
                                 data: (topEmployees) {
                                   return _buildChartCard(
-                                    'نشاط الموظفين',
-                                    _buildBarChart(topEmployees),
+                                    lang['employeeActivity'] ?? 'نشاط الموظفين',
+                                    _buildBarChart(topEmployees, lang),
                                     context,
                                   );
                                 },
@@ -157,7 +160,7 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
                                     child: CircularProgressIndicator()),
                                 error: (err, stack) => Center(
                                     child: Text(
-                                        'خطأ في تحميل نشاط الموظفين: $err')),
+                                        '${lang['employeeActivityLoadError'] ?? 'خطأ في تحميل نشاط الموظفين'}: $err')),
                               ),
                             ],
                           );
@@ -172,11 +175,12 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
                       data: (report) {
                         print('Building UI with ${report.length} items');
                         return _buildRepairTable(
-                            context, report.take(5).toList());
+                            context, report.take(5).toList(), lang);
                       },
                       loading: () =>
                           const Center(child: CircularProgressIndicator()),
-                      error: (err, stack) => Center(child: Text('خطأ: $err')),
+                      error: (err, stack) => Center(
+                          child: Text('${lang['error'] ?? 'خطأ'}: $err')),
                     )
                   ],
                 ),
@@ -184,18 +188,23 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
             ),
           );
         } else {
-          return const Center(child: Text('لم يتم العثور على المستخدم.'));
+          return Center(
+              child:
+                  Text(lang['userNotFound'] ?? 'لم يتم العثور على المستخدم.'));
         }
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) =>
-          Center(child: Text('خطأ في تحميل معرف المستخدم: $err')),
+      error: (err, stack) => Center(
+          child: Text(
+              '${lang['userIdLoadError'] ?? 'خطأ في تحميل معرف المستخدم'}: $err')),
     );
   }
 
-  Widget _buildPieChart(List<Map<String, dynamic>> modelsSummary) {
+  Widget _buildPieChart(
+      List<Map<String, dynamic>> modelsSummary, Map<String, String> lang) {
     if (modelsSummary.isEmpty) {
-      return const Center(child: Text('لا توجد بيانات لعرضها.'));
+      return Center(
+          child: Text(lang['noDataToShow'] ?? 'لا توجد بيانات لعرضها.'));
     }
     return PieChart(
       PieChartData(
@@ -219,9 +228,11 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
     return HSVColor.fromAHSV(1.0, hue, saturation, brightness).toColor();
   }
 
-  Widget _buildBarChart(List<Map<String, dynamic>> data) {
+  Widget _buildBarChart(
+      List<Map<String, dynamic>> data, Map<String, String> lang) {
     if (data.isEmpty) {
-      return const Center(child: Text('لا توجد بيانات لعرضها.'));
+      return Center(
+          child: Text(lang['noDataToShow'] ?? 'لا توجد بيانات لعرضها.'));
     }
     final maxValue = data
         .map((e) => e['value'] as num)
@@ -233,7 +244,7 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
       child: BarChart(
         BarChartData(
           alignment: BarChartAlignment.spaceAround,
-          maxY: maxValue * 1.2, // عشان يكون في مساحة فوق الأعمدة
+          maxY: maxValue * 1.2,
           titlesData: FlTitlesData(
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
@@ -244,11 +255,10 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
                     return Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: Text(
-                        data[index]['label'], // اسم الموظف تحت العمود
+                        data[index]['label'],
                         style: const TextStyle(
                           fontSize: 12,
-
-                          fontWeight: FontWeight.w600, // تحسين النص
+                          fontWeight: FontWeight.w600,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -256,7 +266,7 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
                   }
                   return const SizedBox.shrink();
                 },
-                reservedSize: 40, // زيادة المسافة
+                reservedSize: 40,
               ),
             ),
             leftTitles: AxisTitles(
@@ -266,7 +276,7 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
                   return Padding(
                     padding: const EdgeInsets.only(right: 8.0),
                     child: Text(
-                      value.toStringAsFixed(0), // عرض القيم على اليسار
+                      value.toStringAsFixed(0),
                       style: const TextStyle(
                         fontSize: 12,
                       ),
@@ -297,7 +307,7 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
               barRods: [
                 BarChartRodData(
                   toY: value,
-                  color: Colors.orange, // اللون البرتقالي للأعمدة
+                  color: Colors.orange,
                   width: 30,
                   borderRadius: BorderRadius.circular(6),
                   backDrawRodData: BackgroundBarChartRodData(show: false),
@@ -375,7 +385,7 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
                       .titleMedium
                       ?.copyWith(fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
-              Expanded(child: chartWidget), // استخدام Expanded لتحجيم الشارت
+              Expanded(child: chartWidget),
             ],
           ),
         ),
@@ -394,10 +404,11 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
     }
   }
 
-  Widget _buildRepairTable(
-      BuildContext context, List<Map<String, dynamic>> repairs) {
+  Widget _buildRepairTable(BuildContext context,
+      List<Map<String, dynamic>> repairs, Map<String, String> lang) {
     if (repairs.isEmpty) {
-      return const Center(child: Text('لا توجد تصليحات لعرضها.'));
+      return Center(
+          child: Text(lang['noRepairsToShow'] ?? 'لا توجد تصليحات لعرضها.'));
     }
     return Card(
       elevation: _cardElevation,
@@ -417,7 +428,7 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('آخر التصليحات',
+            Text(lang['recentRepairs'] ?? 'آخر التصليحات',
                 style: Theme.of(context)
                     .textTheme
                     .titleLarge
@@ -441,7 +452,7 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
                           label: Expanded(
                             child: Align(
                               alignment: Alignment.centerLeft,
-                              child: Text('اسم الزبون',
+                              child: Text(lang['customerName'] ?? 'اسم الزبون',
                                   style:
                                       TextStyle(fontWeight: FontWeight.bold)),
                             ),
@@ -451,7 +462,7 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
                           label: Expanded(
                             child: Align(
                               alignment: Alignment.center,
-                              child: Text('نوع التصليح',
+                              child: Text(lang['repairType'] ?? 'نوع التصليح',
                                   style:
                                       TextStyle(fontWeight: FontWeight.bold)),
                             ),
@@ -461,7 +472,7 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
                           label: Expanded(
                             child: Align(
                               alignment: Alignment.centerRight,
-                              child: Text('تاريخ التصليح',
+                              child: Text(lang['repairDate'] ?? 'تاريخ التصليح',
                                   style:
                                       TextStyle(fontWeight: FontWeight.bold)),
                             ),

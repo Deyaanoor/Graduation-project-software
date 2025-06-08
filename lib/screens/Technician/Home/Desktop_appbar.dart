@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/providers/notifications_provider.dart';
 import 'package:flutter_provider/screens/Owner/notifications/notifications_screen.dart';
 import 'package:flutter_provider/screens/Technician/Home/home.dart';
@@ -41,6 +42,7 @@ class _DesktopCustomAppBarState extends ConsumerState<DesktopCustomAppBar>
   Widget build(BuildContext context) {
     final userId = ref.watch(userIdProvider).value;
     final unreadCount = ref.watch(unreadCountProvider(userId!));
+    final lang = ref.watch(languageProvider);
     final screenWidth = MediaQuery.of(context).size.width;
 
     return AppBar(
@@ -172,8 +174,8 @@ class _DesktopCustomAppBarState extends ConsumerState<DesktopCustomAppBar>
                   const Spacer(),
                   if (screenWidth > 600)
                     unreadCount.when(
-                      data: (count) =>
-                          _buildDesktopActions(context, widget.userInfo, count),
+                      data: (count) => _buildDesktopActions(
+                          context, widget.userInfo, count, lang),
                       loading: () => const SizedBox(
                         width: 40,
                         height: 40,
@@ -184,7 +186,7 @@ class _DesktopCustomAppBarState extends ConsumerState<DesktopCustomAppBar>
                           Icon(Icons.error, color: Colors.red),
                     )
                   else
-                    _buildMobileMenu(context),
+                    _buildMobileMenu(context, lang),
                 ],
               ),
             ),
@@ -197,16 +199,6 @@ class _DesktopCustomAppBarState extends ConsumerState<DesktopCustomAppBar>
                   end: Alignment.bottomRight,
                 ),
               ),
-              child: Center(
-                child: Text(
-                  'Welcome,Deyaa!',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
             ),
           ],
         ),
@@ -215,7 +207,10 @@ class _DesktopCustomAppBarState extends ConsumerState<DesktopCustomAppBar>
   }
 
   Widget _buildDesktopActions(
-      BuildContext context, Map<String, dynamic> userInfo, int unreadCount) {
+      BuildContext context,
+      Map<String, dynamic> userInfo,
+      int unreadCount,
+      Map<String, String> lang) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -240,9 +235,9 @@ class _DesktopCustomAppBarState extends ConsumerState<DesktopCustomAppBar>
                   ),
                 )
               },
-              child: const Text(
-                'Contact Us',
-                style: TextStyle(
+              child: Text(
+                lang['contactUs'] ?? 'Contact Us',
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -273,7 +268,7 @@ class _DesktopCustomAppBarState extends ConsumerState<DesktopCustomAppBar>
                 },
               ),
             const SizedBox(width: 10),
-            _buildProfileMenu(context, userInfo),
+            _buildProfileMenu(context, userInfo, lang),
             const SizedBox(width: 20),
           ],
         ),
@@ -327,32 +322,32 @@ class _DesktopCustomAppBarState extends ConsumerState<DesktopCustomAppBar>
     overlay.insert(_overlayEntry!);
   }
 
-  Widget _buildMobileMenu(BuildContext context) {
+  Widget _buildMobileMenu(BuildContext context, Map<String, String> lang) {
     return PopupMenuButton<String>(
       icon: const Icon(Icons.menu, color: Colors.white, size: 30),
       itemBuilder: (context) => [
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'Contact Us',
           child: ListTile(
-            leading: Icon(Icons.contact_page),
-            title: Text('Contact Us'),
+            leading: const Icon(Icons.contact_page),
+            title: Text(lang['contactUs'] ?? 'Contact Us'),
           ),
         ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'Search',
           child: ListTile(
-            leading: Icon(Icons.search),
-            title: Text('Search'),
+            leading: const Icon(Icons.search),
+            title: Text(lang['search'] ?? 'Search'),
           ),
         ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'Notifications',
           child: ListTile(
             leading: Badge(
               label: Text('3'),
-              child: Icon(Icons.notifications),
+              child: const Icon(Icons.notifications),
             ),
-            title: Text('Notifications'),
+            title: Text(lang['notifications'] ?? 'Notifications'),
           ),
         ),
       ],
@@ -370,8 +365,8 @@ class _DesktopCustomAppBarState extends ConsumerState<DesktopCustomAppBar>
     );
   }
 
-  Widget _buildProfileMenu(
-      BuildContext context, Map<String, dynamic> userInfo) {
+  Widget _buildProfileMenu(BuildContext context, Map<String, dynamic> userInfo,
+      Map<String, String> lang) {
     final avatarUrl = userInfo['avatar'];
     final hasAvatar = avatarUrl != null && avatarUrl.toString().isNotEmpty;
 
@@ -408,18 +403,18 @@ class _DesktopCustomAppBarState extends ConsumerState<DesktopCustomAppBar>
             break;
         }
       },
-      itemBuilder: (BuildContext context) => const [
+      itemBuilder: (BuildContext context) => [
         PopupMenuItem<String>(
           value: 'Profile',
-          child: Text('Profile'),
+          child: Text(lang['profile'] ?? 'Profile'),
         ),
         PopupMenuItem<String>(
           value: 'Settings',
-          child: Text('Settings'),
+          child: Text(lang['settings'] ?? 'Settings'),
         ),
         PopupMenuItem<String>(
           value: 'Logout',
-          child: Text('Logout'),
+          child: Text(lang['logout'] ?? 'Logout'),
         ),
       ],
     );

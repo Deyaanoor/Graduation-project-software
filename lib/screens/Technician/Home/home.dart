@@ -15,6 +15,7 @@ import 'package:flutter_provider/screens/Client/client_screen.dart';
 import 'package:flutter_provider/screens/Client/garageDetails.dart';
 import 'package:flutter_provider/screens/Owner/Employee/employee_garage_info_screen.dart';
 import 'package:flutter_provider/screens/Owner/Employee/employee_screen.dart';
+import 'package:flutter_provider/screens/Owner/GarageInfoScreen.dart';
 import 'package:flutter_provider/screens/Owner/OverviewPage.dart';
 import 'package:flutter_provider/screens/Technician/Home/mobile_appbar.dart';
 import 'package:flutter_provider/screens/Technician/reports/RecordOptionsSection.dart';
@@ -117,6 +118,7 @@ class Home extends ConsumerWidget {
           ClientListScreen(key: UniqueKey()),
           GarageRequestsPage(key: UniqueKey()),
           RequestDetailsPage(key: UniqueKey()),
+          GarageInfoScreen(key: UniqueKey()),
         ];
       case 'employee':
         return [
@@ -549,6 +551,15 @@ class Home extends ConsumerWidget {
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 7,
               isExpanded: isExpanded,
             ),
+          if (userRole.toLowerCase() == 'owner')
+            _buildNavButton(
+              context: context,
+              icon: Icons.subscriptions,
+              label: lang['Subscription '] ?? 'Subscription ',
+              isSelected: selectedIndex == 9,
+              onTap: () => ref.read(selectedIndexProvider.notifier).state = 9,
+              isExpanded: isExpanded,
+            ),
         ],
       ),
     );
@@ -691,6 +702,14 @@ class Home extends ConsumerWidget {
                 lang['request'] ?? 'Request',
                 Icons.request_quote_sharp,
                 7,
+              ),
+            if (userInfo['role'].toLowerCase() == 'owner')
+              buildDrawerItem(
+                context,
+                ref,
+                lang['Subscription'] ?? 'Subscription',
+                Icons.request_quote_sharp,
+                9,
               ),
             if (userInfo['role'].toLowerCase() == 'client')
               buildDrawerItem(

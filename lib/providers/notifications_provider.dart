@@ -68,7 +68,7 @@ class NotificationsNotifier
       };
       if (type == 'report') {
         body['reportId'] = reportId;
-        body['newsbody'] = 'تقرير جديد من $senderName';
+        body['newsbody'] = 'New Report from$senderName';
       } else if (type == 'news') {
         body['newsId'] = newsId;
         body['newsTitle'] = newsTitle;

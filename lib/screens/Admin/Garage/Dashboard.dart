@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/admin_StaticProvider.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AdminDashboardPage extends ConsumerWidget {
@@ -9,6 +10,7 @@ class AdminDashboardPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(staticAdminProvider);
+    final lang = ref.watch(languageProvider); // <-- أضف هذا السطر
     print("static : $statsAsync");
 
     final Color mainColor = Colors.orange;
@@ -34,7 +36,7 @@ class AdminDashboardPage extends ConsumerWidget {
                   children: [
                     _buildSummaryCard(
                       context,
-                      title: 'عدد الكراجات',
+                      title: lang['garagesCount'] ?? 'عدد الكراجات',
                       icon: Icons.garage_outlined,
                       value: garagesCount.toString(),
                       mainColor: mainColor,
@@ -42,7 +44,7 @@ class AdminDashboardPage extends ConsumerWidget {
                     ),
                     _buildSummaryCard(
                       context,
-                      title: 'طلبات الاشتراك',
+                      title: lang['subscriptionRequests'] ?? 'طلبات الاشتراك',
                       icon: Icons.person_add_alt_1,
                       value: subscriptionRequestsCount.toString(),
                       mainColor: mainColor,
@@ -50,7 +52,7 @@ class AdminDashboardPage extends ConsumerWidget {
                     ),
                     _buildSummaryCard(
                       context,
-                      title: 'الرسائل المرسلة',
+                      title: lang['contactMessages'] ?? 'الرسائل المرسلة',
                       icon: Icons.message_outlined,
                       value: contactMessagesCount.toString(),
                       mainColor: mainColor,
@@ -58,7 +60,7 @@ class AdminDashboardPage extends ConsumerWidget {
                     ),
                     _buildSummaryCard(
                       context,
-                      title: 'الكراجات التجريبية',
+                      title: lang['trialGarages'] ?? 'الكراجات التجريبية',
                       icon: Icons.science_outlined,
                       value: trialGaragesCount.toString(),
                       mainColor: mainColor,
@@ -72,7 +74,7 @@ class AdminDashboardPage extends ConsumerWidget {
         );
       },
       loading: () => Center(child: const CircularProgressIndicator()),
-      error: (error, stack) => Text('خطأ: $error'),
+      error: (error, stack) => Text('${lang['error'] ?? 'خطأ'}: $error'),
     );
   }
 

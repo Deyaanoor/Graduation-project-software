@@ -37,7 +37,7 @@ class EmployeeGarageInfoPage extends ConsumerWidget {
                 Icon(Icons.error_outline, color: Colors.red, size: 48),
                 SizedBox(height: 20),
                 Text(
-                  lang[''] ?? 'حدث خطأ في تحميل البيانات',
+                  lang['errorLoadingData'] ?? 'حدث خطأ في تحميل البيانات',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -132,7 +132,7 @@ class EmployeeGarageInfoPage extends ConsumerWidget {
               _buildInfoCard(
                 context: context,
                 icon: Icons.build,
-                title: lang['numberOfRepairs '] ?? "عدد التصليحات",
+                title: lang['numberOfRepairs'] ?? "عدد التصليحات",
                 value: "${data['reportCount']} ",
                 iconColor: Colors.green,
                 bgColor: isDarkMode
@@ -185,7 +185,8 @@ class EmployeeGarageInfoPage extends ConsumerWidget {
                 iconColor: Colors.blue,
                 onCopy: () =>
                     _copyToClipboard(context, data['ownerInfo']['email'], lang),
-                onTap: () => _launchEmail(context, data['ownerInfo']['email']),
+                onTap: () =>
+                    _launchEmail(context, data['ownerInfo']['email'], lang),
               ),
               _buildContactItem(
                 context: context,
@@ -195,8 +196,8 @@ class EmployeeGarageInfoPage extends ConsumerWidget {
                 iconColor: Colors.green,
                 onCopy: () => _copyToClipboard(
                     context, data['ownerInfo']['phoneNumber'], lang),
-                onTap: () =>
-                    _launchPhone(context, data['ownerInfo']['phoneNumber']),
+                onTap: () => _launchPhone(
+                    context, data['ownerInfo']['phoneNumber'], lang),
               ),
               SizedBox(height: 40),
             ],
@@ -348,7 +349,7 @@ class EmployeeGarageInfoPage extends ConsumerWidget {
   void _copyToClipboard(
     BuildContext context,
     String value,
-    Map<String, dynamic> lang,
+    Map<String, String> lang,
   ) {
     Clipboard.setData(ClipboardData(text: value));
     ScaffoldMessenger.of(context).showSnackBar(
@@ -357,32 +358,36 @@ class EmployeeGarageInfoPage extends ConsumerWidget {
     );
   }
 
-  void _launchPhone(BuildContext context, String phoneNumber) async {
+  void _launchPhone(BuildContext context, String phoneNumber,
+      Map<String, String> lang) async {
     final Uri url = Uri.parse('tel:$phoneNumber');
     if (await canLaunchUrl(url)) {
       await launchUrl(url);
     } else {
-      _showError(context, 'تعذر فتح تطبيق الاتصال');
+      _showError(context, lang['openPhoneError'] ?? 'تعذر فتح تطبيق الاتصال');
     }
   }
 
-  void _launchEmail(BuildContext context, String email) async {
+  void _launchEmail(
+      BuildContext context, String email, Map<String, String> lang) async {
     final Uri url = Uri.parse('mailto:$email');
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     } else {
       if (context.mounted) {
-        _showError(context, 'تعذر فتح تطبيق البريد الإلكتروني');
+        _showError(context,
+            lang['openEmailError'] ?? 'تعذر فتح تطبيق البريد الإلكتروني');
       }
     }
   }
 
-  void _launchSMS(BuildContext context, String phoneNumber) async {
+  void _launchSMS(BuildContext context, String phoneNumber,
+      Map<String, String> lang) async {
     final Uri url = Uri.parse('sms:$phoneNumber');
     if (await canLaunchUrl(url)) {
       await launchUrl(url);
     } else {
-      _showError(context, 'تعذر فتح تطبيق الرسائل');
+      _showError(context, lang['openSMSError'] ?? 'تعذر فتح تطبيق الرسائل');
     }
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart' as material;
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/providers/plan_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
@@ -34,14 +35,18 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       await Stripe.instance.applySettings();
     } catch (e) {
       if (mounted) {
+        final lang = ref.read(languageProvider);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطأ في تهيئة Stripe: $e')),
+          SnackBar(
+              content: Text(
+                  '${lang['stripeInitError'] ?? 'خطأ في تهيئة Stripe'}: $e')),
         );
       }
     }
   }
 
   Future<void> makePayment(double planPrice) async {
+    final lang = ref.read(languageProvider);
     try {
       setState(() {
         isLoading = true;
@@ -61,13 +66,15 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       );
 
       if (response.statusCode != 200) {
-        throw Exception('فشل في إنشاء PaymentIntent: ${response.body}');
+        throw Exception(
+            '${lang['paymentIntentFail'] ?? 'فشل في إنشاء PaymentIntent'}: ${response.body}');
       }
 
       final jsonResponse = jsonDecode(response.body);
 
       if (!jsonResponse.containsKey('clientSecret')) {
-        throw Exception('لم يتم استلام clientSecret من السيرفر');
+        throw Exception(
+            lang['noClientSecret'] ?? 'لم يتم استلام clientSecret من السيرفر');
       }
 
       await Stripe.instance.initPaymentSheet(
@@ -86,7 +93,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       try {
         await Stripe.instance.presentPaymentSheet();
       } catch (e) {
-        throw Exception('فشل في عرض شاشة الدفع: $e');
+        throw Exception(
+            '${lang['showPaymentSheetFail'] ?? 'فشل في عرض شاشة الدفع'}: $e');
       }
 
       final paymentIntent = await Stripe.instance
@@ -94,20 +102,23 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
       if (paymentIntent.status == PaymentIntentsStatus.Succeeded) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ تم الدفع بنجاح!')),
+          SnackBar(
+              content: Text(lang['paymentSuccess'] ?? '✅ تم الدفع بنجاح!')),
         );
         Navigator.pop(context, true);
       } else {
-        throw Exception('فشل في إتمام عملية الدفع: ${paymentIntent.status}');
+        throw Exception(
+            '${lang['paymentFailed'] ?? 'فشل في إتمام عملية الدفع'}: ${paymentIntent.status}');
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ خطأ في عملية الدفع: ${e.toString()}'),
+            content: Text(
+                '${lang['paymentError'] ?? '❌ خطأ في عملية الدفع'}: ${e.toString()}'),
             duration: const Duration(seconds: 5),
             action: SnackBarAction(
-              label: 'حسناً',
+              label: lang['ok'] ?? 'حسناً',
               onPressed: () {
                 ScaffoldMessenger.of(context).hideCurrentSnackBar();
               },
@@ -129,9 +140,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   Widget build(BuildContext context) {
     final planPriceAsync =
         ref.watch(getPlanByNameProvider(widget.selectedSubscription));
+    final lang = ref.watch(languageProvider);
 
-    print('Selected Subscription: ${widget.selectedSubscription}');
-    print('Currency: ${planPriceAsync}');
     return planPriceAsync.when(
       data: (planPrice) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -141,7 +151,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         return Scaffold(
           backgroundColor: bgColor,
           appBar: AppBar(
-            title: const Text('الدفع'),
+            title: Text(lang['payment'] ?? 'الدفع'),
             centerTitle: true,
             backgroundColor: primaryColor,
             foregroundColor: Colors.white,
@@ -183,7 +193,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                           ),
                           const SizedBox(height: 15),
                           Text(
-                            '${widget.selectedSubscription} Plan',
+                            '${widget.selectedSubscription} ${lang['plan'] ?? 'Plan'}',
                             style: const TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
@@ -209,9 +219,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                       : ElevatedButton.icon(
                           onPressed: () => makePayment(planPrice),
                           icon: const Icon(Icons.lock),
-                          label: const Text(
-                            'ادفع الآن',
-                            style: TextStyle(fontSize: 18),
+                          label: Text(
+                            lang['payNow'] ?? 'ادفع الآن',
+                            style: const TextStyle(fontSize: 18),
                           ),
                           style: ElevatedButton.styleFrom(
                             foregroundColor: Colors.white,
@@ -234,7 +244,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         body: Center(child: CircularProgressIndicator()),
       ),
       error: (error, stack) => Scaffold(
-        body: Center(child: Text('حدث خطأ: $error')),
+        body: Center(
+            child: Text('${lang['errorOccurred'] ?? 'حدث خطأ'}: $error')),
       ),
     );
   }

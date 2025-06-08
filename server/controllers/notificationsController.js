@@ -203,7 +203,7 @@ const createNotification = async (req, res) => {
     }
 
     res.status(201).json({
-      message: "تم إرسال الإشعار بنجاح",
+      message: "Successfully created notification",
       insertedId: result.insertedId,
       data: notification,
     });

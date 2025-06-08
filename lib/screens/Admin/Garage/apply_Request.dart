@@ -12,6 +12,7 @@ import 'package:flutter_provider/screens/auth/logIn.dart';
 import 'package:flutter_provider/screens/auth/Title_Project.dart';
 import 'package:flutter_provider/widgets/bezierContainer.dart';
 import 'package:flutter_provider/screens/auth/divider_widget.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:latlong2/latlong.dart';
 
 class ApplyRequestPage extends ConsumerStatefulWidget {
@@ -37,6 +38,7 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(languageProvider);
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
     final userId = ref.read(userIdProvider).value;
@@ -59,6 +61,7 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
               ref,
               _formKey,
               userId,
+              lang,
             );
           } else {
             return _buildDesktopView(
@@ -76,6 +79,7 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
               ref,
               _formKey,
               userId,
+              lang,
             );
           }
         },
@@ -93,6 +97,7 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
     WidgetRef ref,
     GlobalKey<FormState> _formKey,
     String? userId,
+    Map<String, String> lang,
   ) {
     return Scaffold(
       body: SizedBox(
@@ -117,13 +122,15 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                       TitlePro(),
                       SizedBox(height: 50),
                       CustomTextField(
-                        label: "Garage Name",
-                        hint: "Enter your garage name",
+                        label: lang['garageName'] ?? "Garage Name",
+                        hint:
+                            lang['enterGarageName'] ?? "Enter your garage name",
                         icon: Icons.garage,
                         controller: garageNameController,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter garage name';
+                            return lang['pleaseEnterGarageName'] ??
+                                'Please enter garage name';
                           }
                           return null;
                         },
@@ -133,8 +140,10 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                         controller: garageLocationController,
                         readOnly: true,
                         decoration: InputDecoration(
-                          labelText: "Garage Location",
-                          hintText: "Select garage location",
+                          labelText:
+                              lang['garageLocation'] ?? "Garage Location",
+                          hintText: lang['selectGarageLocation'] ??
+                              "Select garage location",
                           prefixIcon: Icon(Icons.location_on),
                         ),
                         onTap: () async {
@@ -155,10 +164,11 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                       _buildSubscriptionDropdown(
                         selectedSubscription,
                         onSubscriptionChanged,
+                        lang,
                       ),
                       SizedBox(height: 30),
                       CustomButton(
-                        text: "Apply",
+                        text: lang['apply'] ?? "Apply",
                         onPressed: () async {
                           if (_formKey.currentState!.validate()) {
                             final paymentResult = await Navigator.push(
@@ -180,6 +190,7 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                                 garageLocationController,
                                 selectedSubscription,
                                 userId,
+                                lang,
                               );
                             }
                           }
@@ -188,7 +199,7 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                       ),
                       SizedBox(height: 20),
                       DividerWidget(),
-                      _loginAccountLabel(context),
+                      _loginAccountLabel(context, lang),
                       SizedBox(height: 20),
                     ],
                   ),
@@ -212,6 +223,7 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
     WidgetRef ref,
     GlobalKey<FormState> _formKey,
     String? userId,
+    Map<String, String> lang,
   ) {
     return Center(
       child: Container(
@@ -279,13 +291,15 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                         TitlePro(),
                         SizedBox(height: 30),
                         CustomTextField(
-                          label: "Garage Name",
-                          hint: "Enter your garage name",
+                          label: lang['garageName'] ?? "Garage Name",
+                          hint: lang['enterGarageName'] ??
+                              "Enter your garage name",
                           icon: Icons.garage,
                           controller: garageNameController,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter garage name';
+                              return lang['pleaseEnterGarageName'] ??
+                                  'Please enter garage name';
                             }
                             return null;
                           },
@@ -295,8 +309,10 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                           controller: garageLocationController,
                           readOnly: true,
                           decoration: InputDecoration(
-                            labelText: "Garage Location",
-                            hintText: "Select garage location",
+                            labelText:
+                                lang['garageLocation'] ?? "Garage Location",
+                            hintText: lang['selectGarageLocation'] ??
+                                "Select garage location",
                             prefixIcon: Icon(Icons.location_on),
                           ),
                           onTap: () async {
@@ -317,10 +333,11 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                         _buildSubscriptionDropdown(
                           selectedSubscription,
                           onSubscriptionChanged,
+                          lang,
                         ),
                         SizedBox(height: 30),
                         CustomButton(
-                          text: "Apply",
+                          text: lang['apply'] ?? "Apply",
                           onPressed: () async {
                             if (_formKey.currentState!.validate()) {
                               final paymentResult = await Navigator.push(
@@ -341,6 +358,7 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                                   garageLocationController,
                                   selectedSubscription,
                                   userId,
+                                  lang,
                                 );
                               }
                             }
@@ -349,7 +367,7 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                         ),
                         SizedBox(height: 20),
                         DividerWidget(),
-                        _loginAccountLabel(context),
+                        _loginAccountLabel(context, lang),
                       ],
                     ),
                   ),
@@ -365,12 +383,13 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
   Widget _buildSubscriptionDropdown(
     String selectedValue,
     ValueChanged<String?> onChanged,
+    Map<String, String> lang,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Subscription Type",
+          lang['subscriptionType'] ?? "Subscription Type",
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 16,
@@ -385,14 +404,18 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
             contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 15),
           ),
           items: [
-            DropdownMenuItem(value: 'trial', child: Text('Trial')),
-            DropdownMenuItem(value: '6months', child: Text('6 Months')),
-            DropdownMenuItem(value: '1year', child: Text('1 Year')),
+            DropdownMenuItem(
+                value: 'trial', child: Text(lang['trial'] ?? 'Trial')),
+            DropdownMenuItem(
+                value: '6months', child: Text(lang['sixMonths'] ?? '6 Months')),
+            DropdownMenuItem(
+                value: '1year', child: Text(lang['oneYear'] ?? '1 Year')),
           ],
           onChanged: onChanged,
           validator: (value) {
             if (value == null) {
-              return 'Please select a subscription type';
+              return lang['pleaseSelectSubscription'] ??
+                  'Please select a subscription type';
             }
             return null;
           },
@@ -401,7 +424,7 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
     );
   }
 
-  Widget _loginAccountLabel(BuildContext context) {
+  Widget _loginAccountLabel(BuildContext context, Map<String, String> lang) {
     return InkWell(
       onTap: () {
         Navigator.push(
@@ -412,9 +435,9 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
       child: Container(
         padding: const EdgeInsets.all(20),
         alignment: Alignment.center,
-        child: const Text(
-          "Already have an account? Login",
-          style: TextStyle(
+        child: Text(
+          lang['alreadyHaveAccount'] ?? "Already have an account? Login",
+          style: const TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.orange,
             fontSize: 18,
@@ -431,15 +454,18 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
     TextEditingController garageLocationController,
     String subscriptionType,
     String? userId,
+    Map<String, String> lang,
   ) {
     if (garageNameController.text.isEmpty ||
         garageLocationController.text.isEmpty) {
-      CustomSnackBar.showErrorSnackBar(context, "Please fill in all fields.");
+      CustomSnackBar.showErrorSnackBar(
+          context, lang['pleaseFillAllFields'] ?? "Please fill in all fields.");
       return;
     }
 
     if (userId == null) {
-      CustomSnackBar.showErrorSnackBar(context, "User not authenticated.");
+      CustomSnackBar.showErrorSnackBar(
+          context, lang['userNotAuthenticated'] ?? "User not authenticated.");
       return;
     }
 
@@ -453,12 +479,12 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
       ref.read(applyGarageProvider(garageData).future);
       CustomSnackBar.showSuccessSnackBar(
         context,
-        "Application submitted successfully.",
+        lang['applicationSuccess'] ?? "Application submitted successfully.",
       );
     } catch (e) {
       CustomSnackBar.showErrorSnackBar(
         context,
-        "Application failed: ${e.toString()}",
+        "${lang['applicationFailed'] ?? "Application failed:"} ${e.toString()}",
       );
     }
   }
