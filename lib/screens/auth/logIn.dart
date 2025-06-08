@@ -5,6 +5,7 @@ import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/home_provider.dart';
 import 'package:flutter_provider/providers/language_provider.dart';
+import 'package:flutter_provider/providers/userGarage_provider.dart';
 import 'package:flutter_provider/screens/auth/Title_Project.dart';
 import 'package:flutter_provider/screens/auth/divider_widget.dart';
 import 'package:flutter_provider/screens/auth/forgot_password.dart';
@@ -321,29 +322,60 @@ class LoginPage extends ConsumerWidget {
           'fcmToken': fcmToken ?? "",
         };
 
-        final result = await ref.read(loginUserProvider(credentials).future);
-        final role = result['role'];
-        print("rooooole $role");
+        try {
+          final result = await ref.read(loginUserProvider(credentials).future);
+          final role = result['role'];
+          print("rooooole $role");
 
-        ref.invalidate(userIdProvider);
-        if (role == null || role == "") {
-          Navigator.pushNamed(context, '/Apply_Request');
-        } else if (role == "owner") {
-          // Check if garage is inactive
-          final userId = ref.read(userIdProvider).value;
-          if (userId != null) {
-            final garageData = await ref.read(userGarageProvider(userId).future);
-            if (garageData['status'] != "active") {
+          ref.invalidate(userIdProvider);
+          if (role == null || role == "") {
+            Navigator.pushNamed(context, '/Apply_Request');
+          } else if (role == "owner") {
+            // Check if garage is inactive
+            final userId = ref.read(userIdProvider).value;
+            if (userId != null) {
+              try {
+                final garageData =
+                    await ref.read(userGarageProvider(userId).future);
+                print("garage data: $garageData");
+
+                if (garageData['status'] != "active") {
+                  Navigator.pushNamed(context, '/garage_info');
+                  return;
+                }
+              } catch (e) {
+                print("Error fetching garage data: $e");
+                CustomSnackBar.showErrorSnackBar(
+                  context,
+                  lang['garageDataError'] ?? 'Error fetching garage data',
+                );
+                return;
+              }
+            }
+            Navigator.pushNamed(context, '/home');
+          } else {
+            Navigator.pushNamed(context, '/home');
+          }
+        } catch (e) {
+          print("❌ Login error: $e");
+          // Check for various inactive garage error messages
+          if (e.toString().contains("Garage subscription has expired") ||
+              e.toString().contains("Garage is inactive") ||
+              e.toString().contains("inactive garage")) {
+            print("Detected inactive garage error, redirecting to garage info");
+            final userId = ref.read(userIdProvider).value;
+            if (userId != null) {
               Navigator.pushNamed(context, '/garage_info');
               return;
             }
           }
-          Navigator.pushNamed(context, '/home');
-        } else {
-          Navigator.pushNamed(context, '/home');
+          CustomSnackBar.showErrorSnackBar(
+            context,
+            lang['loginFailed'] ?? 'Login failed',
+          );
         }
       } catch (e) {
-        print("❌ Login error: $e");
+        print("❌ General error: $e");
         CustomSnackBar.showErrorSnackBar(
           context,
           lang['loginFailed'] ?? 'Login failed',
