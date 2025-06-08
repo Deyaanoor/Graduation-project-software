@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/notifications_provider.dart';
+import 'package:flutter_provider/screens/auth/Title_Project.dart';
 import 'package:flutter_provider/screens/auth/welcomePage.dart';
-import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class CustomAppBar extends ConsumerStatefulWidget
@@ -24,7 +24,6 @@ class CustomAppBar extends ConsumerStatefulWidget
 class _CustomAppBarState extends ConsumerState<CustomAppBar> {
   @override
   Widget build(BuildContext context) {
-    final lang = ref.watch(languageProvider);
     final userId = ref.watch(userIdProvider).value;
     final unreadCountAsync = userId != null
         ? ref.watch(unreadCountProvider(userId))
@@ -63,6 +62,11 @@ class _CustomAppBarState extends ConsumerState<CustomAppBar> {
 
                 const SizedBox(width: 8),
 
+                // Title
+                Expanded(
+                  child: TitlePro(),
+                ),
+
                 (widget.userInfo['role'] == 'owner' ||
                         widget.userInfo['role'] == 'employee')
                     ? IconButton(
@@ -84,7 +88,6 @@ class _CustomAppBarState extends ConsumerState<CustomAppBar> {
                           error: (err, stack) => const Icon(Icons.notifications,
                               color: Colors.white, size: 30),
                         ),
-                        tooltip: lang['notifications'] ?? 'Notifications',
                         onPressed: () {
                           Navigator.pushNamed(context, '/notifications');
                         },
@@ -94,7 +97,7 @@ class _CustomAppBarState extends ConsumerState<CustomAppBar> {
                 const SizedBox(width: 4),
 
                 // Avatar
-                _buildProfileMenu(context, widget.userInfo, ref, lang),
+                _buildProfileMenu(context, widget.userInfo, ref),
               ],
             ),
           ),
@@ -106,8 +109,8 @@ class _CustomAppBarState extends ConsumerState<CustomAppBar> {
   Size get preferredSize => const Size.fromHeight(kToolbarHeight + 12);
 }
 
-Widget _buildProfileMenu(BuildContext context, Map<String, dynamic> userInfo,
-    WidgetRef ref, Map<String, String> lang) {
+Widget _buildProfileMenu(
+    BuildContext context, Map<String, dynamic> userInfo, WidgetRef ref) {
   final avatarUrl = userInfo['avatar'];
   final hasAvatar = avatarUrl != null && avatarUrl.toString().isNotEmpty;
 
@@ -147,18 +150,18 @@ Widget _buildProfileMenu(BuildContext context, Map<String, dynamic> userInfo,
           break;
       }
     },
-    itemBuilder: (BuildContext context) => [
+    itemBuilder: (BuildContext context) => const [
       PopupMenuItem<String>(
         value: 'Profile',
-        child: Text(lang['profile'] ?? 'Profile'),
+        child: Text('Profile'),
       ),
       PopupMenuItem<String>(
         value: 'Settings',
-        child: Text(lang['settings'] ?? 'Settings'),
+        child: Text('Settings'),
       ),
       PopupMenuItem<String>(
         value: 'Logout',
-        child: Text(lang['logout'] ?? 'Logout'),
+        child: Text('Logout'),
       ),
     ],
   );

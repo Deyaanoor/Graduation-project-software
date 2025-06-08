@@ -17,6 +17,8 @@ const admin_dashboard_stats = require("./routes/admin-dashboard-statsRoutes");
 const paymentRoutes = require('./routes/paymentRoutes');
 const plansRoutes = require('./routes/planRouter');
 const userGarageRouter = require('./routes/userGarageRouter');
+const garageSubscriptionRoutes = require("./routes/garageSubscriptionRouter");
+
 
 dotenv.config({ path: "../assets/.env" });
 console.log("Server time:", new Date().toISOString());
@@ -50,6 +52,8 @@ app.use("/admin_dashboard_stats", admin_dashboard_stats);
 app.use('/payments', paymentRoutes);
 app.use('/plans', plansRoutes);
 app.use('/user-garage', userGarageRouter);
+app.use("/subscription", garageSubscriptionRoutes);
+
 
 
 

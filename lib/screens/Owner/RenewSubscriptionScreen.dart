@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_provider/providers/activateGarageSubscriptionProvider.dart';
+import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/providers/plan_provider.dart';
 import 'package:flutter_provider/widgets/custom_button.dart';
@@ -22,6 +24,7 @@ class _RenewSubscriptionScreenState
     final lang = ref.watch(languageProvider);
     final plansAsync = ref.watch(allPlansProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final userId = ref.watch(userIdProvider).value ?? "";
 
     return Scaffold(
       appBar: AppBar(
@@ -96,9 +99,9 @@ class _RenewSubscriptionScreenState
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                const SizedBox(height: 4),
                                 Text(
-                                    "${lang['price'] ?? 'السعر'}: ${plan['price']} \$"),
+                                  "${lang['price'] ?? 'السعر'}: ${plan['price']} \$",
+                                ),
                               ],
                             ),
                           ),
@@ -111,9 +114,9 @@ class _RenewSubscriptionScreenState
                 CustomButton(
                   text: lang['confirmSubscription'] ?? "تأكيد الاشتراك",
                   backgroundColor: Colors.orange.shade600,
-                  onPressed: () {
-                    if (selectedPlan != null) {
-                      Navigator.push(
+                  onPressed: () async {
+                    if (selectedPlan != null && userId.isNotEmpty) {
+                      final paymentResult = await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => PaymentScreen(
@@ -122,6 +125,10 @@ class _RenewSubscriptionScreenState
                           ),
                         ),
                       );
+
+                      if (paymentResult == true) {
+                        await handleApply(userId, selectedPlan!['name']);
+                      }
                     }
                   },
                 ),
@@ -138,5 +145,22 @@ class _RenewSubscriptionScreenState
         ),
       ),
     );
+  }
+
+  Future<void> handleApply(String userId, String subscriptionType) async {
+    try {
+      await ref.read(activateGarageSubscriptionProvider(
+        ActivateSubscriptionParams(
+            userId: userId, subscriptionType: subscriptionType),
+      ).future);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تم تفعيل الاشتراك بنجاح')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('فشل في تفعيل الاشتراك: $e')),
+      );
+    }
   }
 }
