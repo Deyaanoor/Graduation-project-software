@@ -551,7 +551,7 @@ const loginUser = async (req, res) => {
 
     if (garage) {
       if (garage.status !== "active") {
-        print("Garages :", garage);
+        console.log("Garages :", garage);
         return res.status(403).json({
           message:
             "Garage subscription has expired or is inactive. Please renew your subscription.",
