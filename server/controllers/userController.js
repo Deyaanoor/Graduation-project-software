@@ -555,6 +555,8 @@ const loginUser = async (req, res) => {
         return res.status(403).json({
           message:
             "Garage subscription has expired or is inactive. Please renew your subscription.",
+          userId: user._id.toString(),
+          role: user.role
         });
       }
     }

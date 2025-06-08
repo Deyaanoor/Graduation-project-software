@@ -16,6 +16,7 @@ import 'package:flutter_provider/widgets/custom_snackbar.dart';
 import 'package:flutter_provider/widgets/custom_text_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:convert';
 
 class LoginPage extends ConsumerWidget {
   LoginPage({super.key});
@@ -327,12 +328,18 @@ class LoginPage extends ConsumerWidget {
           final role = result['role'];
           print("rooooole $role");
 
-          ref.invalidate(userIdProvider);
+          // Get userId from the login result
+          final userId = result['userId'];
+          print("User ID from login: $userId");
+          
+          if (userId != null) {
+            ref.invalidate(userIdProvider);
+          }
+
           if (role == null || role == "") {
             Navigator.pushNamed(context, '/Apply_Request');
           } else if (role == "owner") {
             // Check if garage is inactive
-            final userId = ref.read(userIdProvider).value;
             if (userId != null) {
               try {
                 final garageData =
@@ -358,15 +365,27 @@ class LoginPage extends ConsumerWidget {
           }
         } catch (e) {
           print("❌ Login error: $e");
+          print("❌ Error type: ${e.runtimeType}");
+          print("❌ Error message: ${e.toString()}");
+          
           // Check for various inactive garage error messages
           if (e.toString().contains("Garage subscription has expired") ||
               e.toString().contains("Garage is inactive") ||
-              e.toString().contains("inactive garage")) {
+              e.toString().contains("inactive garage") ||
+              e.toString().contains("failed to login user")) {
             print("Detected inactive garage error, redirecting to garage info");
-            final userId = ref.read(userIdProvider).value;
-            if (userId != null) {
-              Navigator.pushNamed(context, '/garage_info');
-              return;
+            
+            // Try to extract userId from the error response
+            try {
+              final errorData = jsonDecode(e.toString().split('Exception: ')[1]);
+              if (errorData['userId'] != null) {
+                print("Found userId in error response: ${errorData['userId']}");
+                ref.invalidate(userIdProvider);
+                Navigator.pushNamed(context, '/garage_info');
+                return;
+              }
+            } catch (parseError) {
+              print("Error parsing error response: $parseError");
             }
           }
           CustomSnackBar.showErrorSnackBar(
@@ -376,6 +395,8 @@ class LoginPage extends ConsumerWidget {
         }
       } catch (e) {
         print("❌ General error: $e");
+        print("❌ General error type: ${e.runtimeType}");
+        print("❌ General error message: ${e.toString()}");
         CustomSnackBar.showErrorSnackBar(
           context,
           lang['loginFailed'] ?? 'Login failed',
