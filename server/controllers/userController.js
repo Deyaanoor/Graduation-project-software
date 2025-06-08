@@ -548,7 +548,7 @@ const loginUser = async (req, res) => {
     } else if (user.role === "employee") {
       garage = await garagesCollection.findOne({ _id: user.garage_id });
     }
-
+    //
     if (garage) {
       if (garage.status !== "active") {
         console.log("Garages :", garage);
@@ -556,7 +556,7 @@ const loginUser = async (req, res) => {
           message:
             "Garage subscription has expired or is inactive. Please renew your subscription.",
           userId: user._id.toString(),
-          role: user.role
+          role: user.role,
         });
       }
     }
