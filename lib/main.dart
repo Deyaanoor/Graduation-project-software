@@ -17,6 +17,7 @@ import 'package:flutter_provider/screens/auth/logIn.dart';
 import 'package:flutter_provider/screens/auth/signUp.dart';
 import 'package:flutter_provider/screens/auth/welcomePage.dart';
 import 'package:flutter_provider/screens/contactUs.dart';
+import 'package:flutter_provider/screens/Owner/GarageInfoScreen.dart';
 
 // 👇 استيراد ذكي حسب المنصة (موبايل أو ويب)
 import 'package:flutter_provider/fcm_setup.dart';
@@ -171,6 +172,7 @@ class MyApp extends ConsumerWidget {
         '/roboflow': (context) => const RoboflowScreen(),
         '/contactUs': (context) => const ContactUsPage(),
         '/plan': (context) => const PlansPage(),
+        '/garage_info': (context) => const GarageInfoScreen(),
       },
     );
   }

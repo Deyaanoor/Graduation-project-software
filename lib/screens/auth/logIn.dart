@@ -5,6 +5,7 @@ import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/home_provider.dart';
 import 'package:flutter_provider/providers/language_provider.dart';
+import 'package:flutter_provider/providers/userGarage_provider.dart';
 import 'package:flutter_provider/screens/auth/Title_Project.dart';
 import 'package:flutter_provider/screens/auth/divider_widget.dart';
 import 'package:flutter_provider/screens/auth/forgot_password.dart';
@@ -15,6 +16,7 @@ import 'package:flutter_provider/widgets/custom_snackbar.dart';
 import 'package:flutter_provider/widgets/custom_text_field.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:convert';
 
 class LoginPage extends ConsumerWidget {
   LoginPage({super.key});
@@ -321,18 +323,80 @@ class LoginPage extends ConsumerWidget {
           'fcmToken': fcmToken ?? "",
         };
 
-        final result = await ref.read(loginUserProvider(credentials).future);
-        final role = result['role'];
-        print("rooooole $role");
+        try {
+          final result = await ref.read(loginUserProvider(credentials).future);
+          final role = result['role'];
+          print("rooooole $role");
 
-        ref.invalidate(userIdProvider);
-        if (role == null || role == "") {
-          Navigator.pushNamed(context, '/Apply_Request');
-        } else {
-          Navigator.pushNamed(context, '/home');
+          // Get userId from the login result
+          final userId = result['userId'];
+          print("User ID from login: $userId");
+          
+          if (userId != null) {
+            ref.invalidate(userIdProvider);
+          }
+
+          if (role == null || role == "") {
+            Navigator.pushNamed(context, '/Apply_Request');
+          } else if (role == "owner") {
+            // Check if garage is inactive
+            if (userId != null) {
+              try {
+                final garageData =
+                    await ref.read(userGarageProvider(userId).future);
+                print("garage data: $garageData");
+
+                if (garageData['status'] != "active") {
+                  Navigator.pushNamed(context, '/garage_info');
+                  return;
+                }
+              } catch (e) {
+                print("Error fetching garage data: $e");
+                CustomSnackBar.showErrorSnackBar(
+                  context,
+                  lang['garageDataError'] ?? 'Error fetching garage data',
+                );
+                return;
+              }
+            }
+            Navigator.pushNamed(context, '/home');
+          } else {
+            Navigator.pushNamed(context, '/home');
+          }
+        } catch (e) {
+          print("❌ Login error: $e");
+          print("❌ Error type: ${e.runtimeType}");
+          print("❌ Error message: ${e.toString()}");
+          
+          // Check for various inactive garage error messages
+          if (e.toString().contains("Garage subscription has expired") ||
+              e.toString().contains("Garage is inactive") ||
+              e.toString().contains("inactive garage") ||
+              e.toString().contains("failed to login user")) {
+            print("Detected inactive garage error, redirecting to garage info");
+            
+            // Try to extract userId from the error response
+            try {
+              final errorData = jsonDecode(e.toString().split('Exception: ')[1]);
+              if (errorData['userId'] != null) {
+                print("Found userId in error response: ${errorData['userId']}");
+                ref.invalidate(userIdProvider);
+                Navigator.pushNamed(context, '/garage_info');
+                return;
+              }
+            } catch (parseError) {
+              print("Error parsing error response: $parseError");
+            }
+          }
+          CustomSnackBar.showErrorSnackBar(
+            context,
+            lang['loginFailed'] ?? 'Login failed',
+          );
         }
       } catch (e) {
-        print("❌ Login error: $e");
+        print("❌ General error: $e");
+        print("❌ General error type: ${e.runtimeType}");
+        print("❌ General error message: ${e.toString()}");
         CustomSnackBar.showErrorSnackBar(
           context,
           lang['loginFailed'] ?? 'Login failed',

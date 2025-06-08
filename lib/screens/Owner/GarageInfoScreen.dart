@@ -14,7 +14,7 @@ class GarageInfoScreen extends ConsumerWidget {
     final lang = ref.watch(languageProvider);
     final userId = '6839d19354d511f0444169ee';
 
-    final garageDataAsync = ref.watch(userGarageProvider(userId!));
+    final garageDataAsync = ref.watch(userGarageProvider(userId));
 
     final isMobile = ResponsiveHelper.isMobile(context);
     final isDesktop = ResponsiveHelper.isDesktop(context);
@@ -52,6 +52,8 @@ class GarageInfoScreen extends ConsumerWidget {
                         Icons.calendar_month),
                     _infoItem(lang['createdAt'] ?? 'تاريخ الإنشاء',
                         _formatDate(data['createdAt'], lang), Icons.history),
+                    _infoItem(lang['status'] ?? 'الحالة',
+                        data['status'] ?? 'غير معروف', Icons.info),
                     const SizedBox(height: 30),
 
                     // ✅ زر تجديد الاشتراك

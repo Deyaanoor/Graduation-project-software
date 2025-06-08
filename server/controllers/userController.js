@@ -524,6 +524,7 @@ const loginUser = async (req, res) => {
     const db = await connectDB();
     const usersCollection = db.collection("users");
     const user = await usersCollection.findOne({ email });
+    const garagesCollection = db.collection("garages");
 
     if (!user) {
       return res.status(400).json({ message: "Email not found" });
@@ -540,6 +541,26 @@ const loginUser = async (req, res) => {
           "Email is not verified. Please verify your email before logging in.",
       });
     }
+
+    let garage;
+    if (user.role === "owner") {
+      garage = await garagesCollection.findOne({ owner_id: user._id });
+    } else if (user.role === "employee") {
+      garage = await garagesCollection.findOne({ _id: user.garage_id });
+    }
+    //
+    if (garage) {
+      if (garage.status !== "active") {
+        console.log("Garages :", garage);
+        return res.status(403).json({
+          message:
+            "Garage subscription has expired or is inactive. Please renew your subscription.",
+          userId: user._id.toString(),
+          role: user.role,
+        });
+      }
+    }
+
     // ✅ تحديث fcmToken إذا كان موجود
     if (fcmToken) {
       await usersCollection.updateOne(

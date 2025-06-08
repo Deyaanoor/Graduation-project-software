@@ -27,6 +27,7 @@ const getUserGarageData = async (req, res) => {
           cost: 1,
           subscriptionEndDate: 1,
           createdAt: 1,
+          status: 1,
         },
       }
     );

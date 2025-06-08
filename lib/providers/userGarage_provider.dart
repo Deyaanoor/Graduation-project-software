@@ -3,7 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
-String garageInfoUrl = 'http://localhost:5000/user-garage/user';
+String garageInfoUrl = '${dotenv.env['API_URL']}/user-garage/user';
 
 final userGarageProvider =
     FutureProvider.family<Map<String, dynamic>, String>((ref, userId) async {
