@@ -12,7 +12,7 @@ class GarageInfoScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final lang = ref.watch(languageProvider);
-    final userId = '6839d19354d511f0444169ee';
+    final userId = '6834c82bf9d4c907a0391c5c';
 
     final garageDataAsync = ref.watch(userGarageProvider(userId));
 
