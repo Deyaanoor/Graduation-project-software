@@ -325,14 +325,16 @@ class LoginPage extends ConsumerWidget {
         final role = result['role'];
         final status = result['status'];
         print("rooooole $role");
+        print("status $status");
 
         ref.invalidate(userIdProvider);
+
         if (role == null || role == "") {
           Navigator.pushNamed(context, '/Apply_Request');
         } else {
           if (status != "active" && role == "owner") {
             Navigator.pushNamed(context, '/garage_info');
-          } else if (status != "active") {
+          } else if (status != "active" && role == "employee") {
             CustomSnackBar.showErrorSnackBar(
               context,
               lang['accountInactive'] ?? 'Your account is inactive',

@@ -566,7 +566,7 @@ const loginUser = async (req, res) => {
       message: "Login successful",
       token,
       role: user.role,
-      status: garage.status,
+      status: garage ? garage.status : "active",
     });
   } catch (error) {
     console.error(error);
