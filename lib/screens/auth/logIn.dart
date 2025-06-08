@@ -328,6 +328,17 @@ class LoginPage extends ConsumerWidget {
         ref.invalidate(userIdProvider);
         if (role == null || role == "") {
           Navigator.pushNamed(context, '/Apply_Request');
+        } else if (role == "owner") {
+          // Check if garage is inactive
+          final userId = ref.read(userIdProvider).value;
+          if (userId != null) {
+            final garageData = await ref.read(userGarageProvider(userId).future);
+            if (garageData['status'] != "active") {
+              Navigator.pushNamed(context, '/garage_info');
+              return;
+            }
+          }
+          Navigator.pushNamed(context, '/home');
         } else {
           Navigator.pushNamed(context, '/home');
         }
