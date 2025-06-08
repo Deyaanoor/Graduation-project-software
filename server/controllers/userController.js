@@ -523,8 +523,6 @@ const loginUser = async (req, res) => {
   try {
     const db = await connectDB();
     const usersCollection = db.collection("users");
-    const garagesCollection = db.collection("garages");
-
     const user = await usersCollection.findOne({ email });
 
     if (!user) {
@@ -542,32 +540,13 @@ const loginUser = async (req, res) => {
           "Email is not verified. Please verify your email before logging in.",
       });
     }
-
-    let garage;
-    if (user.role === "owner") {
-      garage = await garagesCollection.findOne({ owner_id: user._id });
-    } else if (user.role === "employee") {
-      garage = await garagesCollection.findOne({ _id: user.garage_id });
-    }
-
-    if (garage) {
-      const now = new Date();
-      const subEndDate = new Date(garage.subscriptionEndDate);
-      if (garage.status !== "active" || subEndDate < now) {
-        return res.status(403).json({
-          message:
-            "Garage subscription has expired or is inactive. Please renew your subscription.",
-        });
-      }
-    }
-
+    // ✅ تحديث fcmToken إذا كان موجود
     if (fcmToken) {
       await usersCollection.updateOne(
         { _id: user._id },
         { $set: { fcmToken: fcmToken } }
       );
     }
-
     const token = jwt.sign(
       { userId: user._id, role: user.role },
       "your_jwt_secret",
