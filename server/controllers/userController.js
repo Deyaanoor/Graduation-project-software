@@ -548,18 +548,6 @@ const loginUser = async (req, res) => {
     } else if (user.role === "employee") {
       garage = await garagesCollection.findOne({ _id: user.garage_id });
     }
-    //
-    if (garage) {
-      if (garage.status !== "active") {
-        console.log("Garages :", garage);
-        return res.status(403).json({
-          message:
-            "Garage subscription has expired or is inactive. Please renew your subscription.",
-          userId: user._id.toString(),
-          role: user.role,
-        });
-      }
-    }
 
     // ✅ تحديث fcmToken إذا كان موجود
     if (fcmToken) {
@@ -578,6 +566,7 @@ const loginUser = async (req, res) => {
       message: "Login successful",
       token,
       role: user.role,
+      status: garage.status,
     });
   } catch (error) {
     console.error(error);
