@@ -14,8 +14,8 @@ class GarageInfoScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final lang = ref.watch(languageProvider);
     final userId = '6833042195da18ec22db6115';
-    ref.invalidate(refreshsubProvider);
     final garageDataAsync = ref.watch(userGarageProvider(userId));
+    ref.invalidate(userGarageProvider(userId));
 
     final isMobile = ResponsiveHelper.isMobile(context);
     final isDesktop = ResponsiveHelper.isDesktop(context);

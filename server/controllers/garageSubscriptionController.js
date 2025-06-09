@@ -82,7 +82,9 @@ const activateGarageSubscription = async (req, res) => {
           subscriptionStartDate: now,
           subscriptionEndDate,
           status,
-          cost, // ← السعر محفوظ هنا في الكراج
+        },
+        $inc: {
+          cost: planPrice, // ← هذا يضيف قيمة الخطة إلى القيمة الحالية
         },
       }
     );
