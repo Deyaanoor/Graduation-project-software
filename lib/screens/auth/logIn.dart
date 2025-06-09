@@ -324,7 +324,10 @@ class LoginPage extends ConsumerWidget {
         final result = await ref.read(loginUserProvider(credentials).future);
         final role = result['role'];
         final status = result['status'];
+
         print("rooooole $role");
+        print("result $result");
+
         print("status $status");
 
         ref.invalidate(userIdProvider);
@@ -334,8 +337,8 @@ class LoginPage extends ConsumerWidget {
         } else {
           print("✅ Login successful: $role, $status");
           if (status != "active" && role == "owner") {
-            // Navigator.pushNamed(context, '/garage_info');
-            Navigator.pushNamed(context, '/home');
+            print("status $status ,IDUseeer: $userIdProvider");
+            Navigator.pushNamed(context, '/garage_info');
           } else if (status != "active" && role == "employee") {
             CustomSnackBar.showErrorSnackBar(
               context,

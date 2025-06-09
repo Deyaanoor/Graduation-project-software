@@ -51,12 +51,14 @@ final loginUserProvider = FutureProvider.autoDispose
     final responseData = json.decode(response.body);
     final token = responseData['token'];
     final role = responseData['role'];
+    final status = responseData['status'];
 
     await saveToken(token);
 
     return {
       'token': token,
       'role': role,
+      'status': status,
     };
   } else {
     throw Exception('failed to login user');
