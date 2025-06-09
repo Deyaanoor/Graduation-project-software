@@ -76,7 +76,7 @@ const addClient = async (req, res) => {
 };
 
 const getAllClients = async (req, res) => {
-  const { owner_id } = req.query;
+  const { owner_id } = req.params;
 
   try {
     if (!ObjectId.isValid(owner_id)) {
