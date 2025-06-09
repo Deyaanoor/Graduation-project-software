@@ -167,6 +167,7 @@ class _RenewSubscriptionScreenState
       );
 
       if (!mounted) return;
+      ref.read(refreshsubProvider);
       Navigator.pop(context, true); // فقط أرجع true ولا تظهر SnackBar هنا
     } catch (e) {
       if (!mounted) return;
