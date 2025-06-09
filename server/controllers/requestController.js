@@ -131,12 +131,19 @@ const getRequestsByUserAndGarageId = async (req, res) => {
       )
       .toArray();
 
+    // إذا ما في نتائج، رجّع مصفوفة فاضية مع رسالة
     if (requests.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No requests found for this user and garage" });
+      return res.status(200).json({
+        message: "No requests found for this user and garage.",
+        data: [],
+      });
     }
-    res.status(200).json(requests);
+
+    // رجّع النتائج بشكل عادي
+    res.status(200).json({
+      message: "Requests fetched successfully.",
+      data: requests,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error fetching requests" });
