@@ -188,10 +188,11 @@ const verifyEmail = async (req, res) => {
     }
     console.log("existingUser", existingUser);
     console.log("IDD", existingUser._id);
-    console.log("___ID decoded", decoded._id);
+    console.log("___ID ", decoded._id);
 
     // أدخل المستخدم مع حقل isVerified true
     const newUser = {
+      _id: new ObjectId(decoded._id),
       name: decoded.name,
       email: decoded.email,
       password: decoded.password,
