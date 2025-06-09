@@ -14,7 +14,7 @@ class GarageInfoScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final lang = ref.watch(languageProvider);
     final userId = '6833042195da18ec22db6115';
-
+    ref.invalidate(refreshsubProvider);
     final garageDataAsync = ref.watch(userGarageProvider(userId));
 
     final isMobile = ResponsiveHelper.isMobile(context);
@@ -43,8 +43,8 @@ class GarageInfoScreen extends ConsumerWidget {
                     const SizedBox(height: 20),
                     _infoItem(lang['garageName'] ?? 'اسم الجراج', data['name'],
                         Icons.home),
-                    _infoItem(lang['cost'] ?? 'التكلفة', '${data['cost']} \$',
-                        Icons.attach_money),
+                    _infoItem(lang['cost'] ?? 'التكلفة',
+                        '${data['cost'].toString()} \$', Icons.attach_money),
                     _infoItem(lang['subscriptionType'] ?? 'نوع الاشتراك',
                         data['subscriptionType'], Icons.card_membership),
                     _infoItem(

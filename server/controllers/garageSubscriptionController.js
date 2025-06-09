@@ -55,13 +55,12 @@ const activateGarageSubscription = async (req, res) => {
     // تحديد مدة الاشتراك
     let subscriptionDurationDays;
     switch (subscriptionType) {
-      case "6month":
+      case "6months":
         subscriptionDurationDays = 180;
         break;
       case "1year":
         subscriptionDurationDays = 365;
         break;
-      case "trial":
       default:
         subscriptionDurationDays = 14;
         break;
