@@ -65,6 +65,7 @@ const activateGarageSubscription = async (req, res) => {
         subscriptionDurationDays = 14;
         break;
     }
+    const now = new Date();
 
     const subscriptionEndDate = new Date(garage.subscriptionEndDate);
     subscriptionEndDate.setDate(
