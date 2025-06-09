@@ -16,3 +16,9 @@ final userGarageProvider =
     throw Exception('فشل في تحميل بيانات الجراج');
   }
 });
+
+final refreshsubProvider = Provider<void Function(WidgetRef)>((ref) {
+  return (WidgetRef ref) {
+    ref.invalidate(userGarageProvider);
+  };
+});

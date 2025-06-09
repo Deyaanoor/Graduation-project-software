@@ -166,7 +166,7 @@ class _RenewSubscriptionScreenState
           ),
         ).future,
       );
-
+      ref.invalidate(userGarageProvider(userId));
       if (!mounted) return;
       ref.invalidate(userGarageProvider(userId)); // حدث البيانات أولاً
       Navigator.pop(context, true); // ثم أغلق الصفحة وأرجع النتيجة

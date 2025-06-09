@@ -29,3 +29,9 @@ class ActivateSubscriptionParams {
   ActivateSubscriptionParams(
       {required this.userId, required this.subscriptionType});
 }
+
+// final refreshsubProvider = Provider<void Function(WidgetRef)>((ref) {
+//   return (WidgetRef ref) {
+//     ref.invalidate(activateGarageSubscriptionProvider);
+//   };
+// });

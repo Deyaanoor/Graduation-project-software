@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
+import 'package:flutter_provider/providers/activateGarageSubscriptionProvider.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/providers/userGarage_provider.dart';
@@ -13,12 +14,12 @@ class GarageInfoScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final lang = ref.watch(languageProvider);
     final userId = '6833042195da18ec22db6115';
-
     final garageDataAsync = ref.watch(userGarageProvider(userId));
+    ref.invalidate(userGarageProvider(userId));
 
     final isMobile = ResponsiveHelper.isMobile(context);
     final isDesktop = ResponsiveHelper.isDesktop(context);
-
+    print("garageDataAsync: $garageDataAsync");
     return Scaffold(
       body: garageDataAsync.when(
         data: (data) {
@@ -42,8 +43,8 @@ class GarageInfoScreen extends ConsumerWidget {
                     const SizedBox(height: 20),
                     _infoItem(lang['garageName'] ?? 'اسم الجراج', data['name'],
                         Icons.home),
-                    _infoItem(lang['cost'] ?? 'التكلفة', '${data['cost']} \$',
-                        Icons.attach_money),
+                    _infoItem(lang['cost'] ?? 'التكلفة',
+                        '${data['cost'].toString()} \$', Icons.attach_money),
                     _infoItem(lang['subscriptionType'] ?? 'نوع الاشتراك',
                         data['subscriptionType'], Icons.card_membership),
                     _infoItem(
