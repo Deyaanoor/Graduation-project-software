@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/activateGarageSubscriptionProvider.dart';
 import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/providers/plan_provider.dart';
+import 'package:flutter_provider/providers/userGarage_provider.dart';
 import 'package:flutter_provider/widgets/custom_button.dart';
 import 'package:flutter_provider/widgets/payment_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -167,7 +168,9 @@ class _RenewSubscriptionScreenState
       );
 
       if (!mounted) return;
-      Navigator.pop(context, true); // فقط أرجع true ولا تظهر SnackBar هنا
+      ref.invalidate(userGarageProvider(userId)); // حدث البيانات أولاً
+      Navigator.pop(context, true); // ثم أغلق الصفحة وأرجع النتيجة
+// فقط أرجع true ولا تظهر SnackBar هنا
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
