@@ -18,7 +18,7 @@ class GarageInfoScreen extends ConsumerWidget {
 
     final isMobile = ResponsiveHelper.isMobile(context);
     final isDesktop = ResponsiveHelper.isDesktop(context);
-
+    print("garageDataAsync: $garageDataAsync");
     return Scaffold(
       body: garageDataAsync.when(
         data: (data) {
