@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/activateGarageSubscriptionProvider.dart';
-import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/providers/plan_provider.dart';
 import 'package:flutter_provider/widgets/custom_button.dart';
@@ -24,7 +23,7 @@ class _RenewSubscriptionScreenState
     final lang = ref.watch(languageProvider);
     final plansAsync = ref.watch(allPlansProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final userId = ref.watch(userIdProvider).value ?? "";
+    final userId = '6833042195da18ec2d2b6115';
 
     return Scaffold(
       appBar: AppBar(
@@ -126,9 +125,25 @@ class _RenewSubscriptionScreenState
                         ),
                       );
 
+                      if (!mounted) return;
+
+                      print('paymentResult: $paymentResult');
+
                       if (paymentResult == true) {
-                        await handleApply(userId, selectedPlan!['name']);
+                        await handleApply(userId, selectedPlan!['name'], lang);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content:
+                                  Text(lang['paymentFailed'] ?? 'فشل الدفع!')),
+                        );
                       }
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text(lang['selectPlanFirst'] ??
+                                'يرجى اختيار باقة أولاً')),
+                      );
                     }
                   },
                 ),
@@ -147,19 +162,27 @@ class _RenewSubscriptionScreenState
     );
   }
 
-  Future<void> handleApply(String userId, String subscriptionType) async {
+  Future<void> handleApply(
+      String userId, String subscriptionType, Map<String, String> lang) async {
     try {
       await ref.read(activateGarageSubscriptionProvider(
         ActivateSubscriptionParams(
             userId: userId, subscriptionType: subscriptionType),
       ).future);
 
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم تفعيل الاشتراك بنجاح')),
+        SnackBar(
+            content: Text(
+                lang['subscriptionActivated'] ?? 'تم تفعيل الاشتراك بنجاح')),
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('فشل في تفعيل الاشتراك: $e')),
+        SnackBar(
+            content: Text(
+                '${lang['subscriptionActivationFailed'] ?? 'فشل في تفعيل الاشتراك'}: $e')),
       );
     }
   }

@@ -450,4 +450,7 @@ final Map<String, String> english = {
   'paymentIntentFail': 'Failed to create PaymentIntent',
   'noClientSecret': 'No clientSecret received from server',
   'showPaymentSheetFail': 'Failed to show payment sheet',
+  'subscriptionActivated': 'Subscription activated successfully',
+  'subscriptionActivationFailed': 'Failed to activate subscription',
+  'selectPlanFirst': 'Please select a plan first',
 };

@@ -23,7 +23,7 @@ const garageSubscriptionRoutes = require("./routes/garageSubscriptionRouter");
 dotenv.config({ path: "../assets/.env" });
 console.log("Server time:", new Date().toISOString());
 
-// const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const app = express();
 const port = process.env.PORT || 5000;
 

@@ -451,4 +451,7 @@ final Map<String, String> arabic = {
   'paymentIntentFail': 'فشل في إنشاء PaymentIntent',
   'noClientSecret': 'لم يتم استلام clientSecret من السيرفر',
   'showPaymentSheetFail': 'فشل في عرض شاشة الدفع',
+  'subscriptionActivated': 'تم تفعيل الاشتراك بنجاح',
+  'subscriptionActivationFailed': 'فشل في تفعيل الاشتراك',
+  'selectPlanFirst': 'يرجى اختيار باقة أولاً',
 };
