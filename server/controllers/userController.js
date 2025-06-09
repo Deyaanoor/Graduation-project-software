@@ -186,9 +186,6 @@ const verifyEmail = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ message: "Account already verified" });
     }
-    console.log("existingUser", existingUser);
-    console.log("IDD", existingUser._id);
-    console.log("___ID ", decoded._id);
 
     // أدخل المستخدم مع حقل isVerified true
     const newUser = {
