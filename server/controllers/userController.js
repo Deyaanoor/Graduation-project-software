@@ -189,6 +189,7 @@ const verifyEmail = async (req, res) => {
 
     // أدخل المستخدم مع حقل isVerified true
     const newUser = {
+      _id: existingUser._id,
       name: decoded.name,
       email: decoded.email,
       password: decoded.password,
