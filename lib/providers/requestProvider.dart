@@ -55,7 +55,9 @@ final requestsByUserAndGarageProvider = FutureProvider.autoDispose
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
+        final Map<String, dynamic> jsonBody = json.decode(response.body);
+        final List<dynamic> data = jsonBody['data'] ?? [];
+
         return data.cast<Map<String, dynamic>>();
       } else {
         throw Exception('Failed to load requests');
@@ -66,6 +68,7 @@ final requestsByUserAndGarageProvider = FutureProvider.autoDispose
     }
   },
 );
+
 // ✅ Get Request by ID
 final getRequestByIdProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>, String>((ref, requestId) async {

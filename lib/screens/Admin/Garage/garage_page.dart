@@ -103,57 +103,6 @@ class GaragePage extends ConsumerWidget {
           validator: validator,
         );
       }
-
-      showDialog(
-        context: context,
-        builder: (context) {
-          return Dialog(
-            backgroundColor: Colors.transparent,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).dialogBackgroundColor,
-                  borderRadius: BorderRadius.circular(25),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 15,
-                      spreadRadius: 10,
-                    ),
-                  ],
-                ),
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        lang['addGarage'] ?? 'Add New Garage',
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      GarageForm(
-                        formKey: _formKey,
-                        controllers: _controllers,
-                        onSubmit: _submitForm,
-                        buildTextFormField: _buildTextFormField,
-                        buttonText: lang['save'] ?? 'Save',
-                        lang: lang,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      );
     }
   }
 
@@ -180,25 +129,6 @@ class GaragePage extends ConsumerWidget {
           Column(
             children: [
               _buildSearchBar(ref, lang),
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    icon: const Icon(Icons.add),
-                    label: Text(lang['addGarage'] ?? 'Add New Garage'),
-                    onPressed: () => _openAddForm(context, ref, lang),
-                  ),
-                ),
-              ),
               Expanded(
                 child: garagesAsync.when(
                   data: (garages) {

@@ -94,12 +94,6 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
     }
 
     return Scaffold(
-      appBar: (ResponsiveHelper.isMobile(context))
-          ? AppBar(
-              title: Text(lang['garageRequests'] ?? 'طلبات الورشة'),
-              backgroundColor: Colors.orange,
-            )
-          : null,
       body: requestsAsync.when(
         data: (requests) {
           if (requests.isEmpty) {

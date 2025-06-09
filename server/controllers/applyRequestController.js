@@ -150,12 +150,19 @@ const updateRequestStatus = async (req, res) => {
         email: user.email,
         garage_id: "",
       };
-
+      const plan = await plansCollection.findOne({ name: subscriptionType });
+      if (!plan) {
+        return res
+          .status(404)
+          .json({ message: "Plan not found for this subscriptionType" });
+      }
+      // const cost = plan.price;
+      const planPrice = plan.price;
       const ownerInsertResult = await ownersCollection.insertOne(newOwnerData);
 
       let subscriptionDurationDays;
       switch (request.subscriptionType) {
-        case "6month":
+        case "6months":
           subscriptionDurationDays = 180;
           break;
         case "1year":
@@ -176,12 +183,7 @@ const updateRequestStatus = async (req, res) => {
       const now = new Date();
       const garageStatus = now <= subscriptionEndDate ? "active" : "expired";
 
-      const costMap = {
-        trial: 0,
-        "6month": 60,
-        "1year": 100,
-      };
-      const cost = costMap[request.subscriptionType] ?? 0;
+      const cost = planPrice;
 
       const newGarage = {
         name: request.garageName,

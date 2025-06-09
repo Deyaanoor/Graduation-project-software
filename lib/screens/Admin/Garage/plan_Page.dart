@@ -29,7 +29,6 @@ class _PlansPageState extends ConsumerState<PlansPage> {
     final plansAsync = ref.watch(allPlansProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(lang['managePlans'] ?? 'Manage Plans')),
       body: plansAsync.when(
         data: (plans) {
           for (var plan in plans) {
