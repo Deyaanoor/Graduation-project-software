@@ -44,8 +44,8 @@ const activateGarageSubscription = async (req, res) => {
         .status(404)
         .json({ message: "Plan not found for this subscriptionType" });
     }
-    const cost = plan.price;
-
+    // const cost = plan.price;
+    const planPrice = plan.price;
     // تحديث نوع الاشتراك في طلب التسجيل
     await requestCollection.updateOne(
       { user_id: new ObjectId(userId) },
