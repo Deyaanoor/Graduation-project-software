@@ -121,13 +121,19 @@ class NotificationsPage extends ConsumerWidget {
                             ? Colors.blue
                             : notification['type'] == 'message'
                                 ? Colors.green
-                                : const Color(0xFFFFA726),
+                                : notification['type'] == 'request'
+                                    ? const Color(
+                                        0xFFFF7043) // برتقالي مائل للأحمر
+                                    : const Color(0xFFFFA726),
                         child: Icon(
                           notification['type'] == 'report'
                               ? Icons.assignment
                               : notification['type'] == 'message'
                                   ? Icons.message
-                                  : Icons.article,
+                                  : notification['type'] == 'request'
+                                      ? Icons
+                                          .assignment_ind // أيقونة مناسبة للطلبات
+                                      : Icons.article,
                           color: Colors.white,
                         ),
                       ),

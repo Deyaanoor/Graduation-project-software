@@ -15,6 +15,7 @@ const createNotification = async (req, res) => {
       messageTitle,
       messageBody,
       garageId,
+      requestTitle,
     } = req.body;
 
     if (!senderName || !adminId || !type) {
@@ -49,6 +50,13 @@ const createNotification = async (req, res) => {
         .findOne({ _id: new ObjectId(adminId) });
       if (user) userType = "client";
     }
+    if (!user) {
+      user = await db
+        .collection("registration_requests")
+        .findOne({ user_id: new ObjectId(adminId) });
+      if (user) userType = "";
+    }
+
 
     if (!user) {
       return res
@@ -58,7 +66,7 @@ const createNotification = async (req, res) => {
 
     // 🏠 تحديد الجراج
     let garage;
-
+    
     if (userType === "client") {
       // ✅ تحويل garageId من String إلى ObjectId
       if (!garageId || !ObjectId.isValid(garageId)) {
@@ -79,9 +87,7 @@ const createNotification = async (req, res) => {
       garage = await db.collection("garages").findOne(garageQuery);
     }
 
-    if (!garage) {
-      return res.status(404).json({ message: "الجراج غير موجود" });
-    }
+    
 
     // 🔔 تجهيز الإشعار
     let notification;
@@ -134,7 +140,18 @@ const createNotification = async (req, res) => {
         garageId: garage._id,
         senderName,
       };
-    } else {
+    } 
+    else if (type === "request") {
+     
+      notification = {
+        title: requestTitle,
+        type: "request",
+        timestamp: new Date(),
+        isRead: false,
+        senderName,
+      };
+    } 
+    else {
       return res.status(400).json({ message: "نوع الإشعار غير مدعوم" });
     }
 
@@ -158,6 +175,12 @@ const createNotification = async (req, res) => {
         .collection("owners")
         .findOne({ _id: garage.owner_id });
       if (owner) recipients = [owner];
+    }
+    else if (type === "request") {
+      const admin = await db
+        .collection("users")
+        .findOne({ role: "admin" });
+      if (admin) recipients = [admin];
     }
 
     // 📡 جلب التوكنات من جدول users
@@ -223,11 +246,11 @@ const getNotifications = async (req, res) => {
 
     const db = await connectDB();
 
-    // نحاول نلاقيه أولًا بالموظفين
+    // 1. جرب كموظف
     let user = await db
       .collection("employees")
       .findOne({ _id: new ObjectId(adminId) });
-    let typeToFetch = ["news"]; // النوع المبدئي للموظف
+    let typeToFetch = ["news"];
     let garageQuery;
 
     if (user) {
@@ -237,18 +260,34 @@ const getNotifications = async (req, res) => {
       }
       garageQuery = { _id: user.garage_id };
     } else {
-      // مش موظف، نحاول نلاقيه كـ owner
+      // 2. جرب كمالك
       user = await db
         .collection("owners")
         .findOne({ _id: new ObjectId(adminId) });
-      if (!user) {
-        return res.status(404).json({ message: "الموظف أو المالك غير موجود" });
+      if (user) {
+        typeToFetch = ["report", "message"];
+        garageQuery = { owner_id: user._id };
+      } else {
+        // 3. جرب كأدمن في users
+        user = await db
+          .collection("users")
+          .findOne({ _id: new ObjectId(adminId), role: "admin" });
+        if (user) {
+          // الأدمن يرى فقط إشعارات الطلبات (request)
+          const notifications = await db
+            .collection("notifications")
+            .find({ type: "request" })
+            .toArray();
+          return res.status(200).json({ notifications });
+        } else {
+          return res
+            .status(404)
+            .json({ message: "الموظف أو المالك أو الأدمن غير موجود" });
+        }
       }
-      // ✅ المالك يشوف report + message
-      typeToFetch = ["report", "message"];
-      garageQuery = { owner_id: user._id };
     }
 
+    // إذا وصلنا هنا، المستخدم موظف أو مالك
     const garage = await db.collection("garages").findOne(garageQuery);
     if (!garage) {
       return res
@@ -338,10 +377,11 @@ const countUnreadNotifications = async (req, res) => {
 
     const db = await connectDB();
 
+    // جرب كموظف
     let user = await db
       .collection("employees")
       .findOne({ _id: new ObjectId(adminId) });
-    let typeToFetch = ["news"]; // الموظف يشوف news
+    let typeToFetch = ["news"];
     let garageQuery;
 
     if (user) {
@@ -350,16 +390,34 @@ const countUnreadNotifications = async (req, res) => {
       }
       garageQuery = { _id: user.garage_id };
     } else {
+      // جرب كمالك
       user = await db
         .collection("owners")
         .findOne({ _id: new ObjectId(adminId) });
-      if (!user) {
-        return res.status(404).json({ message: "الموظف أو المالك غير موجود" });
+      if (user) {
+        typeToFetch = ["report", "message"];
+        garageQuery = { owner_id: user._id };
+      } else {
+        // جرب كأدمن
+        user = await db
+          .collection("users")
+          .findOne({ _id: new ObjectId(adminId), role: "admin" });
+        if (user) {
+          // الأدمن: عد الإشعارات غير المقروءة من نوع request فقط
+          const count = await db.collection("notifications").countDocuments({
+            type: "request",
+            isRead: false,
+          });
+          return res.status(200).json({ unreadCount: count });
+        } else {
+          return res
+            .status(404)
+            .json({ message: "الموظف أو المالك أو الأدمن غير موجود" });
+        }
       }
-      typeToFetch = ["report", "message"]; // المالك يشوف report و message
-      garageQuery = { owner_id: user._id };
     }
 
+    // إذا وصلنا هنا، المستخدم موظف أو مالك
     const garage = await db.collection("garages").findOne(garageQuery);
     if (!garage) {
       return res

@@ -58,6 +58,7 @@ class NotificationsNotifier
     String? messageBody,
     String? garageId,
     String type = 'report',
+    String? requestTitle,
   }) async {
     if (adminId.length != 24) return;
     try {
@@ -68,7 +69,7 @@ class NotificationsNotifier
       };
       if (type == 'report') {
         body['reportId'] = reportId;
-        body['newsbody'] = 'New Report from$senderName';
+        body['newsbody'] = 'New Report from $senderName';
       } else if (type == 'news') {
         body['newsId'] = newsId;
         body['newsTitle'] = newsTitle;
@@ -77,6 +78,8 @@ class NotificationsNotifier
         body['messageTitle'] = messageTitle;
         body['messageBody'] = messageBody;
         body['garageId'] = garageId;
+      } else if (type == 'request') {
+        body['requestTitle'] = 'New Request from $senderName';
       }
       final response = await http.post(
         Uri.parse('$_baseUrl/send-notification'),

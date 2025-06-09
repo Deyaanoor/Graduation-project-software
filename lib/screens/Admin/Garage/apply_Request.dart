@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
+import 'package:flutter_provider/providers/notifications_provider.dart';
 import 'package:flutter_provider/providers/requestRegister.dart';
 import 'package:flutter_provider/screens/PaymentDialog.dart';
 import 'package:flutter_provider/screens/map.dart';
@@ -447,7 +448,7 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
     );
   }
 
-  void handleApply(
+  Future<void> handleApply(
     BuildContext context,
     WidgetRef ref,
     TextEditingController garageNameController,
@@ -455,7 +456,7 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
     String subscriptionType,
     String? userId,
     Map<String, String> lang,
-  ) {
+  ) async {
     if (garageNameController.text.isEmpty ||
         garageLocationController.text.isEmpty) {
       CustomSnackBar.showErrorSnackBar(
@@ -476,7 +477,17 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
       'user_id': userId,
     };
     try {
+      final userInfo =
+          userId != null ? ref.watch(getUserInfoProvider(userId)).value : null;
+
+      final userName =
+          userInfo != null ? userInfo['name'] ?? 'بدون اسم' : 'جاري التحميل...';
       ref.read(applyGarageProvider(garageData).future);
+      await ref.read(notificationsProvider.notifier).sendNotification(
+            adminId: userId,
+            senderName: userName,
+            type: 'request',
+          );
       ref.invalidate(getAllRequestsProvider);
 
       CustomSnackBar.showSuccessSnackBar(
