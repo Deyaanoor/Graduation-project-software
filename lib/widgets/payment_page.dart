@@ -101,14 +101,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           .retrievePaymentIntent(jsonResponse['clientSecret']);
 
       if (paymentIntent.status == PaymentIntentsStatus.Succeeded) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(lang['paymentSuccess'] ?? '✅ تم الدفع بنجاح!')),
-        );
-        Navigator.pop(context, true);
-      } else {
-        throw Exception(
-            '${lang['paymentFailed'] ?? 'فشل في إتمام عملية الدفع'}: ${paymentIntent.status}');
+        Navigator.pop(context, true); // فقط أرجع true ولا تظهر SnackBar هنا
       }
     } catch (e) {
       if (mounted) {

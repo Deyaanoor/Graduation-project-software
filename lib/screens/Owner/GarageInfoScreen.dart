@@ -59,12 +59,31 @@ class GarageInfoScreen extends ConsumerWidget {
                     // ✅ زر تجديد الاشتراك
                     Center(
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).push(
+                        onPressed: () async {
+                          final result = await Navigator.push(
+                            context,
                             MaterialPageRoute(
-                              builder: (_) => const RenewSubscriptionScreen(),
-                            ),
+                                builder: (_) => RenewSubscriptionScreen()),
                           );
+
+                          if (result == true) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(lang['subscriptionActivated'] ??
+                                    'تم تفعيل الاشتراك بنجاح!'),
+                                behavior: SnackBarBehavior.floating,
+                                margin: const EdgeInsets.only(
+                                  bottom:
+                                      150, // عدّل الرقم لرفع السناك بار أكثر للأعلى
+                                  left: 20,
+                                  right: 20,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                            );
+                          }
                         },
                         icon: const Icon(Icons.refresh),
                         label:

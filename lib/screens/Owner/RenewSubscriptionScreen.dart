@@ -23,7 +23,7 @@ class _RenewSubscriptionScreenState
     final lang = ref.watch(languageProvider);
     final plansAsync = ref.watch(allPlansProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final userId = '6833042195da18ec2d2b6115';
+    final userId = '6833042195da18ec22db6115';
 
     return Scaffold(
       appBar: AppBar(
@@ -111,42 +111,34 @@ class _RenewSubscriptionScreenState
                 ),
                 const SizedBox(height: 16),
                 CustomButton(
-                  text: lang['confirmSubscription'] ?? "تأكيد الاشتراك",
-                  backgroundColor: Colors.orange.shade600,
-                  onPressed: () async {
-                    if (selectedPlan != null && userId.isNotEmpty) {
-                      final paymentResult = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => PaymentScreen(
-                            selectedSubscription: selectedPlan!['name'],
-                            currency: 'USD',
+                    text: lang['confirmSubscription'] ?? "تأكيد الاشتراك",
+                    backgroundColor: Colors.orange.shade600,
+                    onPressed: () async {
+                      if (selectedPlan != null && userId.isNotEmpty) {
+                        final paymentResult = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PaymentScreen(
+                              selectedSubscription: selectedPlan!['name'],
+                              currency: 'USD',
+                            ),
                           ),
-                        ),
-                      );
-
-                      if (!mounted) return;
-
-                      print('paymentResult: $paymentResult');
-
-                      if (paymentResult == true) {
-                        await handleApply(userId, selectedPlan!['name'], lang);
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content:
-                                  Text(lang['paymentFailed'] ?? 'فشل الدفع!')),
                         );
+
+                        if (!mounted) return;
+
+                        if (paymentResult == true) {
+                          await handleApply(
+                              userId, selectedPlan!['name'], lang);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text(
+                                    lang['paymentFailed'] ?? 'فشل الدفع!')),
+                          );
+                        }
                       }
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text(lang['selectPlanFirst'] ??
-                                'يرجى اختيار باقة أولاً')),
-                      );
-                    }
-                  },
-                ),
+                    }),
               ],
             ),
           );
@@ -165,24 +157,24 @@ class _RenewSubscriptionScreenState
   Future<void> handleApply(
       String userId, String subscriptionType, Map<String, String> lang) async {
     try {
-      await ref.read(activateGarageSubscriptionProvider(
-        ActivateSubscriptionParams(
-            userId: userId, subscriptionType: subscriptionType),
-      ).future);
+      await ref.read(
+        activateGarageSubscriptionProvider(
+          ActivateSubscriptionParams(
+            userId: userId,
+            subscriptionType: subscriptionType,
+          ),
+        ).future,
+      );
 
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(
-                lang['subscriptionActivated'] ?? 'تم تفعيل الاشتراك بنجاح')),
-      );
+      Navigator.pop(context, true); // فقط أرجع true ولا تظهر SnackBar هنا
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(
-                '${lang['subscriptionActivationFailed'] ?? 'فشل في تفعيل الاشتراك'}: $e')),
+          content: Text(
+              '${lang['subscriptionActivationFailed'] ?? 'فشل في تفعيل الاشتراك'}: $e'),
+        ),
       );
     }
   }

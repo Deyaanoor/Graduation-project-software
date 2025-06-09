@@ -332,8 +332,10 @@ class LoginPage extends ConsumerWidget {
         if (role == null || role == "") {
           Navigator.pushNamed(context, '/Apply_Request');
         } else {
+          print("✅ Login successful: $role, $status");
           if (status != "active" && role == "owner") {
-            Navigator.pushNamed(context, '/garage_info');
+            // Navigator.pushNamed(context, '/garage_info');
+            Navigator.pushNamed(context, '/home');
           } else if (status != "active" && role == "employee") {
             CustomSnackBar.showErrorSnackBar(
               context,
