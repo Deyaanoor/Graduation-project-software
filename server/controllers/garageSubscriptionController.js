@@ -84,7 +84,7 @@ const activateGarageSubscription = async (req, res) => {
           status,
         },
         $inc: {
-          cost: planPrice, // ← هذا يضيف قيمة الخطة إلى القيمة الحالية
+          cost: planPrice, 
         },
       }
     );

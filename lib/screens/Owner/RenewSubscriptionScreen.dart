@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/activateGarageSubscriptionProvider.dart';
+import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/providers/plan_provider.dart';
 import 'package:flutter_provider/providers/userGarage_provider.dart';
@@ -24,7 +25,7 @@ class _RenewSubscriptionScreenState
     final lang = ref.watch(languageProvider);
     final plansAsync = ref.watch(allPlansProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final userId = '6833042195da18ec22db6115';
+    final userId = ref.watch(userIdProvider).value;
 
     return Scaffold(
       appBar: AppBar(
@@ -115,7 +116,9 @@ class _RenewSubscriptionScreenState
                     text: lang['confirmSubscription'] ?? "تأكيد الاشتراك",
                     backgroundColor: Colors.orange.shade600,
                     onPressed: () async {
-                      if (selectedPlan != null && userId.isNotEmpty) {
+                      if (selectedPlan != null &&
+                          userId != null &&
+                          userId.isNotEmpty) {
                         final paymentResult = await Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -168,9 +171,8 @@ class _RenewSubscriptionScreenState
       );
       ref.invalidate(userGarageProvider(userId));
       if (!mounted) return;
-      ref.invalidate(userGarageProvider(userId)); // حدث البيانات أولاً
-      Navigator.pop(context, true); // ثم أغلق الصفحة وأرجع النتيجة
-// فقط أرجع true ولا تظهر SnackBar هنا
+      ref.invalidate(userGarageProvider(userId));
+      Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
