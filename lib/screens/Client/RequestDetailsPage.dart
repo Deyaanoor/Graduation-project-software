@@ -40,11 +40,17 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
   Widget build(BuildContext context) {
     final request = ref.watch(selectedRequestProvider);
     final lang = ref.watch(languageProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     if (request == null) {
       return Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: Center(
-            child: Text(lang['noRequestDetails'] ?? 'لا يوجد تفاصيل للطلب')),
+            child: Text(
+          lang['noRequestDetails'] ?? 'لا يوجد تفاصيل للطلب',
+          style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+        )),
       );
     }
 
@@ -56,32 +62,47 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
     return garageAsync.when(
       data: (garageData) {
         return Scaffold(
-          body: _buildBody(context, garageData, request, ref, lang),
+          backgroundColor: theme.scaffoldBackgroundColor,
+          body: _buildBody(
+              context, garageData, request, ref, lang, theme, isDark),
         );
       },
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () => Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          body: const Center(child: CircularProgressIndicator())),
       error: (err, _) => Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
           body: Center(
               child: Text(
-                  lang['failedToLoadGarage'] ?? 'فشل تحميل بيانات الكراج'))),
+            lang['failedToLoadGarage'] ?? 'فشل تحميل بيانات الكراج',
+            style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+          ))),
     );
   }
 
-  Widget _buildBody(BuildContext context, Map<String, dynamic> garageData,
-      Map<String, dynamic> request, WidgetRef ref, Map<String, dynamic> lang) {
+  Widget _buildBody(
+      BuildContext context,
+      Map<String, dynamic> garageData,
+      Map<String, dynamic> request,
+      WidgetRef ref,
+      Map<String, dynamic> lang,
+      ThemeData theme,
+      bool isDark) {
     final isDesktop = ResponsiveHelper.isDesktop(context);
 
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.blue.shade50, Colors.white]),
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: isDark
+              ? [Colors.grey[900]!, Colors.grey[850]!]
+              : [Colors.blue.shade50, Colors.white],
+        ),
       ),
       child: isDesktop
-          ? _buildDesktopLayout(request, garageData, ref, lang)
-          : _buildMobileLayout(request, garageData, ref, lang),
+          ? _buildDesktopLayout(request, garageData, ref, lang, theme, isDark)
+          : _buildMobileLayout(request, garageData, ref, lang, theme, isDark),
     );
   }
 
@@ -89,7 +110,9 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
       Map<String, dynamic> request,
       Map<String, dynamic> garageData,
       WidgetRef ref,
-      Map<String, dynamic> lang) {
+      Map<String, dynamic> lang,
+      ThemeData theme,
+      bool isDark) {
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Row(
@@ -103,7 +126,9 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
           ),
           const SizedBox(width: 20),
           Expanded(
-              flex: 1, child: _buildMessage(request['_id'], true, ref, lang)),
+              flex: 1,
+              child: _buildMessage(
+                  request['_id'], true, ref, lang, theme, isDark)),
         ],
       ),
     );
@@ -113,7 +138,9 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
       Map<String, dynamic> request,
       Map<String, dynamic> garageData,
       WidgetRef ref,
-      Map<String, dynamic> lang) {
+      Map<String, dynamic> lang,
+      ThemeData theme,
+      bool isDark) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -134,6 +161,7 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
               : (lang['showMessages'] ?? 'عرض الرسائل')),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.orange,
+            foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
@@ -141,7 +169,8 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
           ),
         ),
         const SizedBox(height: 12),
-        if (_showMessages) _buildMessage(request['_id'], false, ref, lang),
+        if (_showMessages)
+          _buildMessage(request['_id'], false, ref, lang, theme, isDark),
       ],
     );
   }
@@ -207,7 +236,7 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
   }
 
   Widget _buildMessage(String requestId, bool isDesktop, WidgetRef ref,
-      Map<String, dynamic> lang) {
+      Map<String, dynamic> lang, ThemeData theme, bool isDark) {
     final userId = ref.watch(userIdProvider).value;
     final userInfo =
         userId != null ? ref.watch(getUserInfoProvider(userId)).value : null;
@@ -220,7 +249,10 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
 
     if (messagesAsync.hasError) {
       return Center(
-          child: Text(lang['errorFetchingMessages'] ?? 'خطأ في جلب الرسائل'));
+          child: Text(
+        lang['errorFetchingMessages'] ?? 'خطأ في جلب الرسائل',
+        style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+      ));
     }
 
     final messages = messagesAsync.value ?? [];
@@ -230,6 +262,7 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
       child: Material(
         elevation: 5,
         borderRadius: BorderRadius.circular(15),
+        color: theme.cardColor,
         child: Column(
           children: [
             SizedBox(
@@ -273,14 +306,22 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
                                   color: isUser
-                                      ? const Color.fromARGB(255, 240, 160, 41)
-                                      : const Color.fromARGB(255, 245, 217, 63),
+                                      ? (isDark
+                                          ? Colors.orange.shade900
+                                          : const Color.fromARGB(
+                                              255, 240, 160, 41))
+                                      : (isDark
+                                          ? Colors.orange.shade700
+                                          : const Color.fromARGB(
+                                              255, 245, 217, 63)),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
                                   msg['message'] ?? '',
-                                  style:
-                                      TextStyle(fontSize: isDesktop ? 16 : 14),
+                                  style: TextStyle(
+                                    fontSize: isDesktop ? 16 : 14,
+                                    color: isDark ? Colors.white : Colors.black,
+                                  ),
                                   textDirection: TextDirection.rtl,
                                 ),
                               ),
@@ -317,7 +358,9 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 10),
+                        fillColor: theme.inputDecorationTheme.fillColor,
                       ),
+                      style: TextStyle(color: theme.textTheme.bodyLarge?.color),
                       textDirection: TextDirection.rtl,
                     ),
                   ),

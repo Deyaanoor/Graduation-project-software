@@ -18,7 +18,6 @@ class _RecordOptionsSectionState extends ConsumerState<RecordOptionsSection> {
   bool _showSearch = false;
 
   final TextEditingController _searchController = TextEditingController();
-  final Color _primaryColor = Colors.orange;
   String _searchType = 'owner';
   String _searchQuery = '';
 
@@ -83,18 +82,25 @@ class _RecordOptionsSectionState extends ConsumerState<RecordOptionsSection> {
     });
   }
 
-  Widget _buildWebMasterpiece(
-      Map<String, dynamic> lang, List<Map<String, dynamic>> _searchTypes) {
+  Widget _buildWebMasterpiece(Map<String, dynamic> lang,
+      List<Map<String, dynamic>> _searchTypes, ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+    final Color mainColor = theme.colorScheme.secondary;
+    final Color bgColor = theme.scaffoldBackgroundColor;
+    final Color cardColor = theme.cardColor;
+    final Color textColor = theme.textTheme.bodyLarge?.color ?? Colors.black87;
+
     return Scaffold(
+      backgroundColor: bgColor,
       body: Container(
         decoration: BoxDecoration(
           gradient: RadialGradient(
             center: Alignment.topLeft,
             radius: 1.5,
             colors: [
-              _primaryColor.withOpacity(0.2),
-              _primaryColor.withOpacity(0.1),
-              Colors.white
+              mainColor.withOpacity(0.18),
+              mainColor.withOpacity(0.08),
+              bgColor
             ],
           ),
         ),
@@ -106,7 +112,9 @@ class _RecordOptionsSectionState extends ConsumerState<RecordOptionsSection> {
                   child: _TopSearchSection(
                     controller: _searchController,
                     onChanged: _handleSearch,
-                    color: _primaryColor,
+                    color: mainColor,
+                    cardColor: cardColor,
+                    textColor: textColor,
                     searchType: _searchType,
                     searchTypes: _searchTypes,
                     onSearchTypeChanged: (value) =>
@@ -121,19 +129,29 @@ class _RecordOptionsSectionState extends ConsumerState<RecordOptionsSection> {
               child: _SearchResultsPanel(
                 results: filteredReports,
                 onItemSelected: _handleResultSelection,
-                color: _primaryColor,
+                color: mainColor,
+                cardColor: cardColor,
+                textColor: textColor,
               ),
             ),
           ],
         ),
       ),
-      floatingActionButton: buildAddReportButton(lang),
+      floatingActionButton:
+          buildAddReportButton(lang, mainColor, textColor, theme),
     );
   }
 
-  Widget _buildMobileMasterpiece(
-      Map<String, dynamic> lang, List<Map<String, dynamic>> _searchTypes) {
+  Widget _buildMobileMasterpiece(Map<String, dynamic> lang,
+      List<Map<String, dynamic>> _searchTypes, ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+    final Color mainColor = theme.colorScheme.secondary;
+    final Color bgColor = theme.scaffoldBackgroundColor;
+    final Color cardColor = theme.cardColor;
+    final Color textColor = theme.textTheme.bodyLarge?.color ?? Colors.black87;
+
     return Scaffold(
+      backgroundColor: bgColor,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -141,9 +159,9 @@ class _RecordOptionsSectionState extends ConsumerState<RecordOptionsSection> {
             end: Alignment.bottomRight,
             stops: const [0.1, 0.5, 0.9],
             colors: [
-              Colors.orange.shade200,
-              Colors.orange.shade50,
-              Colors.white
+              mainColor.withOpacity(0.18),
+              mainColor.withOpacity(0.08),
+              bgColor
             ],
           ),
         ),
@@ -160,7 +178,9 @@ class _RecordOptionsSectionState extends ConsumerState<RecordOptionsSection> {
                 results: filteredReports,
                 onItemSelected: _handleResultSelection,
                 onClose: () => _toggleSearch(false),
-                color: _primaryColor,
+                color: mainColor,
+                cardColor: cardColor,
+                textColor: textColor,
                 searchType: _searchType,
                 onSearchTypeChanged: (value) =>
                     setState(() => _searchType = value!),
@@ -170,12 +190,16 @@ class _RecordOptionsSectionState extends ConsumerState<RecordOptionsSection> {
           ],
         ),
       ),
-      floatingActionButton: buildAddReportButton(lang),
+      floatingActionButton:
+          buildAddReportButton(lang, mainColor, textColor, theme),
     );
   }
 
   Widget buildAddReportButton(
     Map<String, dynamic> lang,
+    Color mainColor,
+    Color textColor,
+    ThemeData theme,
   ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 40),
@@ -186,10 +210,13 @@ class _RecordOptionsSectionState extends ConsumerState<RecordOptionsSection> {
         },
         label: Text(
           lang['addReport'] ?? 'إضافة تقرير',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          style: theme.textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ),
         ),
-        icon: Icon(Icons.add),
-        backgroundColor: Colors.orange.shade600,
+        icon: Icon(Icons.add, color: textColor),
+        backgroundColor: mainColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -201,14 +228,15 @@ class _RecordOptionsSectionState extends ConsumerState<RecordOptionsSection> {
   @override
   Widget build(BuildContext context) {
     final lang = ref.watch(languageProvider);
+    final theme = Theme.of(context);
     final List<Map<String, dynamic>> _searchTypes = [
       {'value': 'owner', 'label': lang['searchByOwner'] ?? 'بحث بالمالك'},
       {'value': 'plate', 'label': lang['searchByPlate'] ?? 'بحث برقم اللوحة'},
     ];
 
     return ResponsiveHelper.isDesktop(context)
-        ? _buildWebMasterpiece(lang, _searchTypes)
-        : _buildMobileMasterpiece(lang, _searchTypes);
+        ? _buildWebMasterpiece(lang, _searchTypes, theme)
+        : _buildMobileMasterpiece(lang, _searchTypes, theme);
   }
 }
 
@@ -217,16 +245,19 @@ class _TopSearchSection extends ConsumerWidget {
   final TextEditingController controller;
   final Function(String) onChanged;
   final Color color;
+  final Color cardColor;
+  final Color textColor;
   final String searchType;
   final List<Map<String, dynamic>> searchTypes;
   final Function(String?) onSearchTypeChanged;
-
   final VoidCallback onBackPressed;
 
   const _TopSearchSection({
     required this.controller,
     required this.onChanged,
     required this.color,
+    required this.cardColor,
+    required this.textColor,
     required this.searchType,
     required this.searchTypes,
     required this.onSearchTypeChanged,
@@ -244,7 +275,7 @@ class _TopSearchSection extends ConsumerWidget {
         child: Container(
           width: 600,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardColor,
             borderRadius: BorderRadius.circular(30),
             boxShadow: [
               BoxShadow(
@@ -287,9 +318,10 @@ class _TopSearchSection extends ConsumerWidget {
                 child: TextField(
                   controller: controller,
                   onChanged: onChanged,
-                  style: TextStyle(color: color, fontSize: 18),
+                  style: TextStyle(color: textColor, fontSize: 18),
                   decoration: InputDecoration(
                     hintText: lang['search'] ?? 'بحث...',
+                    hintStyle: TextStyle(color: textColor.withOpacity(0.6)),
                     prefixIcon: Icon(Icons.search, color: color),
                     suffixIcon: IconButton(
                       icon: Icon(Icons.close, color: color),
@@ -315,6 +347,8 @@ class _MobileSearchSection extends ConsumerStatefulWidget {
   final Function(Map<String, dynamic>) onItemSelected;
   final VoidCallback onClose;
   final Color color;
+  final Color cardColor;
+  final Color textColor;
   final String searchType;
   final Function(String?) onSearchTypeChanged;
   final List<Map<String, dynamic>> searchTypes;
@@ -325,6 +359,8 @@ class _MobileSearchSection extends ConsumerStatefulWidget {
     required this.onItemSelected,
     required this.onClose,
     required this.color,
+    required this.cardColor,
+    required this.textColor,
     required this.searchType,
     required this.onSearchTypeChanged,
     required this.searchTypes,
@@ -339,6 +375,8 @@ class _MobileSearchSectionState extends ConsumerState<_MobileSearchSection> {
   @override
   Widget build(BuildContext context) {
     final color = widget.color;
+    final cardColor = widget.cardColor;
+    final textColor = widget.textColor;
     final controller = widget.controller;
     final results = widget.results;
     final onItemSelected = widget.onItemSelected;
@@ -351,7 +389,7 @@ class _MobileSearchSectionState extends ConsumerState<_MobileSearchSection> {
     return Positioned.fill(
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardColor,
           boxShadow: [
             BoxShadow(
               color: color.withOpacity(0.2),
@@ -378,11 +416,13 @@ class _MobileSearchSectionState extends ConsumerState<_MobileSearchSection> {
                         Expanded(
                           child: TextField(
                             controller: controller,
-                            style: TextStyle(color: color),
+                            style: TextStyle(color: textColor),
                             decoration: InputDecoration(
                               filled: true,
                               fillColor: color.withOpacity(0.1),
                               hintText: lang['search'] ?? 'بحث...',
+                              hintStyle:
+                                  TextStyle(color: textColor.withOpacity(0.6)),
                               prefixIcon: Icon(Icons.search, color: color),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(15),
@@ -417,7 +457,7 @@ class _MobileSearchSectionState extends ConsumerState<_MobileSearchSection> {
                       ),
                       icon: Icon(Icons.arrow_drop_down, color: color),
                       borderRadius: BorderRadius.circular(10),
-                      dropdownColor: Colors.white,
+                      dropdownColor: cardColor,
                     ),
                   ],
                 ),
@@ -431,7 +471,7 @@ class _MobileSearchSectionState extends ConsumerState<_MobileSearchSection> {
                   leading: Icon(Icons.description, color: color),
                   title: Text(
                     '${results[index]['owner']} - ${results[index]['plateNumber']}',
-                    style: TextStyle(color: Colors.grey[800], fontSize: 16),
+                    style: TextStyle(color: textColor, fontSize: 16),
                   ),
                   trailing: Icon(Icons.chevron_left, color: color),
                   onTap: () => onItemSelected(results[index]),
@@ -468,7 +508,7 @@ class _ActionButton extends StatelessWidget {
       height: isWeb ? 200 : 140,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).cardColor,
           foregroundColor: color,
           elevation: 8,
           shape: RoundedRectangleBorder(
@@ -488,6 +528,7 @@ class _ActionButton extends StatelessWidget {
               style: TextStyle(
                 fontSize: isWeb ? 22 : 18,
                 fontWeight: FontWeight.bold,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
           ],
@@ -501,11 +542,15 @@ class _SearchResultsPanel extends StatelessWidget {
   final List<Map<String, dynamic>> results;
   final Function(Map<String, dynamic>) onItemSelected;
   final Color color;
+  final Color cardColor;
+  final Color textColor;
 
   const _SearchResultsPanel({
     required this.results,
     required this.onItemSelected,
     required this.color,
+    required this.cardColor,
+    required this.textColor,
   });
 
   @override
@@ -514,7 +559,7 @@ class _SearchResultsPanel extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 50),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
@@ -535,7 +580,7 @@ class _SearchResultsPanel extends StatelessWidget {
               leading: Icon(Icons.description, color: color),
               title: Text(
                 '${results[index]['owner']} - ${results[index]['plateNumber']}',
-                style: TextStyle(color: Colors.grey[800], fontSize: 16),
+                style: TextStyle(color: textColor, fontSize: 16),
               ),
               trailing: Icon(Icons.arrow_forward_ios, color: color, size: 18),
               onTap: () => onItemSelected(results[index]),

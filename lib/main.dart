@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_provider/Themes/theme.dart';
 import 'package:flutter_provider/screens/Admin/Garage/apply_Request.dart';
 import 'package:flutter_provider/screens/Admin/Garage/garage_page.dart';
 import 'package:flutter_provider/screens/Admin/Garage/plan_Page.dart';
@@ -145,8 +146,8 @@ class MyApp extends ConsumerWidget {
 
     return MaterialApp(
       title: lang['app_title'] ?? 'App',
-      theme: lightTheme, // استخدم الثيم البرتقالي المخصص
-      darkTheme: darkTheme, // استخدم الثيم الداكن المخصص
+      theme: lightTheme,
+      darkTheme: darkTheme,
       themeMode: themeMode,
       debugShowCheckedModeBanner: false,
       locale: locale,
