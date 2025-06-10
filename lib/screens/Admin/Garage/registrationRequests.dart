@@ -6,6 +6,7 @@ import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/garage_provider.dart';
 import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/providers/requestRegister.dart';
+import 'package:flutter_provider/screens/map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -482,10 +483,18 @@ class _RegistrationRequestsState extends ConsumerState<RegistrationRequests> {
                         icon: Icons.phone_android,
                       ),
                       _infoTile(
-                        label: lang['location'] ?? 'الموقع',
-                        value: request['garageLocation'],
-                        icon: Icons.location_on,
-                      ),
+                          label: lang['location'] ?? 'الموقع',
+                          value: request['garageLocation'],
+                          icon: Icons.location_on,
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => FreeMapPickerPage(
+                                      initialLocation:
+                                          request['garageLocation'])),
+                            );
+                          }),
                       _infoTile(
                         label: lang['status'] ?? 'الحالة',
                         value: request['status'],
@@ -535,44 +544,48 @@ class _RegistrationRequestsState extends ConsumerState<RegistrationRequests> {
     required String label,
     required String? value,
     required IconData icon,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.orange[50],
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.orange.shade200),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: Colors.deepOrange),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: Colors.black54,
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.orange[50],
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.orange.shade200),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: Colors.deepOrange),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Colors.black54,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value ?? 'غير متوفر',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: Colors.black87,
+                  const SizedBox(height: 4),
+                  Text(
+                    value ?? 'غير متوفر',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      color: Colors.black87,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

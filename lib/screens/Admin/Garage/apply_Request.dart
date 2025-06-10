@@ -477,6 +477,8 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
     };
     try {
       ref.read(applyGarageProvider(garageData).future);
+      ref.invalidate(getAllRequestsProvider);
+
       CustomSnackBar.showSuccessSnackBar(
         context,
         lang['applicationSuccess'] ?? "Application submitted successfully.",

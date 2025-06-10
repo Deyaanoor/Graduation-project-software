@@ -65,7 +65,9 @@ class Home extends ConsumerWidget {
         }
 
         final userInfoAsync = ref.watch(getUserInfoProvider(userId));
+        print("UseerId: $userId");
 
+        print("userInfoAsync: $userInfoAsync");
         return userInfoAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (err, stack) {

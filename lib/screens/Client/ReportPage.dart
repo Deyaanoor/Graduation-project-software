@@ -27,6 +27,7 @@ class _ClientReportsPageState extends ConsumerState<ClientReportsPage> {
     Future.microtask(() async {
       final userId = ref.read(userIdProvider).value;
       final garageId = ref.read(garageIdProvider);
+      print("userId: $userId, garageId: $garageId");
       if (userId != null && garageId != null) {
         try {
           final userInfo = await ref.read(getUserInfoProvider(userId).future);

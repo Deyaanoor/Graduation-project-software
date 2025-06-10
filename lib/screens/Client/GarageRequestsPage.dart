@@ -74,7 +74,7 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
   @override
   Widget build(BuildContext context) {
     final userId = ref.watch(userIdProvider).value;
-    final garageId = ref.watch(garageIdProvider);
+    final garageId = ref.watch(getGarageIdProvider(userId!)).value;
     final userInfo =
         userId != null ? ref.watch(getUserInfoProvider(userId)).value : null;
 
@@ -84,22 +84,14 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
     final AsyncValue<List<Map<String, dynamic>>> requestsAsync;
 
     if (userRole == 'owner') {
-      requestsAsync = ref.watch(getRequestsProvider(userId!));
+      requestsAsync = ref.watch(getRequestsProvider(userId));
     } else {
       requestsAsync = ref.watch(
-        requestsByUserAndGarageProvider(
-          (userId: userId!, garageId: garageId!),
-        ),
+        requestsByUserAndGarageProvider((userId: userId, garageId: garageId!)),
       );
     }
 
     return Scaffold(
-      appBar: (ResponsiveHelper.isMobile(context))
-          ? AppBar(
-              title: Text(lang['garageRequests'] ?? 'طلبات الورشة'),
-              backgroundColor: Colors.orange,
-            )
-          : null,
       body: requestsAsync.when(
         data: (requests) {
           if (requests.isEmpty) {
@@ -172,8 +164,13 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
                                 vertical: 10, horizontal: 8),
                             color: bgColor,
                             child: InkWell(
-                              onTap: () => _navigateToDetails(
-                                  request, userRole, garageId!),
+                              onTap: () => {
+                                print("request: $request"),
+                                print("userRole: $userRole"),
+                                print("garageId: $garageId"),
+                                // Navigate to details page
+                                _navigateToDetails(request, userRole, garageId!)
+                              },
                               child: Row(
                                 children: [
                                   Expanded(
@@ -529,6 +526,7 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
 
   void _navigateToDetails(
       Map<String, dynamic> request, String userRole, String garageId) {
+    print("inside navigateToDetails");
     ref.read(selectedRequestProvider.notifier).state = {
       ...request,
       'garageId': garageId,

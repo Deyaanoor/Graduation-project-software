@@ -76,7 +76,7 @@ const addClient = async (req, res) => {
 };
 
 const getAllClients = async (req, res) => {
-  const { owner_id } = req.query;
+  const { owner_id } = req.params;
 
   try {
     if (!ObjectId.isValid(owner_id)) {
@@ -172,7 +172,7 @@ const getClientGarages = async (req, res) => {
     const db = await connectDB();
     const clientsCollection = db.collection("clients");
     const garagesCollection = db.collection("garages");
-
+    const ownersCollection = db.collection("owners");
     const client = await clientsCollection.findOne({
       _id: new ObjectId(client_id),
     });
@@ -188,14 +188,17 @@ const getClientGarages = async (req, res) => {
     const garages = await garagesCollection
       .find({ _id: { $in: garageIds } })
       .toArray();
+    const owner = await ownersCollection.findOne({
+      _id: garages[0].owner_id,
+    });
 
     res.status(200).json(
       garages.map((garage) => ({
         garageId: garage._id,
         name: garage.name,
         location: garage.location,
-        ownerName: garage.ownerName,
-        ownerEmail: garage.ownerEmail,
+        ownerName: owner.name,
+        ownerEmail: owner.email,
       }))
     );
   } catch (error) {
@@ -203,7 +206,6 @@ const getClientGarages = async (req, res) => {
     res.status(500).json({ message: "Error fetching garages" });
   }
 };
-
 
 module.exports = {
   addClient,

@@ -62,9 +62,6 @@ class _ClientListScreenState extends ConsumerState<ClientListScreen> {
     final lang = ref.watch(languageProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(lang['clients'] ?? 'Clients'),
-      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

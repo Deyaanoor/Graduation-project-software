@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
+import 'package:flutter_provider/providers/employeeProvider.dart';
 import 'package:flutter_provider/providers/home_provider.dart';
 import 'package:flutter_provider/providers/notifications_provider.dart';
 import 'package:flutter_provider/providers/overviewProvider.dart';
@@ -653,6 +654,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
           );
           _resetForm();
         }
+        ref.invalidate(getEmployeeGarageInfoProvider(userId));
         ref.invalidate(modelsSummaryProvider(userId));
         ref.invalidate(reportsProviderOverview(userId));
       } catch (e) {

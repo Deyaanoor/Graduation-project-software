@@ -156,3 +156,18 @@ final garageInfoByUserIdProvider = FutureProvider.family
 });
 
 final garageIdProvider = StateProvider<String?>((ref) => null);
+
+final getGarageIdProvider =
+    FutureProvider.family<String, String>((ref, userId) async {
+  final response = await http.get(
+    Uri.parse('$baseUrl/garage/$userId'),
+    headers: {'Content-Type': 'application/json'},
+  );
+
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    return data['garage_id'] as String;
+  } else {
+    throw Exception('Failed to fetch garage ID');
+  }
+});

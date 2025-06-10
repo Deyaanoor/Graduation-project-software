@@ -10,6 +10,7 @@ const {
   getGarageInfo,
   updateGarage,
   updateGarageStatus,
+  getUserGarageData,
 } = require("../controllers/garageController");
 router.post("/add", addGarage);
 router.get("/locations", getGarageLocations);
@@ -19,5 +20,5 @@ router.delete("/:id", deleteGarage);
 router.put("/:id", updateGarage);
 router.put("/:id/status", updateGarageStatus);
 router.get("/garage/info/:userId", getGarageInfo);
-
+router.get("/garage/:userId", getUserGarageData);
 module.exports = router;
