@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_provider/providers/admin_StaticProvider.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/notifications_provider.dart';
 import 'package:flutter_provider/providers/requestRegister.dart';
@@ -488,6 +489,8 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
             senderName: userName,
             type: 'request',
           );
+      ref.invalidate(staticAdminProvider);
+
       ref.invalidate(getAllRequestsProvider);
 
       CustomSnackBar.showSuccessSnackBar(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_provider/providers/admin_StaticProvider.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/contactUs.dart';
 import 'package:flutter_provider/providers/language_provider.dart';
@@ -41,7 +42,8 @@ class _ContactUsPageState extends ConsumerState<ContactUsPage> {
         setState(() {
           _sent = true;
         });
-        await Future.delayed(const Duration(seconds: 2));
+        ref.invalidate(staticAdminProvider);
+
         setState(() {
           _sent = false;
         });

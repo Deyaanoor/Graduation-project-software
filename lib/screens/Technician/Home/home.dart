@@ -414,7 +414,7 @@ class Home extends ConsumerWidget {
           if (userRole.toLowerCase() == 'admin')
             _buildNavButton(
               context: context,
-              icon: Icons.dashboard,
+              icon: Icons.analytics,
               label: lang['Statics'] ?? 'Statics',
               isSelected: selectedIndex == 3,
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 3,
@@ -472,7 +472,7 @@ class Home extends ConsumerWidget {
           if (userRole.toLowerCase() == 'client')
             _buildNavButton(
               context: context,
-              icon: Icons.garage,
+              icon: Icons.emergency,
               label: lang['EmergencyRequest'] ?? 'EmergencyRequest',
               isSelected: selectedIndex == 6,
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 6,
@@ -498,14 +498,16 @@ class Home extends ConsumerWidget {
           if (isExpanded)
             Padding(
               padding: const EdgeInsets.only(bottom: 15),
-              child: Text(
-                'More Features'.toUpperCase(),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[500],
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              child: (userRole.toLowerCase() != 'admin')
+                  ? Text(
+                      'More Features'.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[500],
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : SizedBox(),
             ),
           if (userRole.toLowerCase() == 'owner' ||
               userRole.toLowerCase() == 'employee')
@@ -520,8 +522,8 @@ class Home extends ConsumerWidget {
           if (userRole.toLowerCase() == 'employee')
             _buildNavButton(
               context: context,
-              icon: Icons.calendar_today,
-              label: lang['report'] ?? 'Reports',
+              icon: Icons.analytics,
+              label: lang['Statics'] ?? 'Statics',
               isSelected: selectedIndex == 4,
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 4,
               isExpanded: isExpanded,
@@ -538,7 +540,7 @@ class Home extends ConsumerWidget {
           if (userRole.toLowerCase() == 'owner')
             _buildNavButton(
               context: context,
-              icon: Icons.people,
+              icon: Icons.people_alt,
               label: lang['Clients'] ?? 'Clients',
               isSelected: selectedIndex == 6,
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 6,
@@ -547,7 +549,7 @@ class Home extends ConsumerWidget {
           if (userRole.toLowerCase() == 'owner')
             _buildNavButton(
               context: context,
-              icon: Icons.request_quote_sharp,
+              icon: Icons.markunread_mailbox,
               label: lang['Request'] ?? 'Request',
               isSelected: selectedIndex == 7,
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 7,
@@ -702,7 +704,7 @@ class Home extends ConsumerWidget {
                 context,
                 ref,
                 lang['request'] ?? 'Request',
-                Icons.request_quote_sharp,
+                Icons.markunread_mailbox,
                 7,
               ),
             if (userInfo['role'].toLowerCase() == 'owner')

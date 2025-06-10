@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_provider/providers/admin_StaticProvider.dart';
 import 'package:flutter_provider/providers/contactUs.dart';
 import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -453,8 +454,10 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                onPressed: () =>
-                    {_deleteMessage(context, message['_id'], lang)},
+                onPressed: () => {
+                  _deleteMessage(context, message['_id'], lang),
+                  ref.invalidate(staticAdminProvider),
+                },
                 icon: const Icon(Icons.delete),
                 label: Text(lang['delete'] ?? 'حذف'),
               ),
