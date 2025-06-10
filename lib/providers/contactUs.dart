@@ -89,3 +89,15 @@ final getcontactMessagesByIdProvider = FutureProvider.autoDispose
     throw Exception('فشل في جلب الرسائل');
   }
 });
+
+final deletecontactMessagesByIdProvider =
+    Provider.family<Future<void>, String>((ref, userId) async {
+  final response = await http.delete(
+    Uri.parse('$baseUrl/contactMessages/delete/$userId'),
+  );
+
+  if (response.statusCode != 200) {
+    final body = json.decode(response.body);
+    throw Exception(body['message'] ?? 'فشل في حذف الرسائل');
+  }
+});

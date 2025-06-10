@@ -429,18 +429,36 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
         ),
         actions: [
           Center(
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amber,
-                foregroundColor: Colors.black,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            child: Row(children: [
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.amber,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close),
+                label: Text(lang['close'] ?? 'إغلاق'),
               ),
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.close),
-              label: Text(lang['close'] ?? 'إغلاق'),
-            ),
+              SizedBox(
+                width: 20,
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.amber,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () =>
+                    {_deleteMessage(context, message['_id'], lang)},
+                icon: const Icon(Icons.delete),
+                label: Text(lang['delete'] ?? 'حذف'),
+              ),
+            ]),
           ),
         ],
       ),
@@ -484,94 +502,43 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
     }
   }
 
-  void _replyToMessage(BuildContext context, Map<String, dynamic> message,
-      Map<String, String> lang) {
-    final replyController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-            '${lang['replyTo'] ?? 'الرد على مشكلة'}: ${message['type'] ?? 'غير محدد'}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-                '${lang['problemText'] ?? 'نص المشكلة'}: ${message['message']}'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: replyController,
-              decoration: InputDecoration(
-                hintText: lang['writeReplyHere'] ?? 'اكتب ردك هنا...',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 5,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(lang['cancel'] ?? 'إلغاء'),
-          ),
-          TextButton(
-            onPressed: () {
-              // يمكنك إضافة منطق إرسال الرد هنا
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: Text(lang['replySent'] ?? 'تم إرسال الرد بنجاح')),
-              );
-            },
-            child: Text(lang['send'] ?? 'إرسال'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _deleteMessage(
-    BuildContext context,
+    BuildContext contextScaffold, // <-- هذا هو context الصفحة الرئيسية
     String messageId,
     Map<String, dynamic> lang,
   ) async {
     final confirmed = await showDialog<bool>(
-      context: context,
+      context: contextScaffold,
       builder: (context) => AlertDialog(
-        title: Text(lang['deleteMessage'] ?? 'حذف الرسالة'),
-        content: Text(lang['deleteMessageConfirm'] ??
-            'هل أنت متأكد من رغبتك في حذف هذه الرسالة؟'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(lang['undo'] ?? 'تراجع'),
+          // ... باقي الكود ...
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(lang['delete'] ?? 'حذف',
-                style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
     );
 
     if (confirmed == true) {
       try {
-        await ref.read(deleteContactMessageProvider)(messageId);
-        // ignore: unused_result
-        ref.refresh(contactMessagesProvider);
+        await ref.read(deletecontactMessagesByIdProvider(messageId));
+        ref.invalidate(contactMessagesProvider);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content:
-                    Text(lang['messageDeleted'] ?? 'تم حذف الرسالة بنجاح')),
-          );
+          Navigator.pop(contextScaffold, true); // أغلق نافذة التفاصيل فقط
+          // بعد الإغلاق مباشرة أظهر SnackBar على context الصفحة الرئيسية
+          Future.delayed(const Duration(milliseconds: 200), () {
+            if (mounted) {
+              ScaffoldMessenger.of(contextScaffold).showSnackBar(
+                SnackBar(
+                  content:
+                      Text(lang['messageDeleted'] ?? 'تم حذف الرسالة بنجاح'),
+                ),
+              );
+            }
+          });
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          ScaffoldMessenger.of(contextScaffold).showSnackBar(
             SnackBar(
-                content: Text(
-                    '${lang['deleteFailed'] ?? 'فشل في حذف الرسالة'}: $e')),
+              content:
+                  Text('${lang['deleteFailed'] ?? 'فشل في حذف الرسالة'}: $e'),
+            ),
           );
         }
       }
