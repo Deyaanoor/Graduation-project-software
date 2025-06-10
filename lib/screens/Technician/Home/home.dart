@@ -199,10 +199,10 @@ class Home extends ConsumerWidget {
           items: <Widget>[
             buildNavItem(Icons.dashboard, lang['dashboard'] ?? 'Dashboard', 0,
                 selectedIndex),
-            buildNavItem(Icons.calendar_today, lang['report'] ?? 'Report', 1,
+            buildNavItem(Icons.calendar_today, lang['reports'] ?? 'Report', 1,
                 selectedIndex),
             buildNavItem(
-                Icons.article, lang['News'] ?? 'News', 4, selectedIndex),
+                Icons.article, lang['news'] ?? 'News', 4, selectedIndex),
           ],
           onTap: (index) {
             if (index == 2) {
@@ -217,7 +217,7 @@ class Home extends ConsumerWidget {
           items: <Widget>[
             buildNavItem(
                 Icons.article, lang['news'] ?? 'News', 0, selectedIndex),
-            buildNavItem(Icons.calendar_today, lang['report'] ?? 'Report', 1,
+            buildNavItem(Icons.calendar_today, lang['reports'] ?? 'Report', 1,
                 selectedIndex),
             buildNavItem(
                 Icons.garage, lang['Garagey'] ?? 'Garagey ', 4, selectedIndex),
@@ -375,7 +375,7 @@ class Home extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 15),
               child: Text(
-                'Main Navigation'.toUpperCase(),
+                (lang['mainNavigation'] ?? 'Main Navigation').toUpperCase(),
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey[500],
@@ -415,7 +415,7 @@ class Home extends ConsumerWidget {
             _buildNavButton(
               context: context,
               icon: Icons.analytics,
-              label: lang['Statics'] ?? 'Statics',
+              label: lang['Statics'] ?? 'statics',
               isSelected: selectedIndex == 3,
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 3,
               isExpanded: isExpanded,
@@ -424,7 +424,7 @@ class Home extends ConsumerWidget {
             _buildNavButton(
               context: context,
               icon: Icons.event_note,
-              label: lang['plan'] ?? 'Plans',
+              label: lang['plan'] ?? 'plans',
               isSelected: selectedIndex == 4,
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 4,
               isExpanded: isExpanded,
@@ -514,7 +514,7 @@ class Home extends ConsumerWidget {
             _buildNavButton(
               context: context,
               icon: Icons.calendar_today,
-              label: lang['report'] ?? 'Reports',
+              label: lang['reports'] ?? 'Reports',
               isSelected: selectedIndex == 1,
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 1,
               isExpanded: isExpanded,
@@ -523,7 +523,7 @@ class Home extends ConsumerWidget {
             _buildNavButton(
               context: context,
               icon: Icons.analytics,
-              label: lang['Statics'] ?? 'Statics',
+              label: lang['statics'] ?? 'Statics',
               isSelected: selectedIndex == 4,
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 4,
               isExpanded: isExpanded,
@@ -532,7 +532,7 @@ class Home extends ConsumerWidget {
             _buildNavButton(
               context: context,
               icon: Icons.people_outline,
-              label: lang['Employee'] ?? 'Employee',
+              label: lang['Employees'] ?? 'Employees',
               isSelected: selectedIndex == 5,
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 5,
               isExpanded: isExpanded,
@@ -550,7 +550,7 @@ class Home extends ConsumerWidget {
             _buildNavButton(
               context: context,
               icon: Icons.markunread_mailbox,
-              label: lang['Request'] ?? 'Request',
+              label: lang['requests'] ?? 'Request',
               isSelected: selectedIndex == 7,
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 7,
               isExpanded: isExpanded,
@@ -559,7 +559,7 @@ class Home extends ConsumerWidget {
             _buildNavButton(
               context: context,
               icon: Icons.event_note,
-              label: lang['Subscription '] ?? 'Subscription ',
+              label: lang['Subscription'] ?? 'Subscription ',
               isSelected: selectedIndex == 9,
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 9,
               isExpanded: isExpanded,
@@ -695,7 +695,7 @@ class Home extends ConsumerWidget {
               buildDrawerItem(
                 context,
                 ref,
-                lang['Client'] ?? 'Client',
+                lang['Clients'] ?? 'Client',
                 Icons.people,
                 6,
               ),
@@ -703,7 +703,7 @@ class Home extends ConsumerWidget {
               buildDrawerItem(
                 context,
                 ref,
-                lang['request'] ?? 'Request',
+                lang['requests'] ?? 'Request',
                 Icons.markunread_mailbox,
                 7,
               ),
@@ -727,7 +727,7 @@ class Home extends ConsumerWidget {
               buildDrawerItem(
                 context,
                 ref,
-                lang['Statics'] ?? 'Statics',
+                lang['statics'] ?? 'Statics',
                 Icons.analytics,
                 3,
               ),
@@ -735,7 +735,7 @@ class Home extends ConsumerWidget {
               buildDrawerItem(
                 context,
                 ref,
-                lang['Garage Page'] ?? 'Garage Page',
+                lang['garages'] ?? 'Garage',
                 Icons.garage,
                 0,
               ),
@@ -759,7 +759,7 @@ class Home extends ConsumerWidget {
               buildDrawerItem(
                 context,
                 ref,
-                lang['plan'] ?? 'Plans',
+                lang['plans'] ?? 'Plans',
                 Icons.event_note,
                 4,
               ),

@@ -458,4 +458,9 @@ final Map<String, String> english = {
   'passwordNumber': 'Password must contain a number',
   'passwordSpecial': 'Password must contain a special character',
   'Garagey': 'Garagey',
+  'Subscription': 'Subscription',
+  'mainNavigation': 'Main Navigation',
+  'Statics': 'Statistics',
+  'plans': 'Plans',
+  'garages': 'Garages',
 };

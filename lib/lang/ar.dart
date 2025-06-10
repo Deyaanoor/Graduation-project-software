@@ -459,4 +459,9 @@ final Map<String, String> arabic = {
   'passwordNumber': 'كلمة المرور يجب أن تحتوي على رقم واحد على الأقل',
   'passwordSpecial': 'كلمة المرور يجب أن تحتوي على رمز خاص واحد على الأقل',
   'Garagey': 'كراجي',
+  'Subscription': 'الاشتراك',
+  'mainNavigation': 'التنقل الرئيسي',
+  'Statics': 'الإحصائيات',
+  'plans': 'الباقات',
+  'garages': 'الكراجات',
 };
