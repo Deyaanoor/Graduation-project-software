@@ -185,6 +185,13 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
       required String value,
       required IconData icon,
       required bool isMobile}) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final labelColor = isDark ? Colors.grey[300] : Colors.grey[800];
+    final valueColor = isDark ? Colors.grey[100] : Colors.grey[900];
+    final dividerColor = isDark ? Colors.grey[800] : Colors.grey.shade200;
+
     return Row(
       children: [
         Icon(icon, color: Colors.orange.shade800, size: isMobile ? 28 : 32),
@@ -195,7 +202,7 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
             children: [
               Text(label,
                   style: TextStyle(
-                    color: const Color.fromARGB(221, 104, 102, 102),
+                    color: labelColor,
                     fontSize: isMobile ? 14 : 16,
                   )),
               SizedBox(height: isMobile ? 4 : 8),
@@ -204,7 +211,7 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
                 style: TextStyle(
                   fontSize: isMobile ? 16 : 18,
                   fontWeight: FontWeight.w600,
-                  color: const Color.fromARGB(221, 104, 102, 102),
+                  color: valueColor,
                 ),
               ),
             ],

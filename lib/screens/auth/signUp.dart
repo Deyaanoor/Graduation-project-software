@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
 import 'package:flutter_provider/screens/auth/VerifyEmailPage.dart';
 import 'package:flutter_provider/screens/auth/forgot_password.dart';
 import 'package:flutter_provider/widgets/custom_snackbar.dart';
@@ -39,14 +40,23 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
+    final lang = ref.watch(languageProvider);
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (width < 900) {
-            return _buildMobileView(context, nameController, emailController,
-                passwordController, phoneController, height, ref, _formKey);
+            return _buildMobileView(
+                context,
+                nameController,
+                emailController,
+                passwordController,
+                phoneController,
+                height,
+                ref,
+                _formKey,
+                lang);
           } else {
             return _buildDesktopView(
                 context,
@@ -57,7 +67,8 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                 height,
                 width,
                 ref,
-                _formKey);
+                _formKey,
+                lang);
           }
         },
       ),
@@ -65,14 +76,16 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
   }
 
   Widget _buildMobileView(
-      BuildContext context,
-      TextEditingController nameController,
-      TextEditingController emailController,
-      TextEditingController passwordController,
-      TextEditingController phoneController,
-      double height,
-      WidgetRef ref,
-      GlobalKey<FormState> _formKey) {
+    BuildContext context,
+    TextEditingController nameController,
+    TextEditingController emailController,
+    TextEditingController passwordController,
+    TextEditingController phoneController,
+    double height,
+    WidgetRef ref,
+    GlobalKey<FormState> _formKey,
+    Map<String, dynamic> lang,
+  ) {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: SizedBox(
@@ -204,15 +217,17 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
   }
 
   Widget _buildDesktopView(
-      BuildContext context,
-      TextEditingController nameController,
-      TextEditingController emailController,
-      TextEditingController passwordController,
-      TextEditingController phoneController,
-      double height,
-      double width,
-      WidgetRef ref,
-      GlobalKey<FormState> _formKey) {
+    BuildContext context,
+    TextEditingController nameController,
+    TextEditingController emailController,
+    TextEditingController passwordController,
+    TextEditingController phoneController,
+    double height,
+    double width,
+    WidgetRef ref,
+    GlobalKey<FormState> _formKey,
+    Map<String, dynamic> lang,
+  ) {
     return Center(
       child: Container(
         constraints: BoxConstraints(
@@ -333,10 +348,28 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                           controller: passwordController,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter your password';
+                              return lang['passwordRequired'] ??
+                                  'Please enter your password';
                             }
-                            if (value.length < 6) {
-                              return 'Password must be at least 6 characters';
+                            if (value.length < 8) {
+                              return lang['passwordShort'] ??
+                                  'Password must be at least 8 characters';
+                            }
+                            if (!RegExp(r'[A-Z]').hasMatch(value)) {
+                              return lang['passwordUpper'] ??
+                                  'Password must contain an uppercase letter';
+                            }
+                            if (!RegExp(r'[a-z]').hasMatch(value)) {
+                              return lang['passwordLower'] ??
+                                  'Password must contain a lowercase letter';
+                            }
+                            if (!RegExp(r'[0-9]').hasMatch(value)) {
+                              return lang['passwordNumber'] ??
+                                  'Password must contain a number';
+                            }
+                            if (!RegExp(r'[!@#\$&*~_.,\-]').hasMatch(value)) {
+                              return lang['passwordSpecial'] ??
+                                  'Password must contain a special character';
                             }
                             return null;
                           },

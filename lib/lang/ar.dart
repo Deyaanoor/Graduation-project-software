@@ -454,4 +454,8 @@ final Map<String, String> arabic = {
   'subscriptionActivated': 'تم تفعيل الاشتراك بنجاح',
   'subscriptionActivationFailed': 'فشل في تفعيل الاشتراك',
   'selectPlanFirst': 'يرجى اختيار باقة أولاً',
+  'passwordUpper': 'كلمة المرور يجب أن تحتوي على حرف كبير واحد على الأقل',
+  'passwordLower': 'كلمة المرور يجب أن تحتوي على حرف صغير واحد على الأقل',
+  'passwordNumber': 'كلمة المرور يجب أن تحتوي على رقم واحد على الأقل',
+  'passwordSpecial': 'كلمة المرور يجب أن تحتوي على رمز خاص واحد على الأقل',
 };

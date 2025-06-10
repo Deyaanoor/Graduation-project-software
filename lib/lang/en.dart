@@ -453,4 +453,8 @@ final Map<String, String> english = {
   'subscriptionActivated': 'Subscription activated successfully',
   'subscriptionActivationFailed': 'Failed to activate subscription',
   'selectPlanFirst': 'Please select a plan first',
+  'passwordUpper': 'Password must contain an uppercase letter',
+  'passwordLower': 'Password must contain a lowercase letter',
+  'passwordNumber': 'Password must contain a number',
+  'passwordSpecial': 'Password must contain a special character',
 };
