@@ -182,11 +182,11 @@ class Home extends ConsumerWidget {
         color: const Color(0xFFFF8F00),
         backgroundColor: Colors.grey[200]!,
         items: <Widget>[
-          buildNavItem(Icons.auto_awesome, lang['dashboard'] ?? 'Dashboard', 0,
+          buildNavItem(Icons.dashboard, lang['dashboard'] ?? 'Dashboard', 0,
               selectedIndex),
-          buildNavItem(Icons.auto_awesome, lang['support'] ?? 'support', 1,
-              selectedIndex),
-          buildNavItem(Icons.auto_awesome, lang['request'] ?? 'request', 2,
+          buildNavItem(
+              Icons.support, lang['support'] ?? 'support', 1, selectedIndex),
+          buildNavItem(Icons.request_page, lang['request'] ?? 'request', 2,
               selectedIndex),
         ],
         onTap: (index) =>
@@ -219,8 +219,8 @@ class Home extends ConsumerWidget {
                 Icons.article, lang['news'] ?? 'News', 0, selectedIndex),
             buildNavItem(Icons.calendar_today, lang['report'] ?? 'Report', 1,
                 selectedIndex),
-            buildNavItem(Icons.calendar_today, lang['report'] ?? 'Report', 4,
-                selectedIndex),
+            buildNavItem(
+                Icons.garage, lang['Garagey'] ?? 'Garagey ', 4, selectedIndex),
           ],
           onTap: (index) {
             if (index == 2) {
@@ -247,16 +247,16 @@ class Home extends ConsumerWidget {
       onTap: (index) => ref.read(selectedIndexProvider.notifier).state = index,
       items: [
         BottomNavigationBarItem(
-          icon: Icon(Icons.article),
-          label: lang['img'] ?? 'garages',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.article),
-          label: lang['img'] ?? 'img',
-        ),
-        BottomNavigationBarItem(
           icon: Icon(Icons.garage),
-          label: lang['carAI'] ?? 'Car AI',
+          label: lang['Garagey'] ?? 'garages',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.memory),
+          label: lang['IconIQ '] ?? 'IconIQ ',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.auto_awesome),
+          label: lang['AutoCheck'] ?? 'AutoCheck',
         ),
       ],
     );
@@ -454,8 +454,8 @@ class Home extends ConsumerWidget {
           if (userRole.toLowerCase() == 'client')
             _buildNavButton(
               context: context,
-              icon: Icons.garage,
-              label: lang['plateScan'] ?? 'PlateScan',
+              icon: Icons.memory,
+              label: lang['IconIQ '] ?? 'IconIQ ',
               isSelected: selectedIndex == 1,
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 1,
               isExpanded: isExpanded,
@@ -463,7 +463,7 @@ class Home extends ConsumerWidget {
           if (userRole.toLowerCase() == 'client')
             _buildNavButton(
               context: context,
-              icon: Icons.garage,
+              icon: Icons.auto_awesome,
               label: lang['AutoCheck'] ?? 'AutoCheck',
               isSelected: selectedIndex == 2,
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 2,
@@ -529,7 +529,7 @@ class Home extends ConsumerWidget {
           if (userRole.toLowerCase() == 'owner')
             _buildNavButton(
               context: context,
-              icon: Icons.auto_awesome,
+              icon: Icons.people_outline,
               label: lang['Employee'] ?? 'Employee',
               isSelected: selectedIndex == 5,
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 5,
@@ -538,7 +538,7 @@ class Home extends ConsumerWidget {
           if (userRole.toLowerCase() == 'owner')
             _buildNavButton(
               context: context,
-              icon: Icons.auto_awesome,
+              icon: Icons.people,
               label: lang['Clients'] ?? 'Clients',
               isSelected: selectedIndex == 6,
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 6,
@@ -547,7 +547,7 @@ class Home extends ConsumerWidget {
           if (userRole.toLowerCase() == 'owner')
             _buildNavButton(
               context: context,
-              icon: Icons.auto_awesome,
+              icon: Icons.request_quote_sharp,
               label: lang['Request'] ?? 'Request',
               isSelected: selectedIndex == 7,
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 7,
@@ -556,7 +556,7 @@ class Home extends ConsumerWidget {
           if (userRole.toLowerCase() == 'owner')
             _buildNavButton(
               context: context,
-              icon: Icons.subscriptions,
+              icon: Icons.event_note,
               label: lang['Subscription '] ?? 'Subscription ',
               isSelected: selectedIndex == 9,
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 9,
@@ -710,7 +710,7 @@ class Home extends ConsumerWidget {
                 context,
                 ref,
                 lang['Subscription'] ?? 'Subscription',
-                Icons.request_quote_sharp,
+                Icons.event_note,
                 9,
               ),
             if (userInfo['role'].toLowerCase() == 'client')
@@ -718,7 +718,7 @@ class Home extends ConsumerWidget {
                 context,
                 ref,
                 lang['EmergencyRequest'] ?? 'Emergency Request',
-                Icons.request_quote_sharp,
+                Icons.emergency,
                 6,
               ),
             if (userInfo['role'].toLowerCase() == 'admin')
@@ -726,7 +726,7 @@ class Home extends ConsumerWidget {
                 context,
                 ref,
                 lang['Statics'] ?? 'Statics',
-                Icons.how_to_reg,
+                Icons.analytics,
                 3,
               ),
             if (userInfo['role'].toLowerCase() == 'admin')
@@ -758,7 +758,7 @@ class Home extends ConsumerWidget {
                 context,
                 ref,
                 lang['plan'] ?? 'Plans',
-                Icons.how_to_reg,
+                Icons.event_note,
                 4,
               ),
             if (userInfo['role'].toLowerCase() != 'admin')
@@ -766,7 +766,7 @@ class Home extends ConsumerWidget {
                 context,
                 ref,
                 lang['contactUs'] ?? 'contact Us',
-                Icons.how_to_reg,
+                Icons.contact_support,
                 -2,
               ),
             buildDrawerItem(
