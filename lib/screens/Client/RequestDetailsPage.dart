@@ -56,7 +56,6 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
     return garageAsync.when(
       data: (garageData) {
         return Scaffold(
-          appBar: isMobile ? _buildAppBar(lang) : null,
           body: _buildBody(context, garageData, request, ref, lang),
         );
       },
@@ -66,20 +65,6 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
           body: Center(
               child: Text(
                   lang['failedToLoadGarage'] ?? 'فشل تحميل بيانات الكراج'))),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar(Map<String, dynamic> lang) {
-    return AppBar(
-      title: Text(lang['requestDetails'] ?? 'تفاصيل الطلب'),
-      centerTitle: true,
-      flexibleSpace: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.orange.shade700, Colors.orange.shade400],
-          ),
-        ),
-      ),
     );
   }
 

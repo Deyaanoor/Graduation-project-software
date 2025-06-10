@@ -74,7 +74,7 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
   @override
   Widget build(BuildContext context) {
     final userId = ref.watch(userIdProvider).value;
-    final garageId = ref.watch(getGarageIdProvider(userId!));
+    final garageId = ref.watch(getGarageIdProvider(userId!)).value;
     final userInfo =
         userId != null ? ref.watch(getUserInfoProvider(userId)).value : null;
 
@@ -84,15 +84,10 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
     final AsyncValue<List<Map<String, dynamic>>> requestsAsync;
 
     if (userRole == 'owner') {
-      requestsAsync = ref.watch(getRequestsProvider(userId!));
+      requestsAsync = ref.watch(getRequestsProvider(userId));
     } else {
       requestsAsync = ref.watch(
-        requestsByUserAndGarageProvider(
-          (userId: userId, garageId: garageId) as ({
-            String garageId,
-            String userId
-          }),
-        ),
+        requestsByUserAndGarageProvider((userId: userId, garageId: garageId!)),
       );
     }
 
@@ -174,8 +169,7 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
                                 print("userRole: $userRole"),
                                 print("garageId: $garageId"),
                                 // Navigate to details page
-                                _navigateToDetails(
-                                    request, userRole, garageId as String)
+                                _navigateToDetails(request, userRole, garageId!)
                               },
                               child: Row(
                                 children: [

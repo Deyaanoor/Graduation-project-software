@@ -158,7 +158,7 @@ final garageInfoByUserIdProvider = FutureProvider.family
 final garageIdProvider = StateProvider<String?>((ref) => null);
 
 final getGarageIdProvider =
-    Provider.family<Future<String>, String>((ref, userId) async {
+    FutureProvider.family<String, String>((ref, userId) async {
   final response = await http.get(
     Uri.parse('$baseUrl/garage/$userId'),
     headers: {'Content-Type': 'application/json'},
