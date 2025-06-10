@@ -245,7 +245,9 @@ class _DesktopCustomAppBarState extends ConsumerState<DesktopCustomAppBar>
               ),
             ),
             const SizedBox(width: 10),
-            if (userInfo['role'] == 'owner' || userInfo['role'] == 'employee')
+            if (userInfo['role'] == 'owner' ||
+                userInfo['role'] == 'employee' ||
+                userInfo['role'] == 'admin')
               IconButton(
                 icon: unreadCount > 0
                     ? Badge(

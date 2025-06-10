@@ -113,7 +113,8 @@ class _CustomAppBarState extends ConsumerState<CustomAppBar> {
                   children: [
                     // أيقونة الإشعارات
                     if (widget.userInfo['role'] == 'owner' ||
-                        widget.userInfo['role'] == 'employee')
+                        widget.userInfo['role'] == 'employee' ||
+                        widget.userInfo['role'] == 'admin')
                       Padding(
                         padding: const EdgeInsets.only(right: 0),
                         child: IconButton(

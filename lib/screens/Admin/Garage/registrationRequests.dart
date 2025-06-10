@@ -43,6 +43,7 @@ class _RegistrationRequestsState extends ConsumerState<RegistrationRequests> {
     final rowColor = isDarkMode ? Colors.grey[850] : Colors.orange[50];
     final backgroundColor = isDarkMode ? Colors.grey[900] : Colors.white;
     final lang = ref.watch(languageProvider);
+
     return Scaffold(
       body: getAllRequests.when(
         loading: () => Center(child: CircularProgressIndicator()),

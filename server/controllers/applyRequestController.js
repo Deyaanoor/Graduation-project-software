@@ -1,7 +1,15 @@
 const { ObjectId } = require("mongodb");
 const connectDB = require("../config/db");
 // const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY); // تأكد من ضبط مفتاح Stripe في env
+const nodemailer = require("nodemailer");
 
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "deyaanoor9@gmail.com",
+    pass: "mzfc rxnn zeez tmxr",
+  },
+});
 const applyGarage = async (req, res) => {
   const { garageName, garageLocation, subscriptionType, paymentIntentId } =
     req.body;
@@ -98,6 +106,7 @@ const updateRequestStatus = async (req, res) => {
     const usersCollection = db.collection("users");
     const garageCollection = db.collection("garages");
     const ownersCollection = db.collection("owners");
+    const plansCollection = db.collection("plans");
 
     const request = await requestCollection.findOne({
       _id: new ObjectId(requestId),
@@ -106,32 +115,60 @@ const updateRequestStatus = async (req, res) => {
       return res.status(404).json({ message: "Request not found" });
     }
 
-    // لو الحالة accepted لازم نتحقق من الدفع أولًا
-    // if (status === "accepted") {
-    //   const paymentIntentId = request.paymentIntentId;
-    //   if (!paymentIntentId) {
-    //     return res
-    //       .status(400)
-    //       .json({ message: "No payment intent found for this request" });
-    //   }
-
-    //   // جلب حالة الدفع من Stripe
-    //   const paymentIntent = await stripe.paymentIntents.retrieve(
-    //     paymentIntentId
-    //   );
-
-    //   if (paymentIntent.status !== "succeeded") {
-    //     return res
-    //       .status(400)
-    //       .json({ message: "Payment not completed or failed" });
-    //   }
-    // }
-
-    // تحديث حالة الطلب
     await requestCollection.updateOne(
       { _id: new ObjectId(requestId) },
       { $set: { status } }
     );
+
+    // جلب بيانات المستخدم لإرسال الإيميل
+    const user = await usersCollection.findOne({ _id: new ObjectId(request.user_id) });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // نص الإيميل حسب الحالة
+    let subject, html;
+    if (status === "accepted") {
+      subject = "Garage Registration Request Accepted";
+      html = `
+        <div style="font-family: Arial, sans-serif; background: #fff; border-radius: 8px; border: 1px solid #ffa500; padding: 24px; max-width: 500px; margin: auto;">
+          <h2 style="color: #ffa500;">Congratulations!</h2>
+          <p style="font-size: 16px; color: #333;">
+            Dear ${user.name},<br><br>
+            Your garage registration request <b>(${request.garageName})</b> has been <span style="color:green;font-weight:bold;">accepted</span>.<br>
+            You can now log in and manage your garage as an owner.<br><br>
+            Welcome to our platform!
+          </p>
+          <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+          <p style="font-size:12px;color:#888;text-align:center;">&copy; 2025 Mechanic Workshop Management</p>
+        </div>
+      `;
+    } else if (status === "rejected") {
+      subject = "Garage Registration Request Rejected";
+      html = `
+        <div style="font-family: Arial, sans-serif; background: #fff; border-radius: 8px; border: 1px solid #ffa500; padding: 24px; max-width: 500px; margin: auto;">
+          <h2 style="color: #d32f2f;">We're Sorry!</h2>
+          <p style="font-size: 16px; color: #333;">
+            Dear ${user.name},<br><br>
+            Unfortunately, your garage registration request <b>(${request.garageName})</b> has been <span style="color:#d32f2f;font-weight:bold;">rejected</span>.<br>
+            If you have any questions, please contact our support team.<br><br>
+            Thank you for your interest.
+          </p>
+          <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+          <p style="font-size:12px;color:#888;text-align:center;">&copy; 2025 Mechanic Workshop Management</p>
+        </div>
+      `;
+    }
+
+    // أرسل الإيميل فقط إذا كانت الحالة قبول أو رفض
+    if (status === "accepted" || status === "rejected") {
+      await transporter.sendMail({
+        from: "deyaanoor9@gmail.com",
+        to: user.email,
+        subject,
+        html,
+      });
+    }
 
     // إذا تم القبول و الدفع ناجح، ننشئ المالك والكراج
     if (status === "accepted") {
@@ -150,13 +187,12 @@ const updateRequestStatus = async (req, res) => {
         email: user.email,
         garage_id: "",
       };
-      const plan = await plansCollection.findOne({ name: subscriptionType });
+      const plan = await plansCollection.findOne({ name: request.subscriptionType });
       if (!plan) {
         return res
           .status(404)
           .json({ message: "Plan not found for this subscriptionType" });
       }
-      // const cost = plan.price;
       const planPrice = plan.price;
       const ownerInsertResult = await ownersCollection.insertOne(newOwnerData);
 
