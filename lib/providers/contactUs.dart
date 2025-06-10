@@ -76,3 +76,16 @@ final deleteContactMessageProvider =
     }
   };
 });
+
+final getcontactMessagesByIdProvider = FutureProvider.autoDispose
+    .family<List<Map<String, dynamic>>, String>((ref, userId) async {
+  final response =
+      await http.get(Uri.parse('$baseUrl/contactMessages/user/$userId'));
+
+  if (response.statusCode == 200) {
+    final List<dynamic> data = json.decode(response.body);
+    return data.cast<Map<String, dynamic>>();
+  } else {
+    throw Exception('فشل في جلب الرسائل');
+  }
+});
