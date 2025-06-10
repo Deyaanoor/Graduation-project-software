@@ -173,7 +173,11 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
                                         msg['userName']?.toString() ?? '',
                                         style: TextStyle(
                                           fontSize: 14,
-                                          color: textColor?.withOpacity(0.8),
+                                          color: isDarkMode
+                                              ? Colors.grey[200]
+                                              : Colors
+                                                  .grey[800], // متجاوب مع الثيم
+                                          fontWeight: FontWeight.w500,
                                         ),
                                       ),
                                     ),

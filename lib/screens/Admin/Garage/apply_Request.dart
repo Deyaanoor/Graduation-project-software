@@ -470,6 +470,11 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
       return;
     }
 
+    // ✅ انتظر تحميل بيانات المستخدم بشكل صحيح
+    final userInfo = await ref.read(getUserInfoProvider(userId).future);
+    final userName =
+        userInfo != null ? userInfo['name'] ?? 'بدون اسم' : 'بدون اسم';
+
     final garageData = {
       'garageName': garageNameController.text,
       'garageLocation': garageLocationController.text,
@@ -477,12 +482,7 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
       'user_id': userId,
     };
     try {
-      final userInfo =
-          userId != null ? ref.watch(getUserInfoProvider(userId)).value : null;
-
-      final userName =
-          userInfo != null ? userInfo['name'] ?? 'بدون اسم' : 'جاري التحميل...';
-      ref.read(applyGarageProvider(garageData).future);
+      await ref.read(applyGarageProvider(garageData).future);
       await ref.read(notificationsProvider.notifier).sendNotification(
             adminId: userId,
             senderName: userName,

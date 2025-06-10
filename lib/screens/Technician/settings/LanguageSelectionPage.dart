@@ -138,19 +138,28 @@ class _LanguageSelectionPageState extends ConsumerState<LanguageSelectionPage> {
       required bool isMobile}) {
     final isSelected = _selectedLanguageCode == languageCode;
     final isArabic = languageCode == 'ar';
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // ألوان متوافقة مع الثيم
+    final cardColor = isDark ? Colors.grey[900] : Colors.white;
+    final borderColor = isSelected
+        ? Colors.teal.shade600
+        : (isDark ? Colors.grey.shade800 : Colors.grey.shade200);
+    final textColor = isDark ? Colors.grey[100] : Colors.grey.shade800;
+    final subTextColor = isDark ? Colors.grey[400] : Colors.grey.shade600;
 
     return SizedBox(
       width: isMobile ? null : 450,
       child: Card(
+        color: cardColor,
         elevation: 6,
         margin: isMobile
             ? const EdgeInsets.symmetric(vertical: 8)
             : const EdgeInsets.all(20),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(
-              color: isSelected ? Colors.teal.shade600 : Colors.grey.shade200,
-              width: 2),
+          side: BorderSide(color: borderColor, width: 2),
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
@@ -161,8 +170,13 @@ class _LanguageSelectionPageState extends ConsumerState<LanguageSelectionPage> {
                 : const EdgeInsets.symmetric(vertical: 30, horizontal: 40),
             child: Row(
               children: [
-                Text(isArabic ? '🇵🇸' : '🇺🇸',
-                    style: TextStyle(fontSize: isMobile ? 36 : 42)),
+                Text(
+                  isArabic ? '🔤' : '🌐',
+                  style: TextStyle(
+                    fontSize: isMobile ? 36 : 42,
+                    color: isSelected ? Colors.teal.shade600 : subTextColor,
+                  ),
+                ),
                 SizedBox(width: isMobile ? 20 : 30),
                 Expanded(
                   child: Column(
@@ -174,7 +188,7 @@ class _LanguageSelectionPageState extends ConsumerState<LanguageSelectionPage> {
                               style: TextStyle(
                                   fontSize: isMobile ? 18 : 24,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.grey.shade800)),
+                                  color: textColor)),
                           if (isSelected) ...[
                             const Spacer(),
                             Icon(Icons.check_circle_rounded,
@@ -187,7 +201,7 @@ class _LanguageSelectionPageState extends ConsumerState<LanguageSelectionPage> {
                       Text(subtitle,
                           style: TextStyle(
                               fontSize: isMobile ? 14 : 18,
-                              color: Colors.grey.shade600)),
+                              color: subTextColor)),
                     ],
                   ),
                 ),

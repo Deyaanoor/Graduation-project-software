@@ -213,7 +213,6 @@ const getMonthlySummary = async (req, res) => {
       .json({ message: "An error occurred while fetching monthly summary" });
   }
 };
-
 const getModelsSummary = async (req, res) => {
   try {
     const { userId } = req.body;
@@ -224,30 +223,32 @@ const getModelsSummary = async (req, res) => {
       return res.status(404).json({ message: "Owner not found" });
     }
     const garageId = owner.garage_id;
-    console.log("Garage ID:", garageId);
     const reportsCollection = db.collection("reports");
     const reports = await reportsCollection
       .find({
         garageId: new ObjectId(garageId),
       })
       .toArray();
+
     const modelCounts = {};
     reports.forEach((report) => {
-      const model = report.model || "أخرى";
+      const model = report.model || "Other";
       if (modelCounts[model]) {
         modelCounts[model]++;
       } else {
         modelCounts[model] = 1;
       }
     });
-    const pieChartData = Object.keys(modelCounts).map((model) => ({
-      title: model,
-      value: modelCounts[model],
-    }));
-    console.log("Pie Chart Data:", pieChartData);
+
+    // ترتيب الموديلات تنازلياً وأخذ أعلى 5 فقط
+    const top5Models = Object.entries(modelCounts)
+      .map(([model, count]) => ({ title: model, value: count }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+
     res.status(200).json({
-      message: "Models summary fetched successfully",
-      data: pieChartData,
+      message: "Top 5 models summary fetched successfully",
+      data: top5Models,
     });
   } catch (error) {
     console.error("❌ Error in getModelsSummary:", error);
