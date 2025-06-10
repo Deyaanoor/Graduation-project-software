@@ -66,20 +66,21 @@ class NewsPage extends ConsumerWidget {
                   );
                 }
               },
-              backgroundColor: Colors.orange,
+              backgroundColor: Theme.of(context).colorScheme.primary,
               child: const Icon(Icons.add),
             )
           : null,
-      backgroundColor: Colors.white,
+      backgroundColor:
+          Theme.of(context).scaffoldBackgroundColor, // <-- هنا التغيير
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
             child: Column(
               children: [
-                const Icon(
+                Icon(
                   Icons.new_releases_rounded,
-                  color: Colors.orange,
+                  color: Theme.of(context).colorScheme.primary,
                   size: 40,
                 ),
                 const SizedBox(height: 10),
@@ -88,7 +89,10 @@ class NewsPage extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey[800],
+                    color: Theme.of(context)
+                        .textTheme
+                        .bodyLarge
+                        ?.color, // <-- هنا التغيير
                     letterSpacing: 1.2,
                   ),
                 ),
@@ -110,7 +114,7 @@ class NewsPage extends ConsumerWidget {
                     child: CircularProgressIndicator(color: Colors.orange)),
                 error: (error, _) => _buildErrorUI(error, ref, lang),
                 data: (newsItems) => newsItems.isEmpty
-                    ? _buildEmptyState(lang)
+                    ? _buildEmptyState(lang, context)
                     : _buildNewsList(context, screenWidth, newsItems, userRole,
                         userId!, lang),
               ),
@@ -211,7 +215,7 @@ Widget _buildNewsCard(
                   children: [
                     Icon(
                       Icons.campaign,
-                      color: theme.colorScheme.secondary,
+                      color: theme.colorScheme.primary, // <-- برتقالي من الثيم
                       size: 28,
                     ),
                     Text(
@@ -228,6 +232,8 @@ Widget _buildNewsCard(
                   title,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
+                    color: theme
+                        .textTheme.bodyLarge?.color, // <-- لون النص من الثيم
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -235,6 +241,8 @@ Widget _buildNewsCard(
                   content,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     height: 1.6,
+                    color: theme
+                        .textTheme.bodyMedium?.color, // <-- لون النص من الثيم
                   ),
                 ),
                 const SizedBox(height: 15),
@@ -244,7 +252,7 @@ Widget _buildNewsCard(
                   children: [
                     Icon(
                       Icons.person_outline,
-                      color: theme.colorScheme.secondary,
+                      color: theme.colorScheme.primary, // <-- برتقالي من الثيم
                       size: 22,
                     ),
                     const SizedBox(width: 8),
@@ -266,18 +274,19 @@ Widget _buildNewsCard(
   );
 }
 
-Widget _buildEmptyState(Map<String, dynamic> lang) {
+Widget _buildEmptyState(Map<String, dynamic> lang, BuildContext context) {
+  final theme = Theme.of(context);
   return Center(
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.article, size: 60, color: Colors.grey[400]),
+        Icon(Icons.article, size: 60, color: theme.hintColor),
         const SizedBox(height: 20),
         Text(
           lang['noNews'] ?? 'لا توجد أخبار متاحة حالياً',
           style: TextStyle(
             fontSize: 18,
-            color: Colors.grey[600],
+            color: theme.textTheme.bodyMedium?.color,
           ),
         ),
       ],

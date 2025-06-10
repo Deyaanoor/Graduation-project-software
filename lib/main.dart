@@ -18,7 +18,7 @@ import 'package:flutter_provider/screens/auth/signUp.dart';
 import 'package:flutter_provider/screens/auth/welcomePage.dart';
 import 'package:flutter_provider/screens/contactUs.dart';
 import 'package:flutter_provider/screens/Owner/GarageInfoScreen.dart';
-
+import 'package:flutter_provider/Themes/theme.dart';
 // 👇 استيراد ذكي حسب المنصة (موبايل أو ويب)
 import 'package:flutter_provider/fcm_setup.dart';
 
@@ -145,8 +145,8 @@ class MyApp extends ConsumerWidget {
 
     return MaterialApp(
       title: lang['app_title'] ?? 'App',
-      theme: ThemeData.light(),
-      darkTheme: ThemeData.dark(),
+      theme: lightTheme, // استخدم الثيم البرتقالي المخصص
+      darkTheme: darkTheme, // استخدم الثيم الداكن المخصص
       themeMode: themeMode,
       debugShowCheckedModeBanner: false,
       locale: locale,

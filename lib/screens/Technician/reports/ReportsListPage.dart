@@ -21,37 +21,35 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
   int? _sortColumnIndex;
   bool _sortAscending = true;
 
-  // @override
-  // void didChangeDependencies() {
-  //   super.didChangeDependencies();
-
-  //   final uid = ref.read(userIdProvider).value;
-  //   if (uid != null && uid.isNotEmpty) {
-  //     ref.read(reportsProvider.notifier).fetchReports(userId: uid);
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
     final reportsAsync = ref.watch(reportsProvider);
     final userId = ref.watch(userIdProvider).value;
-    print("reportsAsync : $reportsAsync");
     final userInfo =
         userId != null ? ref.watch(getUserInfoProvider(userId)).value : null;
     final userRole =
         userInfo != null ? userInfo['role'] ?? 'بدون اسم' : 'جاري التحميل...';
     final lang = ref.watch(languageProvider);
 
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+    final cardColor = theme.cardColor;
+    // final headerColor = theme.colorScheme.primary;
+    // final textColor = theme.textTheme.bodyLarge?.color ?? Colors.black;
+    // final subTextColor = theme.textTheme.bodyMedium?.color ?? Colors.orange;
+    // final rowColor = isDarkMode ? Colors.grey[850]! : Colors.orange[50]!;
+    final backgroundColor = theme.scaffoldBackgroundColor;
+
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: () => ref.read(selectedIndexProvider.notifier).state = 2,
-        backgroundColor: Colors.orange,
+        backgroundColor: theme.colorScheme.primary,
         child: const Icon(Icons.add, color: Colors.white),
       ),
-      backgroundColor: Colors.grey[50],
+      backgroundColor: backgroundColor,
       body: Column(
         children: [
-          _buildSearchBar(lang),
+          _buildSearchBar(lang, theme),
           Expanded(
             child: reportsAsync.when(
               data: (reports) {
@@ -69,11 +67,13 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
                   padding: const EdgeInsets.all(16.0),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: cardColor,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.2),
+                          color: isDarkMode
+                              ? Colors.black26
+                              : Colors.grey.withOpacity(0.2),
                           spreadRadius: 2,
                           blurRadius: 8,
                           offset: const Offset(0, 4),
@@ -81,8 +81,10 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
                       ],
                     ),
                     child: ResponsiveHelper.isMobile(context)
-                        ? _buildMobileTable(filteredReports, userRole, lang)
-                        : _buildDesktopTable(filteredReports, userRole, lang),
+                        ? _buildMobileTable(
+                            filteredReports, userRole, lang, theme)
+                        : _buildDesktopTable(
+                            filteredReports, userRole, lang, theme),
                   ),
                 );
               },
@@ -100,6 +102,7 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
     List<Map<String, dynamic>> reports,
     String userRole,
     Map<String, dynamic> lang,
+    ThemeData theme,
   ) {
     final isOwner = userRole == 'owner';
 
@@ -109,17 +112,22 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
       showCheckboxColumn: false,
       minWidth: isOwner ? 700 : 600,
       columns: [
+        _buildDataColumn(lang['plate_number'] ?? 'Plate Number',
+            Icons.directions_car, 0, theme),
+        _buildDataColumn(lang['issue'] ?? 'Issue', Icons.warning, 1, theme),
+        _buildDataColumn(lang['owner'] ?? 'Owner', Icons.person, 2, theme),
         _buildDataColumn(
-            lang['plate_number'] ?? 'Plate Number', Icons.directions_car, 0),
-        _buildDataColumn(lang['issue'] ?? 'Issue', Icons.warning, 1),
-        _buildDataColumn(lang['owner'] ?? 'Owner', Icons.person, 2),
-        _buildDataColumn(lang['cost'] ?? 'Cost', Icons.attach_money, 2, true),
-        _buildDataColumn(lang['date'] ?? 'Date', Icons.calendar_today, 2),
+            lang['cost'] ?? 'Cost', Icons.attach_money, 3, theme, true),
+        _buildDataColumn(
+            lang['date'] ?? 'Date', Icons.calendar_today, 4, theme),
         if (isOwner)
           _buildDataColumn(
-              lang['mechanic_name'] ?? 'Mechanic Name', Icons.build, 2),
+              lang['mechanic_name'] ?? 'Mechanic Name', Icons.build, 5, theme),
       ],
-      rows: reports.map((report) => _buildDesktopRow(report, isOwner)).toList(),
+      rows: reports
+          .map((report) => _buildDesktopRow(report, isOwner, theme))
+          .toList(),
+      dataRowColor: _getRowColor(theme),
     );
   }
 
@@ -127,12 +135,13 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
     List<Map<String, dynamic>> reports,
     String userRole,
     Map<String, dynamic> lang,
+    ThemeData theme,
   ) {
     final columns = [
-      _buildDataColumn(
-          lang['plate_number'] ?? 'Plate Number', Icons.directions_car, 0),
-      _buildDataColumn(lang['owner'] ?? 'Owner', Icons.person, 1),
-      _buildDataColumn(lang['date'] ?? 'Date', Icons.calendar_today, 2),
+      _buildDataColumn(lang['plate_number'] ?? 'Plate Number',
+          Icons.directions_car, 0, theme),
+      _buildDataColumn(lang['owner'] ?? 'Owner', Icons.person, 1, theme),
+      _buildDataColumn(lang['date'] ?? 'Date', Icons.calendar_today, 2, theme),
     ];
 
     return SizedBox(
@@ -144,20 +153,21 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
         minWidth: 0,
         showCheckboxColumn: false,
         columns: columns,
-        rows: reports.map((report) => _buildMobileRow(report)).toList(),
+        rows: reports.map((report) => _buildMobileRow(report, theme)).toList(),
+        dataRowColor: _getRowColor(theme),
       ),
     );
   }
 
-  DataRow _buildMobileRow(Map<String, dynamic> report) {
+  DataRow _buildMobileRow(Map<String, dynamic> report, ThemeData theme) {
     final cells = [
-      _buildDataCell(report['plateNumber'] ?? '-', Icons.directions_car),
-      _buildDataCell(report['owner'] ?? '-', Icons.person),
-      _buildDataCell(_formatDate(report['date']), Icons.calendar_today),
+      _buildDataCell(report['plateNumber'] ?? '-', Icons.directions_car, theme),
+      _buildDataCell(report['owner'] ?? '-', Icons.person, theme),
+      _buildDataCell(_formatDate(report['date']), Icons.calendar_today, theme),
     ];
 
     return DataRow(
-      color: _getRowColor(),
+      color: _getRowColor(theme),
       cells: cells,
       onSelectChanged: (selected) {
         if (selected == true) {
@@ -167,17 +177,19 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
     );
   }
 
-  DataColumn2 _buildDataColumn(String label, IconData icon, int columnIndex,
+  DataColumn2 _buildDataColumn(
+      String label, IconData icon, int columnIndex, ThemeData theme,
       [bool isNumeric = false]) {
+    final headerColor = theme.colorScheme.primary;
     return DataColumn2(
       size: ColumnSize.M,
       label: Row(
         children: [
-          Icon(icon, size: 16, color: Colors.orange),
+          Icon(icon, size: 16, color: headerColor),
           const SizedBox(width: 4),
           Text(label,
-              style: const TextStyle(
-                color: Colors.orange,
+              style: TextStyle(
+                color: headerColor,
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
               )),
@@ -185,7 +197,7 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
             Icon(
               _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
               size: 12,
-              color: Colors.orange,
+              color: headerColor,
             ),
         ],
       ),
@@ -200,23 +212,23 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
   }
 
   DataRow _buildDesktopRow(Map<String, dynamic> report,
-      [bool isOwner = false]) {
+      [bool isOwner = false, ThemeData? theme]) {
     final cells = [
-      _buildDataCell(report['plateNumber'] ?? '-', Icons.directions_car),
-      _buildDataCell(report['issue'] ?? '-', Icons.warning),
-      _buildDataCell(report['owner'] ?? '-', Icons.person),
-      _buildDataCell(_parseCost(report['cost']), Icons.attach_money),
-      _buildDataCell(_formatDate(report['date']), Icons.calendar_today),
+      _buildDataCell(report['plateNumber'] ?? '-', Icons.directions_car, theme),
+      _buildDataCell(report['issue'] ?? '-', Icons.warning, theme),
+      _buildDataCell(report['owner'] ?? '-', Icons.person, theme),
+      _buildDataCell(_parseCost(report['cost']), Icons.attach_money, theme),
+      _buildDataCell(_formatDate(report['date']), Icons.calendar_today, theme),
     ];
 
     if (isOwner) {
       cells.add(
-        _buildDataCell(report['mechanicName'] ?? '-', Icons.build),
+        _buildDataCell(report['mechanicName'] ?? '-', Icons.build, theme),
       );
     }
 
     return DataRow(
-      color: _getRowColor(),
+      color: _getRowColor(theme!),
       cells: cells,
       onSelectChanged: (selected) {
         if (selected == true) {
@@ -226,16 +238,18 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
     );
   }
 
-  DataCell _buildDataCell(String text, IconData icon) {
+  DataCell _buildDataCell(String text, IconData icon, ThemeData? theme) {
+    final textColor = theme?.textTheme.bodyLarge?.color ?? Colors.black;
+    final iconColor = theme?.iconTheme.color ?? Colors.grey[600];
     return DataCell(
       Row(
         children: [
-          Icon(icon, size: 16, color: Colors.grey[600]),
+          Icon(icon, size: 16, color: iconColor),
           const SizedBox(width: 8),
           Expanded(
             child: Text(text,
                 style: TextStyle(
-                    color: Colors.grey[800],
+                    color: textColor,
                     fontSize: 14,
                     overflow: TextOverflow.ellipsis)),
           ),
@@ -246,15 +260,16 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
 
   Widget _buildSearchBar(
     Map<String, dynamic> lang,
+    ThemeData theme,
   ) {
+    final isDarkMode = theme.brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Container(
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              // ignore: deprecated_member_use
-              color: Colors.grey.withOpacity(0.1),
+              color: isDarkMode ? Colors.black26 : Colors.grey.withOpacity(0.1),
               spreadRadius: 2,
               blurRadius: 8,
               offset: const Offset(0, 2),
@@ -263,11 +278,12 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
         ),
         child: TextField(
           onChanged: (value) => setState(() => _searchText = value),
+          style: TextStyle(color: theme.textTheme.bodyLarge?.color),
           decoration: InputDecoration(
             hintText: lang['search'] ?? 'Search',
-            prefixIcon: const Icon(Icons.search, color: Colors.orange),
+            prefixIcon: Icon(Icons.search, color: theme.colorScheme.primary),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: theme.cardColor,
             contentPadding:
                 const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
             border: OutlineInputBorder(
@@ -328,18 +344,17 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
     }
   }
 
-  WidgetStateProperty<Color?> _getRowColor() {
+  WidgetStateProperty<Color?> _getRowColor(ThemeData theme) {
+    final isDarkMode = theme.brightness == Brightness.dark;
     return WidgetStateProperty.resolveWith<Color?>(
       (Set<WidgetState> states) {
         if (states.contains(WidgetState.hovered)) {
-          // ignore: deprecated_member_use
-          return Colors.orange.withOpacity(0.05);
+          return theme.colorScheme.primary.withOpacity(0.05);
         }
         if (states.contains(WidgetState.selected)) {
-          // ignore: deprecated_member_use
-          return Colors.orange.withOpacity(0.1);
+          return theme.colorScheme.primary.withOpacity(0.1);
         }
-        return Colors.white;
+        return theme.cardColor;
       },
     );
   }

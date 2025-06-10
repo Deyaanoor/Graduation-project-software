@@ -177,10 +177,14 @@ class Home extends ConsumerWidget {
     WidgetRef ref,
     String userRole,
   ) {
+    final theme = Theme.of(ref.context);
+
+    final orange = theme.colorScheme.primary; // برتقالي من الثيم
+
     if (userRole.toLowerCase() == 'admin') {
       return CurvedNavigationBar(
-        color: const Color(0xFFFF8F00),
-        backgroundColor: Colors.grey[200]!,
+        color: orange,
+        backgroundColor: theme.scaffoldBackgroundColor,
         items: <Widget>[
           buildNavItem(Icons.dashboard, lang['dashboard'] ?? 'Dashboard', 0,
               selectedIndex),
@@ -194,40 +198,40 @@ class Home extends ConsumerWidget {
       );
     } else if (userRole.toLowerCase() == 'owner') {
       return CurvedNavigationBar(
-          color: const Color(0xFFFF8F00),
-          backgroundColor: Colors.grey[200]!,
-          items: <Widget>[
-            buildNavItem(Icons.dashboard, lang['dashboard'] ?? 'Dashboard', 0,
-                selectedIndex),
-            buildNavItem(Icons.calendar_today, lang['reports'] ?? 'Report', 1,
-                selectedIndex),
-            buildNavItem(
-                Icons.article, lang['news'] ?? 'News', 4, selectedIndex),
-          ],
-          onTap: (index) {
-            if (index == 2) {
-              index = 4;
-            }
-            ref.read(selectedIndexProvider.notifier).state = index;
-          });
+        color: orange,
+        backgroundColor: theme.scaffoldBackgroundColor,
+        items: <Widget>[
+          buildNavItem(Icons.dashboard, lang['dashboard'] ?? 'Dashboard', 0,
+              selectedIndex),
+          buildNavItem(Icons.calendar_today, lang['reports'] ?? 'Report', 1,
+              selectedIndex),
+          buildNavItem(Icons.article, lang['news'] ?? 'News', 4, selectedIndex),
+        ],
+        onTap: (index) {
+          if (index == 2) {
+            index = 4;
+          }
+          ref.read(selectedIndexProvider.notifier).state = index;
+        },
+      );
     } else if (userRole.toLowerCase() == 'employee') {
       return CurvedNavigationBar(
-          color: const Color(0xFFFF8F00),
-          backgroundColor: Colors.grey[200]!,
-          items: <Widget>[
-            buildNavItem(
-                Icons.article, lang['news'] ?? 'News', 0, selectedIndex),
-            buildNavItem(Icons.calendar_today, lang['reports'] ?? 'Report', 1,
-                selectedIndex),
-            buildNavItem(
-                Icons.garage, lang['Garagey'] ?? 'Garagey ', 4, selectedIndex),
-          ],
-          onTap: (index) {
-            if (index == 2) {
-              index = 4;
-            }
-            ref.read(selectedIndexProvider.notifier).state = index;
-          });
+        color: orange,
+        backgroundColor: theme.scaffoldBackgroundColor,
+        items: <Widget>[
+          buildNavItem(Icons.article, lang['news'] ?? 'News', 0, selectedIndex),
+          buildNavItem(Icons.calendar_today, lang['reports'] ?? 'Report', 1,
+              selectedIndex),
+          buildNavItem(
+              Icons.garage, lang['Garagey'] ?? 'Garagey ', 4, selectedIndex),
+        ],
+        onTap: (index) {
+          if (index == 2) {
+            index = 4;
+          }
+          ref.read(selectedIndexProvider.notifier).state = index;
+        },
+      );
     }
     throw Exception('Unsupported user role: $userRole');
   }
@@ -673,9 +677,13 @@ class Home extends ConsumerWidget {
     Map<String, String> lang,
     Map<String, dynamic> userInfo,
   ) {
+    final theme = Theme.of(context);
+
     return Drawer(
       child: Container(
-        decoration: const BoxDecoration(color: Color(0xFFF5F5F5)),
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor, // خلفية متجاوبة مع الثيم
+        ),
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
@@ -777,6 +785,21 @@ class Home extends ConsumerWidget {
               lang['settings'] ?? 'Settings',
               Icons.settings,
               -1,
+            ),
+            SizedBox(
+              height: 30,
+            ),
+            Container(
+              margin: const EdgeInsets.only(top: 40, bottom: 20),
+              child: Column(
+                children: <Widget>[
+                  Image.network(
+                    'https://i.postimg.cc/prZL3jYb/edit-the-uploaded-image-to-make-it-suitable-for-an-app-icon-removebg-preview.png',
+                    height: 180,
+                    width: 160,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
