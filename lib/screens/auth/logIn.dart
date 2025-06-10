@@ -5,6 +5,7 @@ import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/home_provider.dart';
 import 'package:flutter_provider/providers/language_provider.dart';
+import 'package:flutter_provider/providers/requestRegister.dart';
 import 'package:flutter_provider/screens/auth/Title_Project.dart';
 import 'package:flutter_provider/screens/auth/divider_widget.dart';
 import 'package:flutter_provider/screens/auth/forgot_password.dart';
@@ -331,9 +332,22 @@ class LoginPage extends ConsumerWidget {
         print("status $status");
 
         ref.invalidate(userIdProvider);
-
+        final userId = ref.read(userIdProvider).value;
+        final isPendingAsync = ref.watch(existRequestProvider(userId!));
+        isPendingAsync.when(
+          data: (pending) {
+            print("isPendingAsync: $pending"); // true أو false
+            // استخدم القيمة هنا
+          },
+          loading: () {
+            print("isPendingAsync: loading");
+          },
+          error: (e, _) {
+            print("isPendingAsync: error $e");
+          },
+        );
         if (role == null || role == "") {
-          Navigator.pushNamed(context, '/Apply_Request');
+          // Navigator.pushNamed(context, '/Apply_Request');
         } else {
           print("✅ Login successful: $role, $status");
           if (status?.toLowerCase() != "active" && role == "owner") {

@@ -121,7 +121,9 @@ const updateRequestStatus = async (req, res) => {
     );
 
     // جلب بيانات المستخدم لإرسال الإيميل
-    const user = await usersCollection.findOne({ _id: new ObjectId(request.user_id) });
+    const user = await usersCollection.findOne({
+      _id: new ObjectId(request.user_id),
+    });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -187,7 +189,9 @@ const updateRequestStatus = async (req, res) => {
         email: user.email,
         garage_id: "",
       };
-      const plan = await plansCollection.findOne({ name: request.subscriptionType });
+      const plan = await plansCollection.findOne({
+        name: request.subscriptionType,
+      });
       if (!plan) {
         return res
           .status(404)
@@ -245,9 +249,38 @@ const updateRequestStatus = async (req, res) => {
     res.status(500).json({ message: "Something went wrong", error });
   }
 };
+const existRequest = async (req, res) => {
+  try {
+    const db = await connectDB();
+    const { user_id } = req.params;
+    const applyRequestCollection = db.collection("registration_requests");
+
+    // ابحث عن طلب قيد الانتظار أو مقبول
+    const existingRequest = await applyRequestCollection.findOne({
+      user_id: new ObjectId(user_id),
+    });
+
+    if (existingRequest) {
+      // إذا كان الطلب قيد الانتظار
+      if (existingRequest.status === "pending") {
+        return res.status(200).json({
+          statusPending: true,
+        });
+      } else {
+        return res.status(200).json({
+          statusPending: false,
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Exist request error:", error);
+    res.status(500).json({ message: "Something went wrong", error });
+  }
+};
 
 module.exports = {
   applyGarage,
   getAllRequests,
   updateRequestStatus,
+  existRequest,
 };
