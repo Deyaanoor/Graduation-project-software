@@ -47,6 +47,7 @@ const registerUser = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ message: "Email already exists" });
     }
+    console.log("Received registration request:", existingUser);
 
     let newUser = null;
     let role = null;
