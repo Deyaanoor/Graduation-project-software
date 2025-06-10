@@ -7,7 +7,7 @@ String apiUrl = '${dotenv.env['API_URL']}/clients';
 
 final clientsProvider = FutureProvider.autoDispose
     .family<List<Map<String, dynamic>>, String>((ref, ownerId) async {
-  final response = await http.get(Uri.parse('$apiUrl?owner_id=$ownerId'));
+  final response = await http.get(Uri.parse('$apiUrl/$ownerId'));
 
   if (response.statusCode == 200) {
     final List<dynamic> data = json.decode(response.body);

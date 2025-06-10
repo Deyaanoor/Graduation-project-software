@@ -323,7 +323,7 @@ class _EmergencyRequestPageState extends ConsumerState<EmergencyRequestPage> {
 
       await ref.read(notificationsProvider.notifier).sendNotification(
             adminId: userId,
-            messageTitle: "طلب طوارئ جديد",
+            messageTitle: lang['EmergencyRequest'] ?? 'طلب طوارئ',
             messageBody: _messageController.text,
             garageId: _selectedGarageId,
             senderName: userName,

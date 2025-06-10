@@ -425,7 +425,42 @@ const getGarageInfo = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch garage data" });
   }
 };
+const getUserGarageData = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const db = await connectDB();
 
+    // نحول الـ userId إلى ObjectId
+    const owner = await db
+      .collection("owners")
+      .findOne({ _id: new ObjectId(userId) });
+
+    if (!owner) {
+      return res.status(404).json({ message: "Owner not found" });
+    }
+
+    // نبحث عن الكراج اللي إلو علاقة بالـ owner
+    const garage = await db
+      .collection("garages")
+      .findOne({ owner_id: owner._id });
+
+    if (!garage) {
+      return res
+        .status(404)
+        .json({ message: "Garage not found for this owner" });
+    }
+
+    // تحويل الـ garage_id من ObjectId إلى string
+    const garageIdStr = garage._id.toString();
+
+    res.status(200).json({ garage_id: garageIdStr });
+  } catch (error) {
+    console.error("❌ Error fetching garage data:", error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while fetching garage data" });
+  }
+};
 
 module.exports = {
   addGarage,
@@ -436,4 +471,5 @@ module.exports = {
   updateGarageStatus,
   getGarageLocations,
   getGarageInfo,
+  getUserGarageData,
 };
