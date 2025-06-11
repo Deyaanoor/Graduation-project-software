@@ -10,12 +10,13 @@ const transporter = nodemailer.createTransport({
     pass: "mzfc rxnn zeez tmxr",
   },
 });
+
 const applyGarage = async (req, res) => {
   const { garageName, garageLocation, subscriptionType, paymentIntentId } =
     req.body;
   const userId = req.body.user_id;
 
-  if (!garageName || !garageLocation || !subscriptionType || paymentIntentId) {
+  if (!garageName || !garageLocation || !subscriptionType || !paymentIntentId) {
     return res.status(400).json({ message: "All fields are required" });
   }
 

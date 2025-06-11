@@ -78,7 +78,7 @@ class _FreeMapPickerPageState extends State<FreeMapPickerPage> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return Scaffold(
-        appBar: AppBar(title: Text('Free Map Picker')),
+        appBar: AppBar(title: Text('Map')),
         body: Center(child: CircularProgressIndicator()),
       );
     }

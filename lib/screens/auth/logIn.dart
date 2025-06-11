@@ -370,9 +370,13 @@ class LoginPage extends ConsumerWidget {
                 lang,
                 ref);
           } else {
+            ref.invalidate(userIdProvider);
+
             Navigator.pushNamed(context, '/Apply_Request');
           }
         } else {
+          ref.invalidate(userIdProvider);
+
           print("✅ Login successful: $role, $status");
           if (status?.toLowerCase() != "active" && role == "owner") {
             Navigator.pushNamed(context, '/garage_info');
@@ -383,7 +387,6 @@ class LoginPage extends ConsumerWidget {
             );
             return;
           } else {
-            ref.invalidate(userIdProvider);
             final userId = ref.read(userIdProvider).value;
             Navigator.pushNamed(context, '/home');
           }

@@ -475,7 +475,8 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
     final userInfo = await ref.read(getUserInfoProvider(userId).future);
     final userName =
         userInfo != null ? userInfo['name'] ?? 'بدون اسم' : 'بدون اسم';
-
+    print('User Name: $userName');
+    print('User ID: $userId');
     final garageData = {
       'garageName': garageNameController.text,
       'garageLocation': garageLocationController.text,
