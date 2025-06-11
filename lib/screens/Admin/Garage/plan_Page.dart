@@ -153,15 +153,22 @@ class _PlansPageState extends ConsumerState<PlansPage> {
       await ref.read(updatePlanProvider)(name, price);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content:
-                Text(lang['updateSuccess'] ?? 'Plan updated successfully!')),
+          content: Text(
+            lang['validPrice'] ?? 'Please enter a valid number for price',
+          ),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.only(
+              bottom: 60, left: 16, right: 16), // ارفعها 60 بكسل عن الأسفل
+        ),
       );
       ref.refresh(allPlansProvider);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content:
-                Text('${lang['updateFail'] ?? 'Failed to update plan:'} $e')),
+          content: Text(lang['updateSuccess'] ?? 'Plan updated successfully!'),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.only(bottom: 60, left: 16, right: 16),
+        ),
       );
     }
   }

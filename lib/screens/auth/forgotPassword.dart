@@ -18,13 +18,12 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
 
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final TextEditingController emailController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
   bool sent = false;
+  AsyncValue<String>? forgotPasswordState;
 
   @override
   Widget build(BuildContext context) {
-    final forgotPasswordState = ref.watch(
-      forgotPasswordProvider(emailController.text.trim()),
-    );
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
 
@@ -43,13 +42,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     );
   }
 
-  final _formKey = GlobalKey<FormState>();
-
   Widget _buildMobileView(
       BuildContext context,
       TextEditingController emailController,
       double height,
-      AsyncValue<String> forgotPasswordState) {
+      AsyncValue<String>? forgotPasswordState) {
     return Stack(
       children: [
         Positioned(
@@ -90,14 +87,28 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       if (_formKey.currentState!.validate()) {
                         setState(() {
                           sent = true;
+                          forgotPasswordState = const AsyncLoading();
                         });
+                        try {
+                          final msg = await ref.read(
+                            forgotPasswordProvider(emailController.text.trim())
+                                .future,
+                          );
+                          setState(() {
+                            forgotPasswordState = AsyncData(msg);
+                          });
+                        } catch (e, st) {
+                          setState(() {
+                            forgotPasswordState = AsyncError(e, st);
+                          });
+                        }
                       }
                     },
                     isGradient: true,
                   ),
                   SizedBox(height: height * .055),
-                  if (sent)
-                    forgotPasswordState.when(
+                  if (sent && forgotPasswordState != null)
+                    forgotPasswordState!.when(
                       data: (msg) => Text(msg,
                           style: const TextStyle(color: Colors.green)),
                       loading: () => const CircularProgressIndicator(),
@@ -119,7 +130,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     TextEditingController emailController,
     double height,
     double width,
-    AsyncValue<String> forgotPasswordState,
+    AsyncValue<String>? forgotPasswordState,
   ) {
     return Center(
       child: Container(
@@ -182,7 +193,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 child: SingleChildScrollView(
                   padding: EdgeInsets.symmetric(horizontal: 50, vertical: 40),
                   child: Form(
-                    key: _formKey, // إضافة الـ GlobalKey هنا
+                    key: _formKey,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,14 +244,29 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                             if (_formKey.currentState!.validate()) {
                               setState(() {
                                 sent = true;
+                                forgotPasswordState = const AsyncLoading();
                               });
+                              try {
+                                final msg = await ref.read(
+                                  forgotPasswordProvider(
+                                          emailController.text.trim())
+                                      .future,
+                                );
+                                setState(() {
+                                  forgotPasswordState = AsyncData(msg);
+                                });
+                              } catch (e, st) {
+                                setState(() {
+                                  forgotPasswordState = AsyncError(e, st);
+                                });
+                              }
                             }
                           },
                           isGradient: true,
                         ),
                         SizedBox(height: 10),
-                        if (sent)
-                          forgotPasswordState.when(
+                        if (sent && forgotPasswordState != null)
+                          forgotPasswordState!.when(
                             data: (msg) => Text(msg,
                                 style:
                                     TextStyle(color: Colors.orange.shade700)),

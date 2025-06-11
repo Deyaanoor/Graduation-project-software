@@ -193,16 +193,6 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                           return null;
                         },
                       ),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          SizedBox(),
-                          ForgotPassword(),
-                        ],
-                      ),
                       const SizedBox(height: 20),
                       CustomButton(
                         text: "Sign Up",
@@ -220,6 +210,9 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                         isGradient: true,
                       ),
                       const SizedBox(height: 10),
+                      DividerWidget(),
+                      LoginLabel(),
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
@@ -389,16 +382,6 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                             return null;
                           },
                         ),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            SizedBox(),
-                            ForgotPassword(),
-                          ],
-                        ),
                         SizedBox(height: 20),
                         CustomButton(
                           text: "Sign Up",
@@ -415,6 +398,8 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                           },
                           isGradient: true,
                         ),
+                        DividerWidget(),
+                        LoginLabel(),
                       ],
                     ),
                   ),
