@@ -9,7 +9,7 @@ class TitlePro extends StatelessWidget {
     return RichText(
       textAlign: TextAlign.center,
       text: TextSpan(
-        text: 'Mechanic',
+        text: 'Smart',
         style: TextStyle(
           fontSize: 30,
           fontWeight: FontWeight.w700,
@@ -17,7 +17,7 @@ class TitlePro extends StatelessWidget {
         ),
         children: [
           TextSpan(
-            text: ' Workshop',
+            text: 'Workshop',
             style: TextStyle(
               color: onBackground, // متجاوب مع الدارك واللايت
               fontSize: 30,

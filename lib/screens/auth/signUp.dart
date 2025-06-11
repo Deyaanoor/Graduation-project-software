@@ -468,8 +468,6 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
               email: emailController.text, password: passwordController.text),
         ),
       );
-      // CustomSnackBar.showSuccessSnackBar(context, "Registration successful.");
-      // Navigator.pushNamed(context, '/login');
     } catch (e) {
       print("❌ Error during signup: $e");
       CustomSnackBar.showErrorSnackBar(context, "Registration failed.");
