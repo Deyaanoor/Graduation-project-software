@@ -12,11 +12,11 @@ const transporter = nodemailer.createTransport({
 });
 
 const applyGarage = async (req, res) => {
-  const { garageName, garageLocation, subscriptionType, paymentIntentId } =
+  const { garageName, garageLocation, subscriptionType } =
     req.body;
   const userId = req.body.user_id;
 
-  if (!garageName || !garageLocation || !subscriptionType || !paymentIntentId) {
+  if (!garageName || !garageLocation || !subscriptionType ) {
     return res.status(400).json({ message: "All fields are required" });
   }
 
@@ -35,7 +35,7 @@ const applyGarage = async (req, res) => {
       garageName,
       garageLocation,
       subscriptionType,
-      paymentIntentId,
+      
 
       status: "pending",
       createdAt: new Date(),
