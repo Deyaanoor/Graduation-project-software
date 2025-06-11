@@ -256,10 +256,17 @@ const existRequest = async (req, res) => {
     const applyRequestCollection = db.collection("registration_requests");
     const userCollection = db.collection("users");
 
-    const user = await userCollection.find({ email: email });
+    // استخدم findOne بدل find
+    const user = await userCollection.findOne({ email: email });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ statusPending: false, message: "User not found" });
+    }
+
     // ابحث عن طلب قيد الانتظار أو مقبول
     const existingRequest = await applyRequestCollection.findOne({
-      _id: new ObjectId(user._id),
+      user_id: new ObjectId(user._id),
     });
 
     if (existingRequest) {
@@ -273,6 +280,11 @@ const existRequest = async (req, res) => {
           statusPending: false,
         });
       }
+    } else {
+      // لا يوجد طلب أصلاً
+      return res.status(200).json({
+        statusPending: false,
+      });
     }
   } catch (error) {
     console.error("Exist request error:", error);

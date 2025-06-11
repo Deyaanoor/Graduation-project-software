@@ -352,10 +352,13 @@ class LoginPage extends ConsumerWidget {
 
         ref.read(loginLoadingProvider.notifier).state = false;
         print("before isPendingAsync");
-
-        if (role == null || role == "") {
+        print(
+            "role: $role, status: $status  Anding: ${role == null && status == "active" || role == ""}");
+        print("result: $result");
+        if (role == null && status == "active" || role == "") {
+          print("❌ Login failed: Invalid role or status");
           final isPendingAsync =
-              await ref.read(existRequestProvider)(emailController.text);
+              ref.read(existRequestProvider)(emailController.text);
           print("Async pending: $isPendingAsync");
           if (isPendingAsync == true) {
             showPendingRequestDialog(
