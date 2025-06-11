@@ -9,6 +9,6 @@ const router = express.Router();
 
 router.post("/add_request", applyGarage);
 router.get("/", getAllRequests);
-router.get("/status/:user_id", existRequest);
+router.get("/status/:email", existRequest);
 router.put("/:requestId/status", updateRequestStatus);
 module.exports = router;

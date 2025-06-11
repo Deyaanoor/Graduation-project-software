@@ -29,15 +29,17 @@ final getAllRequestsProvider =
     throw Exception('فشل في جلب طلبات التسجيل');
   }
 });
-final existRequestProvider =
-    FutureProvider.family<bool, String>((ref, userId) async {
-  final response =
-      await http.get(Uri.parse('$apiUrl/request_register/status/$userId'));
-
-  if (response.statusCode == 200) {
-    final data = json.decode(response.body);
-    return data['statusPending'] == true;
-  } else {
-    throw Exception('فشل في التحقق من وجود طلب قيد الانتظار');
-  }
-});
+final existRequestProvider = Provider(
+  (ref) => (String email) async {
+    // print('Checking for pending request for user ID: $userId');
+    final response = await http.get(Uri.parse('$apiUrl/status/$email'));
+    print('Response status code: ${response.statusCode}');
+    print('Response body: ${response.body}');
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['statusPending'] == true;
+    } else {
+      throw Exception('فشل في التحقق من وجود طلب قيد الانتظار');
+    }
+  },
+);

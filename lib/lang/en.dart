@@ -463,4 +463,7 @@ final Map<String, String> english = {
   'Statics': 'Statistics',
   'plans': 'Plans',
   'garages': 'Garages',
+  'requestPending':
+      'Your request is under review by the administration. Please wait.\nIf accepted or rejected, you will receive an email.',
+  'requestprocessTitle': 'Your request is being processed',
 };

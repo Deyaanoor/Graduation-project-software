@@ -252,12 +252,14 @@ const updateRequestStatus = async (req, res) => {
 const existRequest = async (req, res) => {
   try {
     const db = await connectDB();
-    const { user_id } = req.params;
+    const { email } = req.params;
     const applyRequestCollection = db.collection("registration_requests");
+    const userCollection = db.collection("users");
 
+    const user = await userCollection.find({ email: email });
     // ابحث عن طلب قيد الانتظار أو مقبول
     const existingRequest = await applyRequestCollection.findOne({
-      user_id: new ObjectId(user_id),
+      _id: new ObjectId(user._id),
     });
 
     if (existingRequest) {

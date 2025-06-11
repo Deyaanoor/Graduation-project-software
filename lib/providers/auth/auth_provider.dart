@@ -213,7 +213,7 @@ final userIdProvider = FutureProvider<String?>((ref) async {
 
 final logoutProvider = Provider((ref) => () async {
       await removeToken();
-      ref.refresh(userIdProvider); // إعادة تحميل التوكن الجديد بعد logout
+      ref.invalidate(userIdProvider);
     });
 
 Future<void> removeToken() async {
