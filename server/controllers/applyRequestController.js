@@ -43,7 +43,7 @@ const applyGarage = async (req, res) => {
 
     await applyRequestCollection.insertOne(applyRequest);
 
-    res.status(201).json({ message: "Application submitted successfully." });
+    res.status(200).json({ message: "Application submitted successfully..." });
   } catch (error) {
     console.error("Apply garage error:", error);
     res.status(500).json({ message: "Something went wrong", error });
