@@ -6,3 +6,4 @@ final selectedIndexProvider = StateProvider<int>((ref) {
 final isEditModeProvider = StateProvider<bool>((ref) => false);
 
 final isSidebarExpandedProvider = StateProvider<bool>((ref) => true);
+final loginLoadingProvider = StateProvider<bool>((ref) => false);

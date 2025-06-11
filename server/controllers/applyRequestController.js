@@ -121,7 +121,9 @@ const updateRequestStatus = async (req, res) => {
     );
 
     // جلب بيانات المستخدم لإرسال الإيميل
-    const user = await usersCollection.findOne({ _id: new ObjectId(request.user_id) });
+    const user = await usersCollection.findOne({
+      _id: new ObjectId(request.user_id),
+    });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -187,7 +189,9 @@ const updateRequestStatus = async (req, res) => {
         email: user.email,
         garage_id: "",
       };
-      const plan = await plansCollection.findOne({ name: request.subscriptionType });
+      const plan = await plansCollection.findOne({
+        name: request.subscriptionType,
+      });
       if (!plan) {
         return res
           .status(404)
@@ -245,9 +249,46 @@ const updateRequestStatus = async (req, res) => {
     res.status(500).json({ message: "Something went wrong", error });
   }
 };
+const existRequest = async (req, res) => {
+  try {
+    const db = await connectDB();
+    const { email } = req.params;
+    const applyRequestCollection = db.collection("registration_requests");
+    const userCollection = db.collection("users");
 
+    console.log("قبل جلب المستخدم");
+    const user = await userCollection.findOne({ email: email });
+    console.log("بعد جلب المستخدم", user);
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ statusPending: false, message: "User not found" });
+    }
+
+    const existingRequest = await applyRequestCollection.findOne({
+      user_id: new ObjectId(user._id),
+    });
+
+    console.log("بعد جلب الطلب", existingRequest);
+
+    if (existingRequest) {
+      if (existingRequest.status === "pending") {
+        return res.status(200).json({ statusPending: true });
+      } else {
+        return res.status(200).json({ statusPending: false });
+      }
+    } else {
+      return res.status(200).json({ statusPending: false });
+    }
+  } catch (error) {
+    console.error("Exist request error:", error);
+    res.status(500).json({ message: "Something went wrong", error });
+  }
+};
 module.exports = {
   applyGarage,
   getAllRequests,
   updateRequestStatus,
+  existRequest,
 };

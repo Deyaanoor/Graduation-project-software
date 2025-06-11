@@ -460,17 +460,23 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
         'fcmToken': "",
       };
 
-      final result = ref.read(registerUserProvider(userData).future);
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => CheckVerificationPage(
-              email: emailController.text, password: passwordController.text),
-        ),
-      );
+      final result = await ref.read(registerUserProvider(userData).future);
+
+      if (result == 'created') {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CheckVerificationPage(
+                email: emailController.text, password: passwordController.text),
+          ),
+        );
+      } else {
+        CustomSnackBar.showErrorSnackBar(context, "Registration failed.");
+      }
     } catch (e) {
       print("❌ Error during signup: $e");
-      CustomSnackBar.showErrorSnackBar(context, "Registration failed.");
+      CustomSnackBar.showErrorSnackBar(
+          context, "Registration failed. Email may already exist.");
     }
   }
 }

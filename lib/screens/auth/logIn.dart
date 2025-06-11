@@ -5,6 +5,7 @@ import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/home_provider.dart';
 import 'package:flutter_provider/providers/language_provider.dart';
+import 'package:flutter_provider/providers/requestRegister.dart';
 import 'package:flutter_provider/screens/auth/Title_Project.dart';
 import 'package:flutter_provider/screens/auth/divider_widget.dart';
 import 'package:flutter_provider/screens/auth/forgot_password.dart';
@@ -13,37 +14,39 @@ import 'package:flutter_provider/widgets/bezierContainer.dart';
 import 'package:flutter_provider/widgets/custom_button.dart';
 import 'package:flutter_provider/widgets/custom_snackbar.dart';
 import 'package:flutter_provider/widgets/custom_text_field.dart';
+import 'package:flutter_provider/widgets/pendingRequest.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class LoginPage extends ConsumerWidget {
   LoginPage({super.key});
 
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  final _formKey = GlobalKey<FormState>();
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final TextEditingController emailController = TextEditingController();
-    final TextEditingController passwordController = TextEditingController();
-
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
     final lang = ref.watch(languageProvider);
+    final isLoading = ref.watch(loginLoadingProvider);
 
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (ResponsiveHelper.isMobile(context)) {
             return _buildMobileView(context, emailController,
-                passwordController, height, ref, lang);
+                passwordController, height, ref, lang, isLoading);
           } else {
             return _buildDesktopView(context, emailController,
-                passwordController, height, width, ref, lang);
+                passwordController, height, width, ref, lang, isLoading);
           }
         },
       ),
     );
   }
-
-  final _formKey = GlobalKey<FormState>();
 
   Widget _buildMobileView(
     BuildContext context,
@@ -52,6 +55,7 @@ class LoginPage extends ConsumerWidget {
     double height,
     WidgetRef ref,
     Map<String, dynamic> lang,
+    bool isLoading,
   ) {
     return Stack(
       children: [
@@ -121,6 +125,7 @@ class LoginPage extends ConsumerWidget {
                           ref, lang);
                     },
                     isGradient: true,
+                    isloading: isLoading,
                   ),
                   DividerWidget(),
                   SizedBox(height: height * .055),
@@ -135,14 +140,14 @@ class LoginPage extends ConsumerWidget {
   }
 
   Widget _buildDesktopView(
-    BuildContext context,
-    TextEditingController emailController,
-    TextEditingController passwordController,
-    double height,
-    double width,
-    WidgetRef ref,
-    Map<String, dynamic> lang,
-  ) {
+      BuildContext context,
+      TextEditingController emailController,
+      TextEditingController passwordController,
+      double height,
+      double width,
+      WidgetRef ref,
+      Map<String, dynamic> lang,
+      isLoading) {
     return Center(
       child: Container(
         constraints: BoxConstraints(
@@ -262,6 +267,7 @@ class LoginPage extends ConsumerWidget {
                                 passwordController, ref, lang);
                           },
                           isGradient: true,
+                          isloading: true,
                         ),
                         SizedBox(height: 10),
                         DividerWidget(),
@@ -287,6 +293,8 @@ class LoginPage extends ConsumerWidget {
   ) async {
     if (_formKey.currentState?.validate() ?? false) {
       try {
+        ref.read(loginLoadingProvider.notifier).state = true;
+
         ref.read(selectedIndexProvider.notifier).state = 0;
 
         String? fcmToken;
@@ -325,19 +333,47 @@ class LoginPage extends ConsumerWidget {
         final role = result['role'];
         final status = result['status'];
 
-        print("rooooole $role");
-        print("result $result");
+        // String? userId;
+        //  = ref.read(userIdProvider).value;
+        // for (int i = 0; i < 10; i++) {
+        //   userId = ref.read(userIdProvider).value;
+        //   if (userId != null) break;
+        //   await Future.delayed(const Duration(milliseconds: 100));
+        // }
+        // print("User ID: $userId");
+        // if (userId == null) {
+        //   CustomSnackBar.showErrorSnackBar(
+        //     context,
+        //     lang['loginFailed'] ?? 'Login failed (userId not found)',
+        //   );
+        //   return;
+        // }
+        // print("User ID2: $userId");
 
-        print("status $status");
-
-        ref.invalidate(userIdProvider);
-
-        if (role == null || role == "") {
-          Navigator.pushNamed(context, '/Apply_Request');
+        ref.read(loginLoadingProvider.notifier).state = false;
+        print("before isPendingAsync");
+        print(
+            "role: $role, status: $status  Anding: ${role == null && status == "active" || role == ""}");
+        print("result: $result");
+        if (role == null && status == "active" || role == "") {
+          print("❌ Login failed: Invalid role or status");
+          final isPendingAsync =
+              ref.read(existRequestProvider)(emailController.text);
+          print("Async pending: $isPendingAsync");
+          if (isPendingAsync == true) {
+            showPendingRequestDialog(
+                context,
+                lang['requestPending'] ??
+                    'طلبك قيد المعالجة من الإدارة. يرجى الانتظار. \n ' +
+                        'في حال القبول أو الرفض سيتم إرسال ايميل اليك',
+                lang,
+                ref);
+          } else {
+            Navigator.pushNamed(context, '/Apply_Request');
+          }
         } else {
           print("✅ Login successful: $role, $status");
           if (status?.toLowerCase() != "active" && role == "owner") {
-            print("status $status ,IDUseeer: $userIdProvider");
             Navigator.pushNamed(context, '/garage_info');
           } else if (status?.toLowerCase() != "active" && role == "employee") {
             CustomSnackBar.showErrorSnackBar(
@@ -350,6 +386,9 @@ class LoginPage extends ConsumerWidget {
           }
         }
       } catch (e) {
+        ref.read(loginLoadingProvider.notifier).state =
+            false; // أوقف التحميل عند الخطأ
+
         print("❌ Login error: $e");
         CustomSnackBar.showErrorSnackBar(
           context,

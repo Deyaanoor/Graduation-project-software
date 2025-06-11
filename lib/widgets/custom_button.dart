@@ -6,10 +6,10 @@ class CustomButton extends StatelessWidget {
   final Color textColor;
   final Color backgroundColor;
   final Color borderColor;
-
+  // final void Function()? onPressed;
   final bool hasShadow;
   final bool isGradient;
-
+  final bool isloading; // Flag to switch between the two styles
   const CustomButton({
     super.key,
     required this.text,
@@ -18,7 +18,8 @@ class CustomButton extends StatelessWidget {
     this.backgroundColor = Colors.blue,
     this.borderColor = Colors.transparent,
     this.hasShadow = true,
-    this.isGradient = false, // Flag to switch between the two styles
+    this.isGradient = false,
+    this.isloading = false, // Flag to switch between the two styles
   });
 
   @override
@@ -47,10 +48,15 @@ class CustomButton extends StatelessWidget {
               colors: [Color(0xfffbb448), Color(0xfff7892b)],
             ),
           ),
-          child: Text(
-            text,
-            style: const TextStyle(fontSize: 20, color: Colors.white),
-          ),
+          child: isloading
+              ? const Center(
+                  child: CircularProgressIndicator(
+                  color: Colors.white,
+                ))
+              : Text(
+                  text,
+                  style: const TextStyle(fontSize: 20, color: Colors.white),
+                ),
         ),
       );
     } else {

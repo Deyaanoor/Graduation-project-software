@@ -464,4 +464,7 @@ final Map<String, String> arabic = {
   'Statics': 'الإحصائيات',
   'plans': 'الباقات',
   'garages': 'الكراجات',
+  'requestPending':
+      'طلبك قيد المعالجة من الإدارة. يرجى الانتظار.\nفي حال القبول أو الرفض سيتم إرسال إيميل إليك.',
+  'requestprocessTitle': 'طلبك قيد المعالجة',
 };
