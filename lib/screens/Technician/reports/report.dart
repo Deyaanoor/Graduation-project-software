@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_provider/Responsive/responsive_helper.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/employeeProvider.dart';
@@ -217,7 +218,8 @@ class _ReportPageState extends ConsumerState<ReportPage> {
       _repairDescController.text = '';
     });
 
-    final url = 'https://9641-35-236-177-189.ngrok-free.app/predict';
+    // final url = 'https://9641-35-236-177-189.ngrok-free.app/predict';
+    final url = '${dotenv.env['car_API_URL']}/predict';
 
     try {
       final response = await http.post(

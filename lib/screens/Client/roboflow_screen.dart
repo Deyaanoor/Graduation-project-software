@@ -538,13 +538,6 @@ class _RoboflowScreenState extends ConsumerState<RoboflowScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                subtitle: Text(
-                  '${lang['confidence'] ?? 'Confidence'}: ${(confidence * 100).toStringAsFixed(1)}%',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
-                ),
                 onTap: () {
                   showPredictionDetails(context, message, lang);
                 },

@@ -135,42 +135,64 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
   }
 
   Widget _buildMobileLayout(
-      Map<String, dynamic> request,
-      Map<String, dynamic> garageData,
-      WidgetRef ref,
-      Map<String, dynamic> lang,
-      ThemeData theme,
-      bool isDark) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
+    Map<String, dynamic> request,
+    Map<String, dynamic> garageData,
+    WidgetRef ref,
+    Map<String, dynamic> lang,
+    ThemeData theme,
+    bool isDark,
+  ) {
+    return Column(
       children: [
         SizedBox(
-          height: _showMessages ? 300 : 500,
-          child: _buildMap(request, garageData),
+          height: 30,
         ),
-        const SizedBox(height: 12),
-        ElevatedButton.icon(
-          onPressed: () {
-            setState(() {
-              _showMessages = !_showMessages;
-            });
-          },
-          icon: Icon(_showMessages ? Icons.visibility_off : Icons.visibility),
-          label: Text(_showMessages
-              ? (lang['hideMessages'] ?? 'إخفاء الرسائل')
-              : (lang['showMessages'] ?? 'عرض الرسائل')),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.orange,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+        // الخريطة تأخذ 30% من الشاشة
+        Flexible(
+          flex: 3,
+          child: SizedBox(
+            width: double.infinity,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ClipRRect(
+                borderRadius:
+                    BorderRadius.circular(16), // يمكنك تغيير القيمة حسب رغبتك
+                child: _buildMap(request, garageData),
+              ),
             ),
-            padding: const EdgeInsets.symmetric(vertical: 12),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: ElevatedButton.icon(
+            onPressed: () {
+              setState(() {
+                _showMessages = !_showMessages;
+              });
+            },
+            icon: Icon(_showMessages ? Icons.visibility_off : Icons.visibility),
+            label: Text(_showMessages
+                ? (lang['hideMessages'] ?? 'إخفاء الرسائل')
+                : (lang['showMessages'] ?? 'عرض الرسائل')),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              // padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        // الرسائل تأخذ 70% من الشاشة
         if (_showMessages)
-          _buildMessage(request['_id'], false, ref, lang, theme, isDark),
+          Flexible(
+            flex: 7,
+            child:
+                _buildMessage(request['_id'], false, ref, lang, theme, isDark),
+          ),
       ],
     );
   }
@@ -266,7 +288,7 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
         child: Column(
           children: [
             SizedBox(
-              height: isDesktop ? 350 : 200,
+              height: isDesktop ? 350 : 410,
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(isDesktop ? 24 : 16),
                 child: Column(

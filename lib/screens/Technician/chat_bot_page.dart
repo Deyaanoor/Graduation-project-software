@@ -1,5 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
 class ChatBotPage extends StatefulWidget {
@@ -26,19 +29,24 @@ class _ChatBotPageState extends State<ChatBotPage> {
     _showWelcomeMessage();
   }
 
-  void _showWelcomeMessage() {
+  void _showWelcomeMessage([Map<String, dynamic>? lang]) {
     messages.add({
-      'text': 'مرحبًا بك في CarAI\nكيف يمكنني مساعدتك في حل مشكلتك اليوم؟',
+      'text': lang?['chatWelcome'] ??
+          'Welcome to CarAI\nHow can I help you with your problem today?',
       'isBot': 'true',
     });
     setState(() {});
   }
 
-  void _addUserMessage(String field, String value) {
+  void _addUserMessage(
+    String field,
+    String value,
+    Map<String, dynamic> lang,
+  ) {
     setState(() {
       userInput[field] = value;
       messages.add({
-        'text': '${_getFieldName(field)}: $value',
+        'text': '${_getFieldName(field, lang)}: $value',
         'isBot': 'false',
       });
       currentStep++;
@@ -46,25 +54,27 @@ class _ChatBotPageState extends State<ChatBotPage> {
     });
   }
 
-  String _getFieldName(String field) {
+  String _getFieldName(String field, Map<String, dynamic> lang) {
     switch (field) {
       case 'Make':
-        return 'Make';
+        return lang['make'] ?? 'Make';
       case 'Model':
-        return 'Model';
+        return lang['model'] ?? 'Model';
       case 'Problem':
-        return 'Problem';
+        return lang['problem'] ?? 'Problem';
       case 'Symptoms':
-        return 'Symptoms';
+        return lang['symptoms'] ?? 'Symptoms';
       case 'Year':
-        return 'Year';
+        return lang['year'] ?? 'Year';
       default:
         return field;
     }
   }
 
-  Future<void> _sendDataToAPI() async {
-    final url = 'https://2b4b-35-193-33-235.ngrok-free.app/predict';
+  Future<void> _sendDataToAPI(
+    Map<String, dynamic> lang,
+  ) async {
+    final url = '${dotenv.env['car_API_URL']}/predict';
 
     final response = await http.post(
       Uri.parse(url),
@@ -93,7 +103,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
     } else {
       setState(() {
         messages.add({
-          'text': 'حدث خطأ أثناء الاتصال بالسيرفر.',
+          'text': lang['serverError'] ?? 'A server error occurred.',
           'isBot': 'true',
         });
       });
@@ -102,44 +112,34 @@ class _ChatBotPageState extends State<ChatBotPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[200]!,
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.all(20),
-              itemCount: messages.length,
-              itemBuilder: (context, index) {
-                return _buildMessageItem(messages[index]);
-              },
+    return Consumer(builder: (context, ref, _) {
+      final lang = ref.watch(languageProvider);
+      final theme = Theme.of(context);
+      return Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                padding: EdgeInsets.all(20),
+                itemCount: messages.length,
+                itemBuilder: (context, index) {
+                  return _buildMessageItem(messages[index], theme, lang);
+                },
+              ),
             ),
-          ),
-          if (currentStep < messageOrder.length) _buildTextInputField(),
-          if (currentStep >= messageOrder.length) _buildGoButton(),
-        ],
-      ),
-    );
-  }
-
-  AppBar _buildAppBar() {
-    return AppBar(
-      title: Text('CarAI Assistant',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-      centerTitle: true,
-      flexibleSpace: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFFFA726), Color(0xFFFF7043)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+            if (currentStep < messageOrder.length)
+              _buildTextInputField(theme, lang),
+            if (currentStep >= messageOrder.length) _buildGoButton(theme, lang),
+          ],
         ),
-      ),
-    );
+      );
+    });
   }
 
-  Widget _buildMessageItem(Map<String, String> message) {
+  Widget _buildMessageItem(
+      Map<String, String> message, ThemeData theme, Map<String, dynamic> lang) {
+    final isBot = message['isBot'] == 'true';
     return AnimatedOpacity(
       opacity: 1.0,
       duration: Duration(milliseconds: 500),
@@ -147,9 +147,9 @@ class _ChatBotPageState extends State<ChatBotPage> {
         margin: EdgeInsets.symmetric(vertical: 8),
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: message['isBot'] == 'true'
-              ? Colors.orange.withOpacity(0.1)
-              : Colors.white,
+          color: isBot
+              ? theme.colorScheme.primary.withOpacity(0.08)
+              : theme.cardColor,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -159,17 +159,18 @@ class _ChatBotPageState extends State<ChatBotPage> {
         child: Text(
           message['text']!,
           style: TextStyle(
-              fontSize: 16,
-              color:
-                  message['isBot'] == 'true' ? Colors.orange : Colors.black87),
+            fontSize: 16,
+            color: isBot
+                ? theme.colorScheme.primary
+                : theme.textTheme.bodyLarge?.color,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildTextInputField() {
+  Widget _buildTextInputField(ThemeData theme, Map<String, dynamic> lang) {
     String currentField = messageOrder[currentStep];
-
     return Padding(
       padding: EdgeInsets.all(20),
       child: Row(
@@ -178,17 +179,20 @@ class _ChatBotPageState extends State<ChatBotPage> {
             child: TextField(
               controller: _controller,
               decoration: InputDecoration(
-                labelText: _getFieldName(currentField),
+                labelText: _getFieldName(currentField, lang),
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
+                filled: true,
+                fillColor: theme.cardColor,
               ),
+              style: TextStyle(color: theme.textTheme.bodyLarge?.color),
             ),
           ),
           SizedBox(width: 10),
           InkWell(
             onTap: () {
               if (_controller.text.isNotEmpty) {
-                _addUserMessage(currentField, _controller.text);
+                _addUserMessage(currentField, _controller.text, lang);
               }
             },
             child: Container(
@@ -196,11 +200,14 @@ class _ChatBotPageState extends State<ChatBotPage> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
-                  colors: [Color(0xFFFFA726), Color(0xFFFF7043)],
+                  colors: [
+                    theme.colorScheme.primary,
+                    theme.colorScheme.primary.withOpacity(0.8)
+                  ],
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.orange.withOpacity(0.3),
+                    color: theme.colorScheme.primary.withOpacity(0.2),
                     blurRadius: 10,
                     spreadRadius: 2,
                   )
@@ -214,21 +221,24 @@ class _ChatBotPageState extends State<ChatBotPage> {
     );
   }
 
-  Widget _buildGoButton() {
+  Widget _buildGoButton(ThemeData theme, Map<String, dynamic> lang) {
     return Padding(
       padding: EdgeInsets.all(20),
       child: InkWell(
-        onTap: () => _sendDataToAPI(),
+        onTap: () => _sendDataToAPI(lang),
         child: Container(
           height: 70,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFFFFA726), Color(0xFFFF7043)],
+              colors: [
+                theme.colorScheme.primary,
+                theme.colorScheme.primary.withOpacity(0.8)
+              ],
             ),
             borderRadius: BorderRadius.circular(35),
             boxShadow: [
               BoxShadow(
-                color: Colors.orange.withOpacity(0.3),
+                color: theme.colorScheme.primary.withOpacity(0.2),
                 blurRadius: 15,
                 spreadRadius: 2,
               )
@@ -240,11 +250,12 @@ class _ChatBotPageState extends State<ChatBotPage> {
               Icon(Icons.auto_awesome_motion, color: Colors.white),
               SizedBox(width: 10),
               Text(
-                'ابدأ التحليل',
+                lang['startAnalysis'] ?? 'ابدأ التحليل',
                 style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ],
           ),

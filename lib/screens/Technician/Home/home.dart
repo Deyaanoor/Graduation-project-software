@@ -247,7 +247,7 @@ class Home extends ConsumerWidget {
     return BottomNavigationBar(
       currentIndex: selectedIndex,
       selectedItemColor: const Color(0xFFFF8F00),
-      unselectedItemColor: Colors.grey,
+      unselectedItemColor: Colors.white,
       onTap: (index) => ref.read(selectedIndexProvider.notifier).state = index,
       items: [
         BottomNavigationBarItem(

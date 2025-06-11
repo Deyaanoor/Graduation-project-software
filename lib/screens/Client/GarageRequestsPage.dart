@@ -74,20 +74,28 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
   @override
   Widget build(BuildContext context) {
     final userId = ref.watch(userIdProvider).value;
-    final garageId = ref.watch(getGarageIdProvider(userId!)).value;
+
+    final garageId;
+
+    // ref.watch(getGarageIdProvider(userId!)).value;
     final userInfo =
         userId != null ? ref.watch(getUserInfoProvider(userId)).value : null;
 
     final userRole =
         userInfo != null ? userInfo['role'] ?? 'بدون اسم' : 'جاري التحميل...';
     final lang = ref.watch(languageProvider);
+    if (userRole == 'owner') {
+      garageId = ref.watch(getGarageIdProvider(userId!)).value;
+    } else {
+      garageId = ref.watch(garageIdProvider);
+    }
     final AsyncValue<List<Map<String, dynamic>>> requestsAsync;
 
     if (userRole == 'owner') {
-      requestsAsync = ref.watch(getRequestsProvider(userId));
+      requestsAsync = ref.watch(getRequestsProvider(userId!));
     } else {
       requestsAsync = ref.watch(
-        requestsByUserAndGarageProvider((userId: userId, garageId: garageId!)),
+        requestsByUserAndGarageProvider((userId: userId!, garageId: garageId!)),
       );
     }
 

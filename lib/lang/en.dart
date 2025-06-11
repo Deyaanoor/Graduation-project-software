@@ -466,4 +466,12 @@ final Map<String, String> english = {
   'requestPending':
       'Your request is under review by the administration. Please wait.\nIf accepted or rejected, you will receive an email.',
   'requestprocessTitle': 'Your request is being processed',
+  'chatWelcome':
+      'Welcome to CarAI\nHow can I help you with your problem today?',
+  'make': 'Make',
+  'model': 'Model',
+  'problem': 'Problem',
+  'year': 'Year',
+  'startAnalysis': 'Start Analysis',
+  'serverError': 'A server error occurred.',
 };
