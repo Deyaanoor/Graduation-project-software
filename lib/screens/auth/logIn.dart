@@ -355,10 +355,11 @@ class LoginPage extends ConsumerWidget {
         print(
             "role: $role, status: $status  Anding: ${role == null && status == "active" || role == ""}");
         print("result: $result");
-        if (role == null && status == "active" || role == "") {
+
+        if (role == null || role == "") {
           print("❌ Login failed: Invalid role or status");
           final isPendingAsync =
-              ref.read(existRequestProvider)(emailController.text);
+              await ref.read(existRequestProvider)(emailController.text);
           print("Async pending: $isPendingAsync");
           if (isPendingAsync == true) {
             showPendingRequestDialog(
@@ -382,6 +383,8 @@ class LoginPage extends ConsumerWidget {
             );
             return;
           } else {
+            ref.invalidate(userIdProvider);
+            final userId = ref.read(userIdProvider).value;
             Navigator.pushNamed(context, '/home');
           }
         }
