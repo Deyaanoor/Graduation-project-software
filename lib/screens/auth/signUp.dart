@@ -167,10 +167,28 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                         controller: passwordController,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your password';
+                            return lang['passwordRequired'] ??
+                                'Please enter your password';
                           }
-                          if (value.length < 6) {
-                            return 'Password must be at least 6 characters';
+                          if (value.length < 8) {
+                            return lang['passwordShort'] ??
+                                'Password must be at least 8 characters';
+                          }
+                          if (!RegExp(r'[A-Z]').hasMatch(value)) {
+                            return lang['passwordUpper'] ??
+                                'Password must contain an uppercase letter';
+                          }
+                          if (!RegExp(r'[a-z]').hasMatch(value)) {
+                            return lang['passwordLower'] ??
+                                'Password must contain a lowercase letter';
+                          }
+                          if (!RegExp(r'[0-9]').hasMatch(value)) {
+                            return lang['passwordNumber'] ??
+                                'Password must contain a number';
+                          }
+                          if (!RegExp(r'[!@#\$&*~_.,\-]').hasMatch(value)) {
+                            return lang['passwordSpecial'] ??
+                                'Password must contain a special character';
                           }
                           return null;
                         },
@@ -202,9 +220,6 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                         isGradient: true,
                       ),
                       const SizedBox(height: 10),
-                      DividerWidget(),
-                      LoginLabel(),
-                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
@@ -400,8 +415,6 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                           },
                           isGradient: true,
                         ),
-                        DividerWidget(),
-                        LoginLabel(),
                       ],
                     ),
                   ),
