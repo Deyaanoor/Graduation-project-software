@@ -527,7 +527,7 @@ const loginUser = async (req, res) => {
     const usersCollection = db.collection("users");
     const user = await usersCollection.findOne({ email });
     const garagesCollection = db.collection("garages");
-
+const employeesCollection = db.collection("employees");
     if (!user) {
       return res.status(400).json({ message: "Email not found" });
     }
@@ -548,7 +548,8 @@ const loginUser = async (req, res) => {
     if (user.role === "owner") {
       garage = await garagesCollection.findOne({ owner_id: user._id });
     } else if (user.role === "employee") {
-      garage = await garagesCollection.findOne({ _id: user.garage_id });
+      const employee = await employeesCollection.findOne({_id: user._id });
+      garage = await garagesCollection.findOne({ _id: employee.garage_id });
     }
 
     // ✅ تحديث fcmToken إذا كان موجود
