@@ -203,6 +203,7 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
     Map<String, dynamic> requestLocation = {};
     try {
       requestLocation = json.decode(request['location']);
+      print('موقع الطلب: $requestLocation');
     } catch (e) {
       print('فشل فك تشفير موقع الطلب: $e');
     }
@@ -216,6 +217,7 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
     Map<String, dynamic> garageLocation = {};
     try {
       garageLocation = json.decode(garageData['location']);
+      print('موقع الكراج: $garageLocation');
     } catch (e) {
       print('فشل فك تشفير موقع الكراج: $e');
     }
@@ -288,7 +290,7 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
         child: Column(
           children: [
             SizedBox(
-              height: isDesktop ? 350 : 410,
+              height: isDesktop ? 350 : 300,
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(isDesktop ? 24 : 16),
                 child: Column(

@@ -112,6 +112,10 @@ class _ReportDetailsPageState extends ConsumerState<ReportDetailsPage> {
                       const SizedBox(height: 16),
                       _buildMobileHeaderItem(Icons.person,
                           lang['owner'] ?? 'المالك', report['owner'] ?? 'N/A'),
+                      _buildMobileHeaderItem(
+                          Icons.person,
+                          lang['mechanicName'] ?? 'Mechanic Name',
+                          report['mechanicName'] ?? 'N/A'),
                     ],
                   )
                 : Row(
@@ -127,6 +131,10 @@ class _ReportDetailsPageState extends ConsumerState<ReportDetailsPage> {
                           report['plateNumber'] ?? 'N/A'),
                       _buildHeaderItem(Icons.person, lang['owner'] ?? 'المالك',
                           report['owner'] ?? 'N/A'),
+                      _buildHeaderItem(
+                          Icons.person,
+                          lang['mechanicName'] ?? 'Mechanic Name',
+                          report['mechanicName'] ?? 'N/A'),
                     ],
                   ),
           ),

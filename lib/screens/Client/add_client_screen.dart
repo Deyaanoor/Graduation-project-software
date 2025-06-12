@@ -65,7 +65,7 @@ class _AddClientScreenState extends ConsumerState<AddClientScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(lang['addClient'] ?? 'Add Client'),
-        backgroundColor: Colors.orange,
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -108,10 +108,16 @@ class _AddClientScreenState extends ConsumerState<AddClientScreen> {
               ElevatedButton(
                 onPressed: _submitClient,
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    padding: const EdgeInsets.symmetric(vertical: 15)),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                ),
                 child: Text(
                   lang['addClient'] ?? 'Add Client',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],

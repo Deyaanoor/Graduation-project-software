@@ -66,7 +66,7 @@ class _AddEmployeeScreenState extends ConsumerState<AddEmployeeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(lang['addEmployee'] ?? 'إضافة موظف'),
-        backgroundColor: Colors.orange,
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -124,9 +124,17 @@ class _AddEmployeeScreenState extends ConsumerState<AddEmployeeScreen> {
               ElevatedButton(
                 onPressed: _submitEmployee,
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    padding: const EdgeInsets.symmetric(vertical: 15)),
-                child: Text(lang['addEmployee'] ?? 'إضافة الموظف'),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                ),
+                child: Text(
+                  lang['addEmployee'] ?? 'إضافة الموظف',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),

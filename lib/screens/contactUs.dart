@@ -25,13 +25,14 @@ class _ContactUsPageState extends ConsumerState<ContactUsPage> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isSending = true);
       final userId = ref.watch(userIdProvider).value;
-      ref.invalidate(getcontactMessagesByIdProvider(userId ?? ''));
+
       try {
         await ref.read(addContactMessageProvider)(
           userId: userId ?? '',
           type: issueType ?? '',
           message: messageController.text,
         );
+        ref.invalidate(getcontactMessagesByIdProvider(userId ?? ''));
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(lang['messageSent'] ?? 'تم إرسال المشكلة بنجاح!'),
@@ -42,11 +43,13 @@ class _ContactUsPageState extends ConsumerState<ContactUsPage> {
         setState(() {
           _sent = true;
         });
-        ref.invalidate(staticAdminProvider);
-
+        // انتظر ثانية ثم أخفِ رسالة النجاح
+        await Future.delayed(const Duration(seconds: 1));
         setState(() {
           _sent = false;
         });
+        // إذا تحتاج تحديث بيانات أخرى أضف هنا
+        // ref.invalidate(staticAdminProvider);
       } catch (error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -160,12 +163,16 @@ class _ContactUsPageState extends ConsumerState<ContactUsPage> {
                                     strokeWidth: 2.5,
                                   ),
                                 )
-                              : const Icon(Icons.send),
+                              : const Icon(
+                                  Icons.send,
+                                  color: Colors.white,
+                                ),
                           label: Text(
                             _isSending
                                 ? (lang['sending'] ?? "جاري الإرسال...")
                                 : (lang['send'] ?? "إرسال"),
-                            style: const TextStyle(fontSize: 18),
+                            style: const TextStyle(
+                                fontSize: 18, color: Colors.white),
                           ),
                         ),
                 ],
@@ -185,79 +192,118 @@ class _ContactUsPageState extends ConsumerState<ContactUsPage> {
                 if (messages.isEmpty) {
                   return Text(lang['noMessages'] ?? 'لا توجد رسائل');
                 }
-                return Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Colors.grey,
-                      width: 1,
-                    ),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: DataTable(
-                    columnSpacing: 24,
-                    headingRowHeight: 48,
-                    dataRowHeight: 48,
-                    showCheckboxColumn: false,
-                    columns: [
-                      DataColumn(
-                        label: Center(
-                          child: Text(
-                            lang['issueType'] ?? 'نوع المشكلة',
+                // إذا كان على موبايل، اعرض كـ Cards
+                if (MediaQuery.of(context).size.width < 600) {
+                  return Column(
+                    children: messages.map<Widget>((msg) {
+                      return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: ListTile(
+                          leading: Icon(Icons.report_problem,
+                              color: Colors.orange.shade700),
+                          title: Text(
+                            msg['type'] ?? '-',
                             style: const TextStyle(fontWeight: FontWeight.bold),
-                            textAlign: TextAlign.center,
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 4),
+                              Text(
+                                  '${lang['message'] ?? 'الرسالة'}: ${msg['message'] ?? '-'}'),
+                              const SizedBox(height: 4),
+                              Text(
+                                  '${lang['status'] ?? 'الحالة'}: ${msg['status'] ?? '-'}'),
+                            ],
                           ),
                         ),
-                      ),
-                      DataColumn(
-                        label: Center(
-                          child: Text(
-                            lang['message'] ?? 'الرسالة',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                      DataColumn(
-                        label: Center(
-                          child: Text(
-                            lang['status'] ?? 'الحالة',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                    ],
-                    rows: messages.map<DataRow>((msg) {
-                      return DataRow(
-                        cells: [
-                          DataCell(
-                            Center(
-                              child: Text(
-                                msg['type'] ?? '-',
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ),
-                          DataCell(
-                            Center(
-                              child: Text(
-                                msg['message'] ?? '-',
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ),
-                          DataCell(
-                            Center(
-                              child: Text(
-                                msg['status'] ?? '-',
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ),
-                        ],
                       );
                     }).toList(),
+                  );
+                }
+                // إذا كان على شاشة كبيرة، اعرض جدول
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Container(
+                    width: 600,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.grey,
+                        width: 1,
+                      ),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: DataTable(
+                      columnSpacing: 24,
+                      headingRowHeight: 48,
+                      dataRowHeight: 48,
+                      showCheckboxColumn: false,
+                      columns: [
+                        DataColumn(
+                          label: Center(
+                            child: Text(
+                              lang['issueType'] ?? 'نوع المشكلة',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                        DataColumn(
+                          label: Center(
+                            child: Text(
+                              lang['message'] ?? 'الرسالة',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                        DataColumn(
+                          label: Center(
+                            child: Text(
+                              lang['status'] ?? 'الحالة',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                      ],
+                      rows: messages.map<DataRow>((msg) {
+                        return DataRow(
+                          cells: [
+                            DataCell(
+                              Center(
+                                child: Text(
+                                  msg['type'] ?? '-',
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                            DataCell(
+                              Center(
+                                child: Text(
+                                  msg['message'] ?? '-',
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                            DataCell(
+                              Center(
+                                child: Text(
+                                  msg['status'] ?? '-',
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                    ),
                   ),
                 );
               },

@@ -361,14 +361,27 @@ class _ReportPageState extends ConsumerState<ReportPage> {
   }
 
   Widget _buildOwnerField(Map<String, String> lang) {
-    return CustomTextField(
-      label: lang['owner_name'] ?? 'Owner Name',
-      hint: lang['enter_owner'] ?? 'Enter owner name',
-      icon: Icons.person,
-      controller: _ownerController,
-      borderColor: Colors.orange,
-      backgroundColor: Colors.white,
-      iconColor: Colors.orange,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CustomTextField(
+          label: lang['owner_name'] ?? 'Owner Name',
+          hint: lang['enter_owner'] ?? 'Enter owner name',
+          icon: Icons.person,
+          controller: _ownerController,
+          borderColor: Colors.orange,
+          backgroundColor: Colors.white,
+          iconColor: Colors.orange,
+        ),
+        if (ownerError != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, left: 8),
+            child: Text(
+              ownerError!,
+              style: const TextStyle(color: Colors.red, fontSize: 13),
+            ),
+          ),
+      ],
     );
   }
 
@@ -376,27 +389,53 @@ class _ReportPageState extends ConsumerState<ReportPage> {
     return Row(
       children: [
         Expanded(
-          child: CustomTextField(
-            label: lang['plate_number'] ?? 'Plate Number',
-            hint: lang['enter_plate'] ?? 'Enter plate number',
-            icon: Icons.directions_car,
-            controller: _plateController,
-            borderColor: Colors.orange,
-            backgroundColor: Colors.white,
-            iconColor: Colors.orange,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CustomTextField(
+                label: lang['plate_number'] ?? 'Plate Number',
+                hint: lang['enter_plate'] ?? 'Enter plate number',
+                icon: Icons.directions_car,
+                controller: _plateController,
+                borderColor: Colors.orange,
+                backgroundColor: Colors.white,
+                iconColor: Colors.orange,
+              ),
+              if (plateError != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, left: 8),
+                  child: Text(
+                    plateError!,
+                    style: const TextStyle(color: Colors.red, fontSize: 13),
+                  ),
+                ),
+            ],
           ),
         ),
         SizedBox(width: ResponsiveHelper.isDesktop(context) ? 25 : 15),
         Expanded(
-          child: CustomTextField(
-            label: lang['cost'] ?? 'Cost',
-            hint: lang['enter_cost'] ?? 'Enter cost',
-            icon: Icons.attach_money,
-            controller: _costController,
-            inputType: TextInputType.number,
-            borderColor: Colors.orange,
-            backgroundColor: Colors.white,
-            iconColor: Colors.orange,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CustomTextField(
+                label: lang['cost'] ?? 'Cost',
+                hint: lang['enter_cost'] ?? 'Enter cost',
+                icon: Icons.attach_money,
+                controller: _costController,
+                inputType: TextInputType.number,
+                borderColor: Colors.orange,
+                backgroundColor: Colors.white,
+                iconColor: Colors.orange,
+              ),
+              if (costError != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, left: 8),
+                  child: Text(
+                    costError!,
+                    style: const TextStyle(color: Colors.red, fontSize: 13),
+                  ),
+                ),
+            ],
           ),
         ),
       ],
@@ -407,38 +446,77 @@ class _ReportPageState extends ConsumerState<ReportPage> {
     return Row(
       children: [
         Expanded(
-          child: CustomTextField(
-            label: lang['car_make'] ?? 'Car Make',
-            hint: lang['enter_car_make'] ?? 'Enter Car Make',
-            icon: Icons.car_crash,
-            controller: _makeController,
-            borderColor: Colors.orange,
-            backgroundColor: Colors.white,
-            iconColor: Colors.orange,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CustomTextField(
+                label: lang['car_make'] ?? 'Car Make',
+                hint: lang['enter_car_make'] ?? 'Enter Car Make',
+                icon: Icons.car_crash,
+                controller: _makeController,
+                borderColor: Colors.orange,
+                backgroundColor: Colors.white,
+                iconColor: Colors.orange,
+              ),
+              if (makeError != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, left: 8),
+                  child: Text(
+                    makeError!,
+                    style: const TextStyle(color: Colors.red, fontSize: 13),
+                  ),
+                ),
+            ],
           ),
         ),
         SizedBox(width: ResponsiveHelper.isDesktop(context) ? 25 : 15),
         Expanded(
-          child: CustomTextField(
-            label: lang['car_model'] ?? 'Car Model',
-            hint: lang['enter_car_model'] ?? 'Enter Car Model',
-            icon: Icons.car_crash_outlined,
-            controller: _modelController,
-            borderColor: Colors.orange,
-            backgroundColor: Colors.white,
-            iconColor: Colors.orange,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CustomTextField(
+                label: lang['car_model'] ?? 'Car Model',
+                hint: lang['enter_car_model'] ?? 'Enter Car Model',
+                icon: Icons.car_crash_outlined,
+                controller: _modelController,
+                borderColor: Colors.orange,
+                backgroundColor: Colors.white,
+                iconColor: Colors.orange,
+              ),
+              if (modelError != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, left: 8),
+                  child: Text(
+                    modelError!,
+                    style: const TextStyle(color: Colors.red, fontSize: 13),
+                  ),
+                ),
+            ],
           ),
         ),
         SizedBox(width: ResponsiveHelper.isDesktop(context) ? 25 : 15),
         Expanded(
-          child: CustomTextField(
-            label: lang['car_year'] ?? 'Car Year',
-            hint: lang['enter_car_year'] ?? 'Enter Car Year',
-            icon: Icons.date_range,
-            controller: _yearController,
-            borderColor: Colors.orange,
-            backgroundColor: Colors.white,
-            iconColor: Colors.orange,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CustomTextField(
+                label: lang['car_year'] ?? 'Car Year',
+                hint: lang['enter_car_year'] ?? 'Enter Car Year',
+                icon: Icons.date_range,
+                controller: _yearController,
+                borderColor: Colors.orange,
+                backgroundColor: Colors.white,
+                iconColor: Colors.orange,
+              ),
+              if (yearError != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, left: 8),
+                  child: Text(
+                    yearError!,
+                    style: const TextStyle(color: Colors.red, fontSize: 13),
+                  ),
+                ),
+            ],
           ),
         ),
       ],
@@ -446,26 +524,52 @@ class _ReportPageState extends ConsumerState<ReportPage> {
   }
 
   Widget _buildCarSymptomsField(Map<String, String> lang) {
-    return CustomTextField(
-      label: lang['car_symptoms'] ?? 'Car Symptoms',
-      hint: lang['enter_car_symptoms'] ?? 'Enter Car Symptoms',
-      icon: Icons.car_repair_rounded,
-      controller: _symptomsController,
-      borderColor: Colors.orange,
-      backgroundColor: Colors.white,
-      iconColor: Colors.orange,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CustomTextField(
+          label: lang['car_symptoms'] ?? 'Car Symptoms',
+          hint: lang['enter_car_symptoms'] ?? 'Enter Car Symptoms',
+          icon: Icons.car_repair_rounded,
+          controller: _symptomsController,
+          borderColor: Colors.orange,
+          backgroundColor: Colors.white,
+          iconColor: Colors.orange,
+        ),
+        if (symptomsError != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, left: 8),
+            child: Text(
+              symptomsError!,
+              style: const TextStyle(color: Colors.red, fontSize: 13),
+            ),
+          ),
+      ],
     );
   }
 
   Widget _buildProblemTitleField(Map<String, String> lang) {
-    return CustomTextField(
-      label: lang['problem_title'] ?? 'Problem Title',
-      hint: lang['enter_problem_title'] ?? 'Enter problem title',
-      icon: Icons.error_outline,
-      controller: _problemTitleController,
-      borderColor: Colors.orange,
-      backgroundColor: Colors.white,
-      iconColor: Colors.orange,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CustomTextField(
+          label: lang['problem_title'] ?? 'Problem Title',
+          hint: lang['enter_problem_title'] ?? 'Enter problem title',
+          icon: Icons.error_outline,
+          controller: _problemTitleController,
+          borderColor: Colors.orange,
+          backgroundColor: Colors.white,
+          iconColor: Colors.orange,
+        ),
+        if (problemTitleError != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, left: 8),
+            child: Text(
+              problemTitleError!,
+              style: const TextStyle(color: Colors.red, fontSize: 13),
+            ),
+          ),
+      ],
     );
   }
 
@@ -588,9 +692,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
               ),
             ),
             child: Text(
-              ref.watch(isEditModeProvider)
-                  ? 'Update'
-                  : lang['send_admin'] ?? 'Send to Admin',
+              ref.watch(isEditModeProvider) ? 'Update' : lang['send'] ?? 'Send',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: ResponsiveHelper.isDesktop(context) ? 18 : 16,
@@ -606,6 +708,23 @@ class _ReportPageState extends ConsumerState<ReportPage> {
   void _submitReport(String userName) async {
     final lang = ref.read(languageProvider);
     final reportsNotifier = ref.read(reportsProvider.notifier);
+
+    // تحقق من الحقول أولاً
+    _validateFields(lang);
+
+    // إذا فيه أي خطأ، لا تكمل الإرسال
+    if (ownerError != null ||
+        plateError != null ||
+        costError != null ||
+        makeError != null ||
+        modelError != null ||
+        yearError != null ||
+        symptomsError != null ||
+        problemTitleError != null ||
+        repairDescError != null) {
+      // يمكنك عرض رسالة عامة هنا إذا أردت
+      return;
+    }
 
     if (_formKey.currentState!.validate()) {
       try {
@@ -788,6 +907,42 @@ class _ReportPageState extends ConsumerState<ReportPage> {
       _modelController.clear();
       _yearController.clear();
       _symptomsController.clear();
+    });
+  }
+
+  String? ownerError;
+  String? plateError;
+  String? costError;
+  String? makeError;
+  String? modelError;
+  String? yearError;
+  String? symptomsError;
+  String? problemTitleError;
+  String? repairDescError;
+
+  void _validateFields(Map<String, String> lang) {
+    setState(() {
+      ownerError =
+          _ownerController.text.isEmpty ? (lang['required'] ?? 'مطلوب') : null;
+      plateError =
+          _plateController.text.isEmpty ? (lang['required'] ?? 'مطلوب') : null;
+      costError =
+          _costController.text.isEmpty ? (lang['required'] ?? 'مطلوب') : null;
+      makeError =
+          _makeController.text.isEmpty ? (lang['required'] ?? 'مطلوب') : null;
+      modelError =
+          _modelController.text.isEmpty ? (lang['required'] ?? 'مطلوب') : null;
+      yearError =
+          _yearController.text.isEmpty ? (lang['required'] ?? 'مطلوب') : null;
+      symptomsError = _symptomsController.text.isEmpty
+          ? (lang['required'] ?? 'مطلوب')
+          : null;
+      problemTitleError = _problemTitleController.text.isEmpty
+          ? (lang['required'] ?? 'مطلوب')
+          : null;
+      repairDescError = _repairDescController.text.isEmpty
+          ? (lang['required'] ?? 'مطلوب')
+          : null;
     });
   }
 

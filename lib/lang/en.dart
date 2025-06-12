@@ -9,7 +9,7 @@ final Map<String, String> english = {
   'attendance': 'Attendance',
   'spare_parts': 'Spare Parts',
   'change_language': 'Change Language',
-  'dark_mode': 'Dark Mode',
+  'dark_mode': 'Mode',
   'contact_support': 'Contact Support',
   'account': 'Account',
   'edit_account_info': 'Edit account info',
@@ -59,7 +59,7 @@ final Map<String, String> english = {
   'stop_record': 'Stop Recording',
   'attach_photos': 'Attach Photos',
   'save_draft': 'Save Draft',
-  'send_admin': 'Send to Admin',
+  'send': 'Send',
   'available_quantity': 'Available Quantity',
   'tire': 'Tire',
   'choose_file': 'Choose File',
@@ -165,7 +165,7 @@ final Map<String, String> english = {
   'repairDescription': 'Repair Description',
   'usedParts': 'Used Parts',
   'noPartsUsed': 'No parts used',
-  'totalCost': 'Total Cost',
+  'totalCost': 'Overall Total Cost',
   'attachedImages': 'Attached Images',
   'noImagesAttached': 'No images attached',
   'deleteReport': 'Delete Report',
@@ -460,7 +460,7 @@ final Map<String, String> english = {
   'Garagey': 'Garagey',
   'Subscription': 'Subscription',
   'mainNavigation': 'Main Navigation',
-  'Statics': 'Statistics',
+  'statics': 'Statics',
   'plans': 'Plans',
   'garages': 'Garages',
   'requestPending':
@@ -474,4 +474,10 @@ final Map<String, String> english = {
   'year': 'Year',
   'startAnalysis': 'Start Analysis',
   'serverError': 'A server error occurred.',
+  'noMessages': 'No messages available.',
+  'previousMessages': 'Previous Messages',
+  'required': 'Required',
+  'garageUnavailableTitle': 'Garage Not Available',
+  'garageUnavailableMsg':
+      'The garage is currently unavailable or your subscription has expired.\nPlease contact the garage owner for assistance.'
 };

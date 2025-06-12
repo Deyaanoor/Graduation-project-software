@@ -9,7 +9,7 @@ final Map<String, String> arabic = {
   'attendance': 'الحضور',
   'spare_parts': 'قطع الغيار',
   'change_language': 'تغيير اللغة',
-  'dark_mode': 'الوضع الليلي',
+  'dark_mode': 'اختر الوضع',
   'contact_support': 'الدعم الفني',
   'account': 'الحساب',
   'edit_account_info': 'تعديل معلومات الحساب',
@@ -59,7 +59,7 @@ final Map<String, String> arabic = {
   'stop_record': 'إيقاف التسجيل',
   'attach_photos': 'إرفاق صور',
   'save_draft': 'حفظ كمسودة',
-  'send_admin': 'إرسال للإدمن',
+  'send': 'إرسال',
   'available_quantity': 'الكمية المتاحة',
   'tire': 'إطار',
   'choose_file': 'اختر ملف',
@@ -165,7 +165,7 @@ final Map<String, String> arabic = {
   'repairDescription': 'وصف الاصلاح',
   'usedParts': 'القطع المستخدمة',
   'noPartsUsed': 'لا توجد قطع مستخدمة',
-  'totalCost': 'التكلفة الإجمالية',
+  'totalCost': 'إجمالي التكاليف الكاملة',
   'attachedImages': 'الصور المرفقة',
   'noImagesAttached': 'لا توجد صور مرفقة',
   'deleteReport': 'حذف التقرير',
@@ -461,7 +461,7 @@ final Map<String, String> arabic = {
   'Garagey': 'كراجي',
   'Subscription': 'الاشتراك',
   'mainNavigation': 'التنقل الرئيسي',
-  'Statics': 'الإحصائيات',
+  'statics': 'الإحصائيات',
   'plans': 'الباقات',
   'garages': 'الكراجات',
   'requestPending':
@@ -474,4 +474,10 @@ final Map<String, String> arabic = {
   'year': 'السنة',
   'startAnalysis': 'ابدأ التحليل',
   'serverError': 'حدث خطأ أثناء الاتصال بالسيرفر.',
+  'noMessages': 'لا توجد رسائل بعد.',
+  'previousMessages': 'الرسائل السابقة',
+  'required': 'هذا الحقل مطلوب',
+  'garageUnavailableTitle': 'الكراج غير متاح',
+  'garageUnavailableMsg':
+      'الورشة غير متاحة حاليًا أو أن الاشتراك قد انتهى.\nيرجى التواصل مع صاحب الورشة للمساعدة.'
 };

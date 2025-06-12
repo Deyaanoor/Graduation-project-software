@@ -20,6 +20,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final TextEditingController emailController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool sent = false;
+  bool isLoading = false;
   AsyncValue<String>? forgotPasswordState;
 
   @override
@@ -81,31 +82,51 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     },
                   ),
                   const SizedBox(height: 20),
-                  CustomButton(
-                    text: 'Send Reset Link',
-                    onPressed: () async {
-                      if (_formKey.currentState!.validate()) {
-                        setState(() {
-                          sent = true;
-                          forgotPasswordState = const AsyncLoading();
-                        });
-                        try {
-                          final msg = await ref.read(
-                            forgotPasswordProvider(emailController.text.trim())
-                                .future,
-                          );
-                          setState(() {
-                            forgotPasswordState = AsyncData(msg);
-                          });
-                        } catch (e, st) {
-                          setState(() {
-                            forgotPasswordState = AsyncError(e, st);
-                          });
-                        }
-                      }
-                    },
-                    isGradient: true,
-                  ),
+                  isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : CustomButton(
+                          text: 'Send Reset Link',
+                          onPressed: () async {
+                            if (_formKey.currentState!.validate()) {
+                              setState(() {
+                                isLoading = true;
+                                sent = true;
+                                forgotPasswordState = const AsyncLoading();
+                              });
+                              try {
+                                final msg = await ref.read(
+                                  forgotPasswordProvider(
+                                          emailController.text.trim())
+                                      .future,
+                                );
+                                setState(() {
+                                  forgotPasswordState = AsyncData(msg);
+                                  isLoading = false;
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content:
+                                        Text('Reset link sent successfully!'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              } catch (e, st) {
+                                setState(() {
+                                  forgotPasswordState = AsyncError(e, st);
+                                  isLoading = false;
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                        'Failed to send reset link. Please try again.'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          isGradient: true,
+                        ),
                   SizedBox(height: height * .055),
                   if (sent && forgotPasswordState != null)
                     forgotPasswordState!.when(
@@ -244,6 +265,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                             if (_formKey.currentState!.validate()) {
                               setState(() {
                                 sent = true;
+                                isLoading = true;
                                 forgotPasswordState = const AsyncLoading();
                               });
                               try {
@@ -258,6 +280,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                               } catch (e, st) {
                                 setState(() {
                                   forgotPasswordState = AsyncError(e, st);
+                                });
+                              } finally {
+                                setState(() {
+                                  isLoading = false;
                                 });
                               }
                             }

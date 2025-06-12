@@ -310,7 +310,15 @@ class _GarageTable extends StatelessWidget {
                                     .capitalize()
                                 : 'Active',
                             underline: const SizedBox(),
-                            style: const TextStyle(fontSize: 14),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  ?.color, // لون النص حسب الثيم
+                            ),
+                            dropdownColor: Theme.of(context)
+                                .cardColor, // لون خلفية القائمة حسب الثيم
                             onChanged: (value) async {
                               if (value != null) {
                                 try {
@@ -334,11 +342,29 @@ class _GarageTable extends StatelessWidget {
                             items: [
                               DropdownMenuItem(
                                 value: 'Active',
-                                child: Text(lang['active'] ?? 'Active'),
+                                child: Text(
+                                  lang['active'] ?? 'Active',
+                                  style: TextStyle(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primary, // برتقالي للـ Active
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                               DropdownMenuItem(
                                 value: 'Inactive',
-                                child: Text(lang['inactive'] ?? 'Inactive'),
+                                child: Text(
+                                  lang['inactive'] ?? 'Inactive',
+                                  style: TextStyle(
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.red[300]
+                                        : Colors
+                                            .red[700], // أحمر متناسب مع الثيم
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ],
                           ),

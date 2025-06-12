@@ -190,8 +190,8 @@ class Home extends ConsumerWidget {
               selectedIndex),
           buildNavItem(
               Icons.support, lang['support'] ?? 'support', 1, selectedIndex),
-          buildNavItem(Icons.request_page, lang['request'] ?? 'request', 2,
-              selectedIndex),
+          buildNavItem(Icons.markunread_mailbox, lang['request'] ?? 'request',
+              2, selectedIndex),
         ],
         onTap: (index) =>
             ref.read(selectedIndexProvider.notifier).state = index,
@@ -419,7 +419,7 @@ class Home extends ConsumerWidget {
             _buildNavButton(
               context: context,
               icon: Icons.analytics,
-              label: lang['Statics'] ?? 'statics',
+              label: lang['statics'] ?? 'statics',
               isSelected: selectedIndex == 3,
               onTap: () => ref.read(selectedIndexProvider.notifier).state = 3,
               isExpanded: isExpanded,

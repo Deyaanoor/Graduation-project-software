@@ -564,11 +564,12 @@ const loginUser = async (req, res) => {
       { expiresIn: "1h" }
     );
 
+    console.log("garage", garage);
     res.status(200).json({
       message: "Login successful",
       token,
       role: user.role,
-      status: garage ? garage.status : "",
+      status: garage ? garage.status : "active",
     });
   } catch (error) {
     console.error(error);

@@ -82,7 +82,7 @@ class _OverviewPageState extends ConsumerState<OverviewPage> {
                           context,
                         ),
                         _buildSummaryCard(
-                          lang['monthlyTotal'] ?? 'الإجمالي الشهري',
+                          lang['TotalCost'] ?? 'إجمالي التكاليف الكاملة',
                           Icons.bar_chart,
                           '${monthlySummary.value?.toString() ?? '-'} \$',
                           context,

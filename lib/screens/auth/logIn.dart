@@ -330,25 +330,10 @@ class LoginPage extends ConsumerWidget {
         };
 
         final result = await ref.read(loginUserProvider(credentials).future);
+        print("Login result: $result");
         final role = result['role'];
         final status = result['status'];
-
-        // String? userId;
-        //  = ref.read(userIdProvider).value;
-        // for (int i = 0; i < 10; i++) {
-        //   userId = ref.read(userIdProvider).value;
-        //   if (userId != null) break;
-        //   await Future.delayed(const Duration(milliseconds: 100));
-        // }
-        // print("User ID: $userId");
-        // if (userId == null) {
-        //   CustomSnackBar.showErrorSnackBar(
-        //     context,
-        //     lang['loginFailed'] ?? 'Login failed (userId not found)',
-        //   );
-        //   return;
-        // }
-        // print("User ID2: $userId");
+        print("Role: $role, Status: $status");
 
         ref.read(loginLoadingProvider.notifier).state = false;
         print("before isPendingAsync");
@@ -381,9 +366,25 @@ class LoginPage extends ConsumerWidget {
           if (status?.toLowerCase() != "active" && role == "owner") {
             Navigator.pushNamed(context, '/garage_info');
           } else if (status?.toLowerCase() != "active" && role == "employee") {
-            CustomSnackBar.showErrorSnackBar(
-              context,
-              lang['accountInactive'] ?? 'Your account is inactive',
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text(
+                  lang['garageUnavailableTitle'] ?? 'Garage Not Available',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                content: Text(
+                  lang['garageUnavailableMsg'] ??
+                      'الكراج غير متاح أو انتهى الاشتراك.\nيرجى مراجعة صاحب الكراج.\n\nGarage is not available or the subscription has ended.\nPlease contact the garage owner.',
+                  textAlign: TextAlign.center,
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(lang['ok'] ?? 'حسناً'),
+                  ),
+                ],
+              ),
             );
             return;
           } else {

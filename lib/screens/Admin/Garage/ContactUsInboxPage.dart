@@ -187,7 +187,15 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
                                         child: DropdownButton<String>(
                                           value: msg['status'] ?? 'pending',
                                           underline: const SizedBox(),
-                                          style: const TextStyle(fontSize: 14),
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Theme.of(context)
+                                                .textTheme
+                                                .bodyLarge
+                                                ?.color,
+                                          ),
+                                          dropdownColor:
+                                              Theme.of(context).cardColor,
                                           onChanged: (value) {
                                             if (value != null &&
                                                 msg['_id'] != null) {
@@ -198,18 +206,49 @@ class _ContactUsInboxPageState extends ConsumerState<ContactUsInboxPage> {
                                           items: [
                                             DropdownMenuItem(
                                               value: 'pending',
-                                              child: Text(lang['pending'] ??
-                                                  'قيد الانتظار'),
+                                              child: Text(
+                                                lang['pending'] ??
+                                                    'قيد الانتظار',
+                                                style: TextStyle(
+                                                  color: Colors.orange,
+                                                  // برتقالي للحالة pending
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
                                             ),
                                             DropdownMenuItem(
                                               value: 'in progress',
-                                              child: Text(lang['inProgress'] ??
-                                                  'قيد المعالجة'),
+                                              child: Text(
+                                                lang['inProgress'] ??
+                                                    'قيد المعالجة',
+                                                style: TextStyle(
+                                                  color: Colors.blue,
+                                                  // أزرق للحالة in progress
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
                                             ),
                                             DropdownMenuItem(
                                               value: 'resolved',
-                                              child: Text(lang['resolved'] ??
-                                                  'تم الحل'),
+                                              child: Text(
+                                                lang['resolved'] ?? 'تم الحل',
+                                                style: TextStyle(
+                                                  color: Colors.green,
+                                                  // أخضر للحالة resolved
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: 'rejected',
+                                              child: Text(
+                                                lang['rejected'] ?? 'مرفوض',
+                                                style: TextStyle(
+                                                  color: Colors.red,
+                                                  // أحمر للحالة rejected
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
                                             ),
                                           ],
                                         ),
