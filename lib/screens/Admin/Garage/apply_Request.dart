@@ -390,7 +390,7 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 16,
-            color: Colors.grey.shade700,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
         SizedBox(height: 8),

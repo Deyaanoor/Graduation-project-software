@@ -96,43 +96,59 @@ class _PlansPageState extends ConsumerState<PlansPage> {
 
   Widget _buildDesktopTable(
       List<Map<String, dynamic>> plans, Map<String, String> lang) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        columns: [
-          DataColumn(label: Text(lang['planName'] ?? 'Plan Name')),
-          DataColumn(label: Text(lang['price'] ?? 'Price')),
-          DataColumn(label: Text(lang['actions'] ?? 'Actions')),
-        ],
-        rows: plans.map((plan) {
-          final name = plan['name'] as String;
-          final priceController = _priceControllers[name]!;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: 900, // وسع الجدول أكثر
+          minWidth: 600,
+        ),
+        child: Card(
+          elevation: 4,
+          margin: const EdgeInsets.symmetric(vertical: 32),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                columns: [
+                  DataColumn(label: Text(lang['planName'] ?? 'Plan Name')),
+                  DataColumn(label: Text(lang['price'] ?? 'Price')),
+                  DataColumn(label: Text(lang['actions'] ?? 'Actions')),
+                ],
+                rows: plans.map((plan) {
+                  final name = plan['name'] as String;
+                  final priceController = _priceControllers[name]!;
 
-          return DataRow(
-            cells: [
-              DataCell(Text(name)),
-              DataCell(
-                SizedBox(
-                  width: 100,
-                  child: TextField(
-                    controller: priceController,
-                    keyboardType: TextInputType.number,
-                    decoration:
-                        const InputDecoration(border: OutlineInputBorder()),
-                  ),
-                ),
+                  return DataRow(
+                    cells: [
+                      DataCell(Text(name)),
+                      DataCell(
+                        SizedBox(
+                          width: 200, // وسع حقل السعر
+                          child: TextField(
+                            controller: priceController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                      ),
+                      DataCell(
+                        ElevatedButton(
+                          onPressed: () async {
+                            await _updatePlan(name, priceController.text, lang);
+                          },
+                          child: Text(lang['update'] ?? 'Update'),
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
               ),
-              DataCell(
-                ElevatedButton(
-                  onPressed: () async {
-                    await _updatePlan(name, priceController.text, lang);
-                  },
-                  child: Text(lang['update'] ?? 'Update'),
-                ),
-              ),
-            ],
-          );
-        }).toList(),
+            ),
+          ),
+        ),
       ),
     );
   }

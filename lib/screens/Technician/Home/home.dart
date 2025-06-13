@@ -241,13 +241,22 @@ class Home extends ConsumerWidget {
     int selectedIndex,
     WidgetRef ref,
   ) {
+    final theme = Theme.of(ref.context);
+
+    // اختر ألوان متناسبة مع الثيم
+    final selectedColor = theme.colorScheme.primary; // برتقالي أو حسب الثيم
+    final unselectedColor = theme.brightness == Brightness.dark
+        ? Colors.grey[400]
+        : Colors.grey[700];
+
     if (selectedIndex >= 3) {
       selectedIndex = 0;
     }
     return BottomNavigationBar(
       currentIndex: selectedIndex,
-      selectedItemColor: const Color(0xFFFF8F00),
-      unselectedItemColor: Colors.white,
+      selectedItemColor: selectedColor,
+      unselectedItemColor: unselectedColor,
+      backgroundColor: theme.colorScheme.background,
       onTap: (index) => ref.read(selectedIndexProvider.notifier).state = index,
       items: [
         BottomNavigationBarItem(

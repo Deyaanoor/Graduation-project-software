@@ -151,9 +151,7 @@ class WelcomePage extends ConsumerWidget {
               CustomButton(
                 text: 'Register now',
                 onPressed: () {
-                  MaterialPageRoute(
-                    builder: (context) => SignUpPage(),
-                  );
+                  Navigator.pushNamed(context, "/signup");
                 },
                 backgroundColor:
                     Color(0xFFFB8C00).withOpacity(0.8), // لون برتقالي شفاف

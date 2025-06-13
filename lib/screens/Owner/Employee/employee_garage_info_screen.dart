@@ -122,7 +122,7 @@ class EmployeeGarageInfoPage extends ConsumerWidget {
                 context: context,
                 icon: Icons.attach_money_rounded,
                 title: lang['salary'] ?? "الراتب الشهري",
-                value: "${data['salary']} دينار",
+                value: "${data['salary']}",
                 iconColor: Colors.green,
                 bgColor: isDarkMode
                     ? Colors.green[900]!.withOpacity(0.2)

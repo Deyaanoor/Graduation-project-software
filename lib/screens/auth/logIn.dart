@@ -267,7 +267,7 @@ class LoginPage extends ConsumerWidget {
                                 passwordController, ref, lang);
                           },
                           isGradient: true,
-                          isloading: true,
+                          isloading: isLoading,
                         ),
                         SizedBox(height: 10),
                         DividerWidget(),

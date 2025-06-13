@@ -61,15 +61,15 @@ class SettingsPage extends ConsumerWidget {
                 color: Colors.green.shade600,
                 onTap: () => _navigateToLanguagePage(context, ref),
               ),
-              // if (userRole == 'owner' || userRole == 'employee')
-              //   SettingsCard(
-              //       icon: Icons.contact_support,
-              //       title: lang['contact_info'] ?? '',
-              //       subtitle: lang['support_contact'] ?? '',
-              //       color: Colors.red.shade600,
-              //       onTap: () {
-              //         NavigationHelper.navigateTo(context, ContactInfoPage());
-              //       }),
+              if (userRole == 'employee')
+                SettingsCard(
+                    icon: Icons.contact_support,
+                    title: lang['contact_info'] ?? '',
+                    subtitle: lang['support_contact'] ?? '',
+                    color: Colors.red.shade600,
+                    onTap: () {
+                      NavigationHelper.navigateTo(context, ContactInfoPage());
+                    }),
             ],
           ),
         ),
@@ -134,13 +134,14 @@ class SettingsPage extends ConsumerWidget {
                       selectedIndex,
                       ref,
                     ),
-                    // _buildSidebarItem(
-                    //   3,
-                    //   Icons.contact_support_rounded,
-                    //   lang['contact_info'] ?? 'Contact',
-                    //   selectedIndex,
-                    //   ref,
-                    // ),
+                    if (userRole == 'employee')
+                      _buildSidebarItem(
+                        3,
+                        Icons.contact_support_rounded,
+                        lang['contact_info'] ?? 'Contact',
+                        selectedIndex,
+                        ref,
+                      ),
                     _buildThemeToggle(context, ref),
                     const SizedBox(height: 10), // مسافة بين الزرين
                     _buildHomeButton(context, ref),
@@ -181,8 +182,7 @@ class SettingsPage extends ConsumerWidget {
                       );
                     },
                   ),
-                  // if (userRole == 'owner' || userRole == 'employee')
-                  //   ContactInfoPage(),
+                  if (userRole == 'employee') ContactInfoPage(),
                 ],
               ),
             ),
