@@ -308,12 +308,19 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                           controller: garageLocationController,
                           readOnly: true,
                           decoration: InputDecoration(
+                            hintStyle: TextStyle(
+                              color: Colors.black,
+                            ),
                             labelText:
                                 lang['garageLocation'] ?? "Garage Location",
+                            labelStyle: TextStyle(
+                              color: Colors.black,
+                            ),
                             hintText: lang['selectGarageLocation'] ??
                                 "Select garage location",
                             prefixIcon: Icon(Icons.location_on),
                           ),
+                          style: TextStyle(color: Colors.grey.shade700),
                           onTap: () async {
                             final LatLng? result = await Navigator.push(
                               context,
@@ -402,11 +409,23 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
           ),
           items: [
             DropdownMenuItem(
-                value: 'trial', child: Text(lang['trial'] ?? 'Trial')),
+                value: 'trial',
+                child: Text(
+                  lang['trial'] ?? 'Trial',
+                  style: TextStyle(color: Colors.grey.shade700),
+                )),
             DropdownMenuItem(
-                value: '6months', child: Text(lang['sixMonths'] ?? '6 Months')),
+                value: '6months',
+                child: Text(
+                  lang['sixMonths'] ?? '6 Months',
+                  style: TextStyle(color: Colors.grey.shade700),
+                )),
             DropdownMenuItem(
-                value: '1year', child: Text(lang['oneYear'] ?? '1 Year')),
+                value: '1year',
+                child: Text(
+                  lang['oneYear'] ?? '1 Year',
+                  style: TextStyle(color: Colors.grey.shade700),
+                )),
           ],
           onChanged: onChanged,
           validator: (value) {

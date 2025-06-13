@@ -216,34 +216,35 @@ class _DesktopCustomAppBarState extends ConsumerState<DesktopCustomAppBar>
       children: [
         Row(
           children: [
-            TextButton(
-              onPressed: () => {
-                showDialog(
-                  context: context,
-                  builder: (context) => Dialog(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: SizedBox(
-                        width: 600,
-                        height: 400,
-                        child: ContactUsPage(),
+            if (userInfo['role'] != 'admin')
+              TextButton(
+                onPressed: () => {
+                  showDialog(
+                    context: context,
+                    builder: (context) => Dialog(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: SizedBox(
+                          width: 600,
+                          height: 400,
+                          child: ContactUsPage(),
+                        ),
                       ),
                     ),
+                  )
+                },
+                child: Text(
+                  lang['contactUs'] ?? 'Contact Us',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
-                )
-              },
-              child: Text(
-                lang['contactUs'] ?? 'Contact Us',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
             const SizedBox(width: 10),
             if (userInfo['role'] == 'owner' ||
                 userInfo['role'] == 'employee' ||

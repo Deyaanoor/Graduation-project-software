@@ -197,127 +197,133 @@ class _AdminAnnouncementPageState extends ConsumerState<AdminAnnouncementPage> {
     final lang = ref.watch(languageProvider);
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: widget.isUpdate
-            ? Text(lang['editAnnouncement'] ?? 'تعديل إعلان')
-            : Text(lang['addAnnouncement'] ?? 'إضافة إعلان'),
-        backgroundColor: theme.colorScheme.primary, // برتقالي من الثيم
-        actions: widget.isUpdate
-            ? [
-                if (!_isEditing)
-                  IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: _isLoading ? null : _deleteNews,
+    return Container(
+      height: 600,
+      child: Scaffold(
+        appBar: AppBar(
+          title: widget.isUpdate
+              ? Text(lang['editAnnouncement'] ?? 'تعديل إعلان')
+              : Text(lang['addAnnouncement'] ?? 'إضافة إعلان'),
+          backgroundColor: theme.colorScheme.primary, // برتقالي من الثيم
+          actions: widget.isUpdate
+              ? [
+                  if (!_isEditing)
+                    IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: _isLoading ? null : _deleteNews,
+                    ),
+                ]
+              : null,
+        ),
+        backgroundColor:
+            theme.scaffoldBackgroundColor, // خلفية متجاوبة مع الثيم
+        body: Container(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    lang['sendNewAnnouncement'] ?? "إرسال إعلان جديد",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary, // برتقالي من الثيم
+                    ),
                   ),
-              ]
-            : null,
-      ),
-      backgroundColor: theme.scaffoldBackgroundColor, // خلفية متجاوبة مع الثيم
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                lang['sendNewAnnouncement'] ?? "إرسال إعلان جديد",
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary, // برتقالي من الثيم
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _titleController,
-                enabled: _isEditing,
-                decoration: InputDecoration(
-                  labelText: lang['announcementTitle'] ?? 'عنوان الإعلان',
-                  prefixIcon:
-                      Icon(Icons.title, color: theme.colorScheme.primary),
-                  hintText:
-                      lang['announcementTitleHint'] ?? 'اكتب عنوان الإعلان...',
-                  focusedBorder: OutlineInputBorder(
-                    borderSide:
-                        BorderSide(color: theme.colorScheme.primary, width: 2),
-                    borderRadius: BorderRadius.circular(12),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _titleController,
+                    enabled: _isEditing,
+                    decoration: InputDecoration(
+                      labelText: lang['announcementTitle'] ?? 'عنوان الإعلان',
+                      prefixIcon:
+                          Icon(Icons.title, color: theme.colorScheme.primary),
+                      hintText: lang['announcementTitleHint'] ??
+                          'اكتب عنوان الإعلان...',
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.primary, width: 2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.primary.withOpacity(0.3),
+                            width: 2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: theme.cardColor, // لون الكارد من الثيم
+                    ),
+                    style: TextStyle(
+                        fontSize: 16, color: theme.textTheme.bodyLarge?.color),
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                        color: theme.colorScheme.primary.withOpacity(0.3),
-                        width: 2),
-                    borderRadius: BorderRadius.circular(12),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _messageController,
+                    maxLines: 4,
+                    enabled: _isEditing,
+                    decoration: InputDecoration(
+                      labelText: lang['announcementContent'] ?? 'محتوى الرسالة',
+                      prefixIcon:
+                          Icon(Icons.message, color: theme.colorScheme.primary),
+                      hintText: lang['announcementContentHint'] ??
+                          'اكتب تفاصيل الإعلان...',
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.primary, width: 2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                            color: theme.colorScheme.primary.withOpacity(0.3),
+                            width: 2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: theme.cardColor,
+                    ),
+                    style: TextStyle(
+                        fontSize: 16, color: theme.textTheme.bodyLarge?.color),
                   ),
-                  filled: true,
-                  fillColor: theme.cardColor, // لون الكارد من الثيم
-                ),
-                style: TextStyle(
-                    fontSize: 16, color: theme.textTheme.bodyLarge?.color),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _messageController,
-                maxLines: 4,
-                enabled: _isEditing,
-                decoration: InputDecoration(
-                  labelText: lang['announcementContent'] ?? 'محتوى الرسالة',
-                  prefixIcon:
-                      Icon(Icons.message, color: theme.colorScheme.primary),
-                  hintText: lang['announcementContentHint'] ??
-                      'اكتب تفاصيل الإعلان...',
-                  focusedBorder: OutlineInputBorder(
-                    borderSide:
-                        BorderSide(color: theme.colorScheme.primary, width: 2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                        color: theme.colorScheme.primary.withOpacity(0.3),
-                        width: 2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: theme.cardColor,
-                ),
-                style: TextStyle(
-                    fontSize: 16, color: theme.textTheme.bodyLarge?.color),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: widget.isUpdate
-                    ? _isLoading
-                        ? null
-                        : _updateNews
-                    : _isLoading
-                        ? null
-                        : sendAnnouncement,
-                icon: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : Icon(widget.isUpdate
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    onPressed: widget.isUpdate
+                        ? _isLoading
+                            ? null
+                            : _updateNews
+                        : _isLoading
+                            ? null
+                            : sendAnnouncement,
+                    icon: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : Icon(widget.isUpdate
+                            ? _isEditing
+                                ? Icons.save
+                                : Icons.edit
+                            : Icons.send),
+                    label: Text(widget.isUpdate
                         ? _isEditing
-                            ? Icons.save
-                            : Icons.edit
-                        : Icons.send),
-                label: Text(widget.isUpdate
-                    ? _isEditing
-                        ? lang['saveChanges'] ?? 'حفظ التعديلات'
-                        : lang['edit'] ?? 'تعديل'
-                    : _isLoading
-                        ? lang['sending'] ?? "جاري الإرسال..."
-                        : lang['send'] ?? "إرسال"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  textStyle: const TextStyle(fontSize: 18),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                            ? lang['saveChanges'] ?? 'حفظ التعديلات'
+                            : lang['edit'] ?? 'تعديل'
+                        : _isLoading
+                            ? lang['sending'] ?? "جاري الإرسال..."
+                            : lang['send'] ?? "إرسال"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 16),
+                      textStyle: const TextStyle(fontSize: 18),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
