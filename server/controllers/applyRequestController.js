@@ -16,7 +16,7 @@ const applyGarage = async (req, res) => {
     req.body;
   const userId = req.body.user_id;
 
-  if (!garageName || !garageLocation || !subscriptionType ) {
+  if (!garageName || !garageLocation || !subscriptionType) {
     return res.status(400).json({ message: "All fields are required" });
   }
 
@@ -35,7 +35,7 @@ const applyGarage = async (req, res) => {
       garageName,
       garageLocation,
       subscriptionType,
-      
+
 
       status: "pending",
       createdAt: new Date(),
@@ -203,31 +203,31 @@ const updateRequestStatus = async (req, res) => {
 
       let subscriptionDurationDays;
 
-const rawType = request.subscriptionType || '';
-const cleanedType = rawType.trim().toLowerCase().replace(/\s/g, '');
+      const rawType = request.subscriptionType || '';
+      const cleanedType = rawType.trim().toLowerCase().replace(/\s/g, '');
 
-// أولاً: إذا كانت trial نرجع 14
-if (cleanedType === 'trial') {
-  subscriptionDurationDays = 14;
-} else {
-  // تحقق من وجود رقم + months أو years
-  const match = cleanedType.match(/^(\d+)(months?|years?)$/);
+      // أولاً: إذا كانت trial نرجع 14
+      if (cleanedType === 'trial') {
+        subscriptionDurationDays = 14;
+      } else {
+        // تحقق من وجود رقم + months أو years
+        const match = cleanedType.match(/^(\d+)(months?|years?)$/);
 
-  if (match) {
-    const value = parseInt(match[1]);
-    const unit = match[2];
+        if (match) {
+          const value = parseInt(match[1]);
+          const unit = match[2];
 
-    if (unit.startsWith("month")) {
-      subscriptionDurationDays = value * 30;
-    } else if (unit.startsWith("year")) {
-      subscriptionDurationDays = value * 365;
-    } else {
-      subscriptionDurationDays = 14;
-    }
-  } else {
-    subscriptionDurationDays = 14;
-  }
-}
+          if (unit.startsWith("month")) {
+            subscriptionDurationDays = value * 30;
+          } else if (unit.startsWith("year")) {
+            subscriptionDurationDays = value * 365;
+          } else {
+            subscriptionDurationDays = 14;
+          }
+        } else {
+          subscriptionDurationDays = 14;
+        }
+      }
 
 
       const subscriptionStartDate = new Date();
@@ -282,21 +282,17 @@ const existRequest = async (req, res) => {
         .json({ statusPending: false, message: "User not found" });
     }
 
-    const existingRequest = await applyRequestCollection.findOne({
+    // جلب جميع الطلبات للمستخدم
+    const existingRequests = await applyRequestCollection.find({
       user_id: new ObjectId(user._id),
-    });
+    }).toArray();
 
-    console.log("بعد جلب الطلب", existingRequest);
+    console.log("جميع الطلبات", existingRequests);
 
-    if (existingRequest) {
-      if (existingRequest.status === "pending") {
-        return res.status(200).json({ statusPending: true });
-      } else {
-        return res.status(200).json({ statusPending: false });
-      }
-    } else {
-      return res.status(200).json({ statusPending: false });
-    }
+    // التحقق من وجود أي طلب في حالة pending
+    const hasPendingRequest = existingRequests.some(request => request.status === "pending");
+
+    return res.status(200).json({ statusPending: hasPendingRequest });
   } catch (error) {
     console.error("Exist request error:", error);
     res.status(500).json({ message: "Something went wrong", error });

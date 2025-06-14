@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 String apiUrl = '${dotenv.env['API_URL']}/users';
 final avatarFileProvider = StateProvider<File?>((ref) => null);
@@ -213,6 +214,7 @@ final userIdProvider = FutureProvider<String?>((ref) async {
 
 final logoutProvider = Provider((ref) => () async {
       await removeToken();
+      await clearCredentials();
       ref.invalidate(userIdProvider);
     });
 
@@ -220,4 +222,30 @@ Future<void> removeToken() async {
   final prefs = await SharedPreferences.getInstance();
   await prefs.remove('auth_token');
   print("Token removed");
+}
+
+final rememberMeProvider = StateProvider<bool>((ref) => false);
+
+final storedCredentialsProvider = FutureProvider<Map<String, String>?>((ref) async {
+  final storage = const FlutterSecureStorage();
+  final email = await storage.read(key: 'remembered_email');
+  final password = await storage.read(key: 'remembered_password');
+  
+  if (email != null && password != null) {
+    ref.read(rememberMeProvider.notifier).state = true;
+    return {'email': email, 'password': password};
+  }
+  return null;
+});
+
+Future<void> saveCredentials(String email, String password) async {
+  final storage = const FlutterSecureStorage();
+  await storage.write(key: 'remembered_email', value: email);
+  await storage.write(key: 'remembered_password', value: password);
+}
+
+Future<void> clearCredentials() async {
+  final storage = const FlutterSecureStorage();
+  await storage.delete(key: 'remembered_email');
+  await storage.delete(key: 'remembered_password');
 }

@@ -2,16 +2,110 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_provider/providers/auth/auth_provider.dart';
+import 'package:flutter_provider/providers/language_provider.dart';
+import 'package:flutter_provider/providers/requestRegister.dart';
 import 'package:flutter_provider/screens/auth/Title_Project.dart';
 import 'package:flutter_provider/screens/auth/signUp.dart';
 import 'package:flutter_provider/widgets/custom_button.dart';
+import 'package:flutter_provider/widgets/custom_snackbar.dart';
+import 'package:flutter_provider/widgets/pendingRequest.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class WelcomePage extends ConsumerWidget {
+class WelcomePage extends ConsumerStatefulWidget {
   const WelcomePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WelcomePage> createState() => _WelcomePageState();
+}
+
+class _WelcomePageState extends ConsumerState<WelcomePage> {
+  @override
+  void initState() {
+    super.initState();
+    _checkStoredCredentials();
+  }
+
+  Future<void> _checkStoredCredentials() async {
+    final storedCredentials = await ref.read(storedCredentialsProvider.future);
+    if (storedCredentials != null) {
+      // Auto login with stored credentials
+      final credentials = {
+        'email': storedCredentials['email']!,
+        'password': storedCredentials['password']!,
+        'fcmToken': '',
+      };
+
+      try {
+        final result = await ref.read(loginUserProvider(credentials).future);
+        final role = result['role'];
+        final status = result['status'];
+
+        if (role == null || role == "") {
+          final isPendingAsync = await ref.read(existRequestProvider)(storedCredentials['email']!);
+          if (isPendingAsync == true) {
+            if (mounted) {
+              showPendingRequestDialog(
+                context,
+                'طلبك قيد المعالجة من الإدارة. يرجى الانتظار.',
+                ref.read(languageProvider),
+                ref,
+              );
+            }
+          } else {
+            ref.invalidate(userIdProvider);
+            if (mounted) {
+              Navigator.pushNamed(context, '/Apply_Request');
+            }
+          }
+        } else {
+          ref.invalidate(userIdProvider);
+          if (status?.toLowerCase() != "active" && role == "owner") {
+            if (mounted) {
+              Navigator.pushNamed(context, '/garage_info');
+            }
+          } else if (status?.toLowerCase() != "active" && role == "employee") {
+            if (mounted) {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text(
+                    'Garage Not Available',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  content: const Text(
+                    'الكراج غير متاح أو انتهى الاشتراك.\nيرجى مراجعة صاحب الكراج.\n\nGarage is not available or the subscription has ended.\nPlease contact the garage owner.',
+                    textAlign: TextAlign.center,
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('حسناً'),
+                    ),
+                  ],
+                ),
+              );
+            }
+          } else {
+            if (mounted) {
+              Navigator.pushNamed(context, '/home');
+            }
+          }
+        }
+      } catch (e) {
+        print("❌ Auto login error: $e");
+        if (mounted) {
+          CustomSnackBar.showErrorSnackBar(
+            context,
+            'فشل تسجيل الدخول التلقائي',
+          );
+        }
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
     double height = MediaQuery.of(context).size.height;
 

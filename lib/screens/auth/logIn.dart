@@ -18,30 +18,51 @@ import 'package:flutter_provider/widgets/pendingRequest.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-class LoginPage extends ConsumerWidget {
+class LoginPage extends ConsumerStatefulWidget {
   LoginPage({super.key});
 
+  @override
+  ConsumerState<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends ConsumerState<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
   final _formKey = GlobalKey<FormState>();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    _loadStoredCredentials();
+  }
+
+  Future<void> _loadStoredCredentials() async {
+    final storedCredentials = await ref.read(storedCredentialsProvider.future);
+    if (storedCredentials != null) {
+      setState(() {
+        emailController.text = storedCredentials['email']!;
+        passwordController.text = storedCredentials['password']!;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
     final lang = ref.watch(languageProvider);
     final isLoading = ref.watch(loginLoadingProvider);
+    final rememberMe = ref.watch(rememberMeProvider);
 
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
           if (ResponsiveHelper.isMobile(context)) {
             return _buildMobileView(context, emailController,
-                passwordController, height, ref, lang, isLoading);
+                passwordController, height, ref, lang, isLoading, rememberMe);
           } else {
             return _buildDesktopView(context, emailController,
-                passwordController, height, width, ref, lang, isLoading);
+                passwordController, height, width, ref, lang, isLoading, rememberMe);
           }
         },
       ),
@@ -56,6 +77,7 @@ class LoginPage extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> lang,
     bool isLoading,
+    bool rememberMe,
   ) {
     return Stack(
       children: [
@@ -113,7 +135,23 @@ class LoginPage extends ConsumerWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      SizedBox(),
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: rememberMe,
+                            onChanged: (value) {
+                              ref.read(rememberMeProvider.notifier).state = value ?? false;
+                            },
+                          ),
+                          Text(
+                            lang['rememberMe'] ?? 'Remember Me',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
                       ForgotPassword(),
                     ],
                   ),
@@ -147,7 +185,8 @@ class LoginPage extends ConsumerWidget {
       double width,
       WidgetRef ref,
       Map<String, dynamic> lang,
-      isLoading) {
+      bool isLoading,
+      bool rememberMe) {
     return Center(
       child: Container(
         constraints: BoxConstraints(
@@ -255,7 +294,23 @@ class LoginPage extends ConsumerWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            SizedBox(),
+                            Row(
+                              children: [
+                                Checkbox(
+                                  value: rememberMe,
+                                  onChanged: (value) {
+                                    ref.read(rememberMeProvider.notifier).state = value ?? false;
+                                  },
+                                ),
+                                Text(
+                                  lang['rememberMe'] ?? 'Remember Me',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
                             ForgotPassword(),
                           ],
                         ),
@@ -299,7 +354,6 @@ class LoginPage extends ConsumerWidget {
 
         String? fcmToken;
 
-        // ✅ طلب إذن الإشعارات وتوليد التوكن
         NotificationSettings settings =
             await FirebaseMessaging.instance.requestPermission(
           alert: true,
@@ -335,6 +389,13 @@ class LoginPage extends ConsumerWidget {
         final status = result['status'];
         print("Role: $role, Status: $status");
 
+        // Handle remember me
+        if (ref.read(rememberMeProvider)) {
+          await saveCredentials(emailController.text, passwordController.text);
+        } else {
+          await clearCredentials();
+        }
+
         ref.read(loginLoadingProvider.notifier).state = false;
         print("before isPendingAsync");
         print(
@@ -354,9 +415,9 @@ class LoginPage extends ConsumerWidget {
                         'في حال القبول أو الرفض سيتم إرسال ايميل اليك',
                 lang,
                 ref);
+            return;
           } else {
             ref.invalidate(userIdProvider);
-
             Navigator.pushNamed(context, '/Apply_Request');
           }
         } else {
@@ -393,8 +454,7 @@ class LoginPage extends ConsumerWidget {
           }
         }
       } catch (e) {
-        ref.read(loginLoadingProvider.notifier).state =
-            false; // أوقف التحميل عند الخطأ
+        ref.read(loginLoadingProvider.notifier).state = false;
 
         print("❌ Login error: $e");
         CustomSnackBar.showErrorSnackBar(
