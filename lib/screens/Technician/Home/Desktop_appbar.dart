@@ -400,10 +400,9 @@ class _DesktopCustomAppBarState extends ConsumerState<DesktopCustomAppBar>
             break;
           case 'Logout':
             ref.read(logoutProvider)();
-
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => WelcomePage()),
+              MaterialPageRoute(builder: (context) => const WelcomePage(fromLogout: true)),
             );
             break;
         }
