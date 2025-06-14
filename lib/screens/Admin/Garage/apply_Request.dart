@@ -173,18 +173,29 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                         text: lang['apply'] ?? "Apply",
                         onPressed: () async {
                           if (_formKey.currentState!.validate()) {
-                            final paymentResult = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => PaymentScreen(
-                                  selectedSubscription: selectedSubscription,
-                                  currency: 'USD',
+                            if (selectedSubscription != 'trial') {
+                              final paymentResult = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PaymentScreen(
+                                    selectedSubscription: selectedSubscription,
+                                    currency: 'USD',
+                                  ),
                                 ),
-                              ),
-                            );
-
-                            // إذا نجح الدفع، قم بتقديم الطلب
-                            if (paymentResult == true) {
+                              );
+                              // إذا نجح الدفع، قم بتقديم الطلب
+                              if (paymentResult == true) {
+                                handleApply(
+                                  context,
+                                  ref,
+                                  garageNameController,
+                                  garageLocationController,
+                                  selectedSubscription,
+                                  userId,
+                                  lang,
+                                );
+                              }
+                            } else {
                               handleApply(
                                 context,
                                 ref,
@@ -346,17 +357,30 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                           text: lang['apply'] ?? "Apply",
                           onPressed: () async {
                             if (_formKey.currentState!.validate()) {
-                              final paymentResult = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => PaymentScreen(
-                                    selectedSubscription: selectedSubscription,
-                                    currency: 'USD',
+                              if (selectedSubscription != 'trial') {
+                                final paymentResult = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PaymentScreen(
+                                      selectedSubscription:
+                                          selectedSubscription,
+                                      currency: 'USD',
+                                    ),
                                   ),
-                                ),
-                              );
-
-                              if (paymentResult == true) {
+                                );
+                                // إذا نجح الدفع، قم بتقديم الطلب
+                                if (paymentResult == true) {
+                                  handleApply(
+                                    context,
+                                    ref,
+                                    garageNameController,
+                                    garageLocationController,
+                                    selectedSubscription,
+                                    userId,
+                                    lang,
+                                  );
+                                }
+                              } else {
                                 handleApply(
                                   context,
                                   ref,
