@@ -4,7 +4,7 @@ const admin = require("../../firebase/firebase-config");
 const moment = require("moment-timezone");
 
 const createNotification = async (req, res) => {
-  const palestineTime = new Date(moment().tz("Asia/Jerusalem").date());
+  const palestineTime = moment.tz("Asia/Jerusalem").toDate();
 
   try {
     const {
