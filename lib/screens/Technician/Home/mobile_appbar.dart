@@ -200,7 +200,7 @@ Widget _buildProfileMenu(
             ref.read(logoutProvider)();
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const WelcomePage()),
+              MaterialPageRoute(builder: (context) => const WelcomePage(fromLogout: true)),
             );
           }
           break;

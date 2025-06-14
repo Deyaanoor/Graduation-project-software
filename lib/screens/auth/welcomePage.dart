@@ -13,7 +13,8 @@ import 'package:flutter_provider/widgets/pendingRequest.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class WelcomePage extends ConsumerStatefulWidget {
-  const WelcomePage({super.key});
+  final bool fromLogout;
+  const WelcomePage({super.key, this.fromLogout = false});
 
   @override
   ConsumerState<WelcomePage> createState() => _WelcomePageState();
@@ -23,7 +24,9 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
   @override
   void initState() {
     super.initState();
-    _checkStoredCredentials();
+    if (!widget.fromLogout) {
+      _checkStoredCredentials();
+    }
   }
 
   Future<void> _checkStoredCredentials() async {
