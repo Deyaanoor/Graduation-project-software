@@ -202,18 +202,33 @@ const updateRequestStatus = async (req, res) => {
       const ownerInsertResult = await ownersCollection.insertOne(newOwnerData);
 
       let subscriptionDurationDays;
-      switch (request.subscriptionType) {
-        case "6months":
-          subscriptionDurationDays = 180;
-          break;
-        case "1year":
-          subscriptionDurationDays = 365;
-          break;
-        case "trial":
-        default:
-          subscriptionDurationDays = 14;
-          break;
-      }
+
+const rawType = request.subscriptionType || '';
+const cleanedType = rawType.trim().toLowerCase().replace(/\s/g, '');
+
+// أولاً: إذا كانت trial نرجع 14
+if (cleanedType === 'trial') {
+  subscriptionDurationDays = 14;
+} else {
+  // تحقق من وجود رقم + months أو years
+  const match = cleanedType.match(/^(\d+)(months?|years?)$/);
+
+  if (match) {
+    const value = parseInt(match[1]);
+    const unit = match[2];
+
+    if (unit.startsWith("month")) {
+      subscriptionDurationDays = value * 30;
+    } else if (unit.startsWith("year")) {
+      subscriptionDurationDays = value * 365;
+    } else {
+      subscriptionDurationDays = 14;
+    }
+  } else {
+    subscriptionDurationDays = 14;
+  }
+}
+
 
       const subscriptionStartDate = new Date();
       const subscriptionEndDate = new Date(subscriptionStartDate);
