@@ -52,6 +52,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
   List<XFile> _images = [];
   bool _isListening = false;
   List<String> _selectedParts = [];
+  final Map<String, bool> _isUpdating = {};
   @override
   void initState() {
     super.initState();
@@ -709,10 +710,8 @@ class _ReportPageState extends ConsumerState<ReportPage> {
     final lang = ref.read(languageProvider);
     final reportsNotifier = ref.read(reportsProvider.notifier);
 
-    // تحقق من الحقول أولاً
     _validateFields(lang);
 
-    // إذا فيه أي خطأ، لا تكمل الإرسال
     if (ownerError != null ||
         plateError != null ||
         costError != null ||
@@ -722,13 +721,11 @@ class _ReportPageState extends ConsumerState<ReportPage> {
         symptomsError != null ||
         problemTitleError != null ||
         repairDescError != null) {
-      // يمكنك عرض رسالة عامة هنا إذا أردت
       return;
     }
 
     if (_formKey.currentState!.validate()) {
       try {
-        // ✅ جهّز متغيرات الصور فقط إذا فيه صور
         List<Uint8List>? imageBytesList;
         List<String>? fileNames;
 
@@ -869,8 +866,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
             content: lang['report_updated'] ?? 'Report updated successfully',
           );
           _resetForm();
-          ref.read(isEditModeProvider.notifier).state =
-              false; // تفعيل وضع التعديل
+          ref.read(isEditModeProvider.notifier).state = false;
         }
         if (userId != null) {
           ref.read(reportsProvider.notifier).fetchReports(userId: userId);

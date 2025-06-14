@@ -7,8 +7,6 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:flutter_provider/Responsive/Responsive_helper.dart';
 import 'package:flutter_provider/providers/news_provider.dart';
 
-// ...existing imports...
-
 class NewsPage extends ConsumerWidget {
   const NewsPage({super.key});
 

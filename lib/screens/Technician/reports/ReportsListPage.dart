@@ -34,15 +34,15 @@ class _ReportsPageState extends ConsumerState<ReportsPageList> {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
     final cardColor = theme.cardColor;
-    // final headerColor = theme.colorScheme.primary;
-    // final textColor = theme.textTheme.bodyLarge?.color ?? Colors.black;
-    // final subTextColor = theme.textTheme.bodyMedium?.color ?? Colors.orange;
-    // final rowColor = isDarkMode ? Colors.grey[850]! : Colors.orange[50]!;
+
     final backgroundColor = theme.scaffoldBackgroundColor;
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        onPressed: () => ref.read(selectedIndexProvider.notifier).state = 2,
+        onPressed: () => {
+          ref.read(selectedIndexProvider.notifier).state = 2,
+          ref.read(isEditModeProvider.notifier).state = false,
+        },
         backgroundColor: theme.colorScheme.primary,
         child: const Icon(Icons.add, color: Colors.white),
       ),

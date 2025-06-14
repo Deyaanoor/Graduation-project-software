@@ -19,6 +19,8 @@ class EmergencyRequestPage extends ConsumerStatefulWidget {
       _EmergencyRequestPageState();
 }
 
+bool _isSubmitting = false;
+
 class _EmergencyRequestPageState extends ConsumerState<EmergencyRequestPage> {
   final TextEditingController _messageController = TextEditingController();
   String? _selectedGarageId;
@@ -283,9 +285,22 @@ class _EmergencyRequestPageState extends ConsumerState<EmergencyRequestPage> {
   Widget _buildSubmitButton(
       String userId, String userName, Map<String, dynamic> lang) {
     return ElevatedButton.icon(
-      icon: const Icon(Icons.send, size: 24),
-      label: Text(lang['submit_request'] ?? 'إرسال الطلب',
-          style: TextStyle(fontSize: 18)),
+      icon: _isSubmitting
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : const Icon(Icons.send, size: 24),
+      label: Text(
+        _isSubmitting
+            ? (lang['sending'] ?? 'جاري الإرسال...')
+            : (lang['submit_request'] ?? 'إرسال الطلب'),
+        style: const TextStyle(fontSize: 18),
+      ),
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.deepOrange,
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
@@ -293,7 +308,8 @@ class _EmergencyRequestPageState extends ConsumerState<EmergencyRequestPage> {
           borderRadius: BorderRadius.circular(30),
         ),
       ),
-      onPressed: () => _handleSubmit(userId, userName, lang),
+      onPressed:
+          _isSubmitting ? null : () => _handleSubmit(userId, userName, lang),
     );
   }
 
@@ -307,6 +323,8 @@ class _EmergencyRequestPageState extends ConsumerState<EmergencyRequestPage> {
           lang['enter_message'] ?? 'يرجى إدخال رسالة و اختيار كراج');
       return;
     }
+
+    setState(() => _isSubmitting = true);
 
     try {
       await ref.read(addRequestProvider).call({
@@ -340,6 +358,8 @@ class _EmergencyRequestPageState extends ConsumerState<EmergencyRequestPage> {
     } catch (e) {
       _showErrorSnackBar(
           '${lang['error_sending_request'] ?? 'حدث خطأ أثناء إرسال الطلب'}: ${e.toString()}');
+    } finally {
+      setState(() => _isSubmitting = false);
     }
   }
 }
