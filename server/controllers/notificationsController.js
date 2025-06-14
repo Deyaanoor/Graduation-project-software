@@ -2,9 +2,10 @@ const connectDB = require("../config/db");
 const { ObjectId } = require("mongodb");
 const admin = require("../../firebase/firebase-config");
 const moment = require("moment-timezone");
-const palestineTime = moment().tz("Asia/Jerusalem").toDate(); // ISO string بتوقيت فلسطين
 
 const createNotification = async (req, res) => {
+  const palestineTime = new Date(moment().tz("Asia/Jerusalem").date());
+
   try {
     const {
       reportId,
@@ -19,6 +20,7 @@ const createNotification = async (req, res) => {
       garageId,
       requestTitle,
     } = req.body;
+    console.log("🕒 Palestine as Date:", palestineTime); // يجب أن يكون بنفس وقت فلسطين
 
     if (!senderName || !adminId || !type) {
       return res
