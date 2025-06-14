@@ -51,6 +51,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       setState(() {
         isLoading = true;
       });
+      print('Creating payment intent for $planPrice ${widget.currency}');
 
       final response = await http.post(
         Uri.parse(
@@ -60,7 +61,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           'Accept': 'application/json',
         },
         body: jsonEncode({
-          'amount': planPrice.toInt().toString(),
+          'amount': (planPrice.toInt() * 100).toString(),
           'currency': widget.currency,
         }),
       );
