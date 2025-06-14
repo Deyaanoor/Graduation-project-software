@@ -171,7 +171,7 @@ class _PlansPageState extends ConsumerState<PlansPage> {
                       icon: const Icon(Icons.delete, color: Colors.red),
                       tooltip: lang['deletePlan'] ?? 'Delete Plan',
                       onPressed: () =>
-                          _confirmDeletePlan(plan['id'], name, lang),
+                          _confirmDeletePlan(plan['_id'], name, lang),
                     ),
                   ],
                 ),
