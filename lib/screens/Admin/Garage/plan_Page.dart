@@ -161,9 +161,20 @@ class _PlansPageState extends ConsumerState<PlansPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name,
-                    style: const TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.bold)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(name,
+                        style: const TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold)),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      tooltip: lang['deletePlan'] ?? 'Delete Plan',
+                      onPressed: () =>
+                          _confirmDeletePlan(plan['id'], name, lang),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 10),
                 TextField(
                   controller: priceController,
@@ -191,7 +202,7 @@ class _PlansPageState extends ConsumerState<PlansPage> {
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(
-          maxWidth: 900, // وسع الجدول أكثر
+          maxWidth: 900,
           minWidth: 600,
         ),
         child: Card(
@@ -216,7 +227,7 @@ class _PlansPageState extends ConsumerState<PlansPage> {
                       DataCell(Text(name)),
                       DataCell(
                         SizedBox(
-                          width: 200, // وسع حقل السعر
+                          width: 200,
                           child: TextField(
                             controller: priceController,
                             keyboardType: TextInputType.number,
@@ -227,11 +238,23 @@ class _PlansPageState extends ConsumerState<PlansPage> {
                         ),
                       ),
                       DataCell(
-                        ElevatedButton(
-                          onPressed: () async {
-                            await _updatePlan(name, priceController.text, lang);
-                          },
-                          child: Text(lang['update'] ?? 'Update'),
+                        Row(
+                          children: [
+                            ElevatedButton(
+                              onPressed: () async {
+                                await _updatePlan(
+                                    name, priceController.text, lang);
+                              },
+                              child: Text(lang['update'] ?? 'Update'),
+                            ),
+                            const SizedBox(width: 12),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              tooltip: lang['deletePlan'] ?? 'Delete Plan',
+                              onPressed: () =>
+                                  _confirmDeletePlan(plan['id'], name, lang),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -243,6 +266,55 @@ class _PlansPageState extends ConsumerState<PlansPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDeletePlan(
+      String id, String name, Map<String, String> lang) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        final isMobile = ResponsiveHelper.isMobile(context);
+        return AlertDialog(
+          title: Text(lang['confirmDeleteTitle'] ?? 'Confirm Deletion'),
+          content: Text(
+              lang['confirmDeleteMessage']?.replaceAll('{name}', name) ??
+                  'Are you sure you want to delete "$name"?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(lang['cancel'] ?? 'Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(lang['delete'] ?? 'Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      try {
+        await ref.read(deletePlanProvider)(id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(lang['deleteSuccess'] ?? 'Plan deleted successfully'),
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.only(bottom: 60, left: 16, right: 16),
+          ),
+        );
+        ref.refresh(allPlansProvider);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(lang['deleteError'] ?? 'Failed to delete plan'),
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.only(bottom: 60, left: 16, right: 16),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _updatePlan(
