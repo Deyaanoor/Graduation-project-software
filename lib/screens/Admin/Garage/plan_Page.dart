@@ -22,6 +22,80 @@ class _PlansPageState extends ConsumerState<PlansPage> {
     super.dispose();
   }
 
+  void _showAddPlanDialog(Map<String, String> lang) {
+    final nameController = TextEditingController();
+    final priceController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(lang['addPlan'] ?? 'Add Plan'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(
+                  labelText: lang['planName'] ?? 'Plan Name',
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: priceController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: lang['price'] ?? 'Price',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(lang['cancel'] ?? 'Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final name = nameController.text.trim();
+                final price = double.tryParse(priceController.text.trim());
+
+                if (name.isEmpty || price == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text(lang['validInputs'] ??
+                            'Please fill both fields correctly')),
+                  );
+                  return;
+                }
+
+                try {
+                  await ref.read(addPlanProvider)(name, price);
+
+                  Navigator.of(context).pop(); // إغلاق النافذة
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text(
+                            lang['planAdded'] ?? 'Plan added successfully')),
+                  );
+                  ref.refresh(allPlansProvider);
+                } catch (e) {
+                  Navigator.of(context).pop(); // إغلاق النافذة
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content:
+                            Text(lang['planAddError'] ?? 'Error adding plan')),
+                  );
+                }
+              },
+              child: Text(lang['add'] ?? 'Add'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final lang = ref.watch(languageProvider);
@@ -29,6 +103,24 @@ class _PlansPageState extends ConsumerState<PlansPage> {
     final plansAsync = ref.watch(allPlansProvider);
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text(lang['plans'] ?? 'Plans'),
+        actions: [
+          if (!isMobile)
+            IconButton(
+              icon: const Icon(Icons.add),
+              tooltip: lang['addPlan'] ?? 'Add Plan',
+              onPressed: () => _showAddPlanDialog(lang),
+            ),
+        ],
+      ),
+      floatingActionButton: isMobile
+          ? FloatingActionButton(
+              onPressed: () => _showAddPlanDialog(lang),
+              child: const Icon(Icons.add),
+              tooltip: lang['addPlan'] ?? 'Add Plan',
+            )
+          : null,
       body: plansAsync.when(
         data: (plans) {
           for (var plan in plans) {

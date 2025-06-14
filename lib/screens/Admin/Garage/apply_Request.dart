@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_provider/providers/admin_StaticProvider.dart';
 import 'package:flutter_provider/providers/auth/auth_provider.dart';
 import 'package:flutter_provider/providers/notifications_provider.dart';
+import 'package:flutter_provider/providers/plan_provider.dart';
 import 'package:flutter_provider/providers/requestRegister.dart';
 import 'package:flutter_provider/screens/PaymentDialog.dart';
 import 'package:flutter_provider/screens/map.dart';
@@ -163,11 +164,8 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                         },
                       ),
                       SizedBox(height: 20),
-                      _buildSubscriptionDropdown(
-                        selectedSubscription,
-                        onSubscriptionChanged,
-                        lang,
-                      ),
+                      _buildSubscriptionDropdown(selectedSubscription,
+                          onSubscriptionChanged, lang, ref),
                       SizedBox(height: 30),
                       CustomButton(
                         text: lang['apply'] ?? "Apply",
@@ -351,6 +349,7 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                           selectedSubscription,
                           onSubscriptionChanged,
                           lang,
+                          ref,
                         ),
                         SizedBox(height: 30),
                         CustomButton(
@@ -412,7 +411,10 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
     String selectedValue,
     ValueChanged<String?> onChanged,
     Map<String, String> lang,
+    WidgetRef ref, // نحتاجه لاستدعاء البروقايدر
   ) {
+    final asyncPlans = ref.watch(allPlansProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -424,40 +426,44 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
             color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
-        SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: selectedValue,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-            contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-          ),
-          items: [
-            DropdownMenuItem(
-                value: 'trial',
-                child: Text(
-                  lang['trial'] ?? 'Trial',
-                  style: TextStyle(color: Colors.grey.shade700),
-                )),
-            DropdownMenuItem(
-                value: '6months',
-                child: Text(
-                  lang['sixMonths'] ?? '6 Months',
-                  style: TextStyle(color: Colors.grey.shade700),
-                )),
-            DropdownMenuItem(
-                value: '1year',
-                child: Text(
-                  lang['oneYear'] ?? '1 Year',
-                  style: TextStyle(color: Colors.grey.shade700),
-                )),
-          ],
-          onChanged: onChanged,
-          validator: (value) {
-            if (value == null) {
-              return lang['pleaseSelectSubscription'] ??
-                  'Please select a subscription type';
-            }
-            return null;
+        const SizedBox(height: 8),
+        asyncPlans.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => Text('حدث خطأ: ${error.toString()}'),
+          data: (plans) {
+            return DropdownButtonFormField<String>(
+              value: selectedValue,
+              decoration: InputDecoration(
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+              ),
+              items: [
+                DropdownMenuItem(
+                  value: 'trial',
+                  child: Text(lang['trial'] ?? 'Trial'),
+                ),
+                ...plans
+                    .map<DropdownMenuItem<String>>((Map<String, dynamic> plan) {
+                  return DropdownMenuItem<String>(
+                    value: plan['name'] as String,
+                    child: Text(
+                      lang[plan['name']] ?? plan['name'],
+                      style: TextStyle(color: Colors.grey.shade700),
+                    ),
+                  );
+                }).toList(),
+              ],
+              onChanged: onChanged,
+              validator: (value) {
+                if (value == null) {
+                  return lang['pleaseSelectSubscription'] ??
+                      'Please select a subscription type';
+                }
+                return null;
+              },
+            );
           },
         ),
       ],
