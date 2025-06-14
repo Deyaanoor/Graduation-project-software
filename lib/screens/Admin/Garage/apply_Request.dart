@@ -5,6 +5,7 @@ import 'package:flutter_provider/providers/notifications_provider.dart';
 import 'package:flutter_provider/providers/plan_provider.dart';
 import 'package:flutter_provider/providers/requestRegister.dart';
 import 'package:flutter_provider/screens/PaymentDialog.dart';
+import 'package:flutter_provider/screens/auth/welcomePage.dart';
 import 'package:flutter_provider/screens/map.dart';
 import 'package:flutter_provider/widgets/custom_snackbar.dart';
 import 'package:flutter_provider/widgets/payment_page.dart';
@@ -367,7 +368,6 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
                                     ),
                                   ),
                                 );
-                                // إذا نجح الدفع، قم بتقديم الطلب
                                 if (paymentResult == true) {
                                   handleApply(
                                     context,
@@ -515,7 +515,6 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
       return;
     }
 
-    // ✅ انتظر تحميل بيانات المستخدم بشكل صحيح
     final userInfo = await ref.read(getUserInfoProvider(userId).future);
     final userName =
         userInfo != null ? userInfo['name'] ?? 'بدون اسم' : 'بدون اسم';
@@ -541,6 +540,12 @@ class _ApplyRequestPageState extends ConsumerState<ApplyRequestPage> {
       CustomSnackBar.showSuccessSnackBar(
         context,
         lang['applicationSuccess'] ?? "Application submitted successfully.",
+      );
+      ref.read(logoutProvider)();
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => WelcomePage()),
       );
     } catch (e) {
       CustomSnackBar.showErrorSnackBar(
