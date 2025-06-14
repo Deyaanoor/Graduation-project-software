@@ -377,115 +377,147 @@ const renderResetPasswordForm = async (req, res) => {
     return res.status(400).send("Missing token");
   }
 
-  res.send(`
-    <html>
-      <head>
-        <title>Reset Password</title>
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-          }
-          .container {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-          }
-          h2 {
-            color: #f57c00;
-          }
-          label {
-            font-size: 14px;
-            color: #333;
-            text-align: left;
-            display: block;
-            margin-bottom: 8px;
-          }
-          input[type="password"] {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            font-size: 16px;
-          }
-          button {
-            background-color: #f57c00;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
-          }
-          button:hover {
-            background-color: #e76c00;
-          }
-          .footer {
-            margin-top: 20px;
-            font-size: 12px;
-            color: #aaa;
-          }
-          .error {
-            color: red;
-            font-size: 12px;
-            margin-top: -10px;
-            margin-bottom: 20px;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <h2>🔐 Reset Your Password</h2>
-          <form method="POST" action="/users/reset-password" id="resetForm">
-            <input type="hidden" name="token" value="${token}" />
-            <label for="newPassword">New Password:</label>
-            <input type="password" name="newPassword" id="newPassword" required />
-            
-            <label for="confirmPassword">Confirm Password:</label>
-            <input type="password" name="confirmPassword" id="confirmPassword" required />
-            
-            <div id="errorMessage" class="error" style="display:none;">
-              <p>Passwords do not match!</p>
-            </div>
-            
-            <button type="submit">Reset Password</button>
-          </form>
-  
-          <div class="footer">
-            <p>© 2025 Management Application for Mechanic Workshop</p>
-          </div>
+ res.send(`
+<html>
+  <head>
+    <title>Reset Password</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+      .container {
+        background-color: #ffffff;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+      }
+      h2 {
+        color: #f57c00;
+      }
+      label {
+        font-size: 14px;
+        color: #333;
+        text-align: left;
+        display: block;
+        margin-bottom: 8px;
+      }
+      .password-wrapper {
+        position: relative;
+      }
+      input[type="password"],
+      input[type="text"] {
+        width: 100%;
+        padding: 12px 40px 12px 12px;
+        margin-bottom: 20px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        font-size: 16px;
+      }
+      .toggle-visibility {
+        position: absolute;
+        top: 50%;
+        right: 12px;
+        transform: translateY(-50%);
+        cursor: pointer;
+        font-size: 18px;
+        color: #777;
+      }
+      button {
+        background-color: #f57c00;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        font-size: 16px;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 100%;
+      }
+      button:hover {
+        background-color: #e76c00;
+      }
+      .footer {
+        margin-top: 20px;
+        font-size: 12px;
+        color: #aaa;
+      }
+      .error {
+        color: red;
+        font-size: 12px;
+        margin-top: -10px;
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>🔐 Reset Your Password</h2>
+      <form method="POST" action="/users/reset-password" id="resetForm">
+        <input type="hidden" name="token" value="${token}" />
+        
+        <label for="newPassword">New Password:</label>
+        <div class="password-wrapper">
+          <input type="password" name="newPassword" id="newPassword" required />
+          <span class="toggle-visibility" onclick="toggleVisibility('newPassword', this)">👁️</span>
         </div>
-  
-        <script>
-          const form = document.getElementById('resetForm');
-          form.addEventListener('submit', function(event) {
-            const password = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            const errorMessage = document.getElementById('errorMessage');
-            
-            if (password !== confirmPassword) {
-              event.preventDefault(); // Prevent form submission
-              errorMessage.style.display = 'block';
-            } else {
-              errorMessage.style.display = 'none'; 
-            }
-          });
-        </script>
-      </body>
-    </html>
-  `);
+        
+        <label for="confirmPassword">Confirm Password:</label>
+        <div class="password-wrapper">
+          <input type="password" name="confirmPassword" id="confirmPassword" required />
+          <span class="toggle-visibility" onclick="toggleVisibility('confirmPassword', this)">👁️</span>
+        </div>
+
+        <div id="errorMessage" class="error" style="display:none;">
+          <p>Passwords do not match!</p>
+        </div>
+
+        <button type="submit">Reset Password</button>
+      </form>
+
+      <div class="footer">
+        <p>© 2025 Management Application for Mechanic Workshop</p>
+      </div>
+    </div>
+
+    <script>
+      function toggleVisibility(id, el) {
+        const input = document.getElementById(id);
+        if (input.type === 'password') {
+          input.type = 'text';
+          el.textContent = '🙈';
+        } else {
+          input.type = 'password';
+          el.textContent = '👁️';
+        }
+      }
+
+      const form = document.getElementById('resetForm');
+      form.addEventListener('submit', function(event) {
+        const password = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const errorMessage = document.getElementById('errorMessage');
+
+        if (password !== confirmPassword) {
+          event.preventDefault();
+          errorMessage.style.display = 'block';
+        } else {
+          errorMessage.style.display = 'none';
+        }
+      });
+    </script>
+  </body>
+</html>
+`);
+
 };
 const resetPassword = async (req, res) => {
   const { token, newPassword } = req.body;
