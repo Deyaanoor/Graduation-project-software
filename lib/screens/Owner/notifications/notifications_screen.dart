@@ -14,8 +14,11 @@ class NotificationsPage extends ConsumerWidget {
 
   String formatDate(String dateString) {
     try {
-      final date = DateTime.parse(dateString);
-      return DateFormat('dd/MM/yyyy hh:mm a').format(date);
+      final utcDate = DateTime.parse(dateString);
+      final palestineDate =
+          utcDate.toLocal(); // إذا جهاز المستخدم بتوقيت فلسطين
+
+      return DateFormat('dd/MM/yyyy hh:mm a').format(palestineDate);
     } catch (_) {
       return 'تاريخ غير معروف';
     }

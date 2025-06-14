@@ -528,8 +528,16 @@ class _GarageRequestsPageState extends ConsumerState<GarageRequestsPage> {
   }
 
   String _formatDate(dynamic timestamp) {
-    final date = DateTime.parse(timestamp.toString());
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final utcDate = DateTime.parse(timestamp.toString());
+
+    // تحويل التوقيت إلى فلسطين (UTC+3)
+    final palestineDate =
+        utcDate.toLocal(); // في حال الجهاز مضبوط على توقيت فلسطين
+
+    // أو إذا حبيت تضبطها يدويًا دايمًا:
+    // final palestineDate = utcDate.add(Duration(hours: 3));
+
+    return '${palestineDate.year}-${palestineDate.month.toString().padLeft(2, '0')}-${palestineDate.day.toString().padLeft(2, '0')}';
   }
 
   void _navigateToDetails(
