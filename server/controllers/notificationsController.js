@@ -1,6 +1,8 @@
 const connectDB = require("../config/db");
 const { ObjectId } = require("mongodb");
 const admin = require("../../firebase/firebase-config");
+const moment = require("moment-timezone");
+const palestineTime = moment().tz("Asia/Jerusalem").toDate(); // ISO string بتوقيت فلسطين
 
 const createNotification = async (req, res) => {
   try {
@@ -57,7 +59,6 @@ const createNotification = async (req, res) => {
       if (user) userType = "";
     }
 
-
     if (!user) {
       return res
         .status(404)
@@ -66,7 +67,7 @@ const createNotification = async (req, res) => {
 
     // 🏠 تحديد الجراج
     let garage;
-    
+
     if (userType === "client") {
       // ✅ تحويل garageId من String إلى ObjectId
       if (!garageId || !ObjectId.isValid(garageId)) {
@@ -87,8 +88,6 @@ const createNotification = async (req, res) => {
       garage = await db.collection("garages").findOne(garageQuery);
     }
 
-    
-
     // 🔔 تجهيز الإشعار
     let notification;
     if (type === "report") {
@@ -103,7 +102,7 @@ const createNotification = async (req, res) => {
         reportId,
         type: "report",
         status: "pending",
-        timestamp: new Date(),
+        timestamp: palestineTime,
         isRead: false,
         garageId: garage._id,
         senderName,
@@ -119,7 +118,7 @@ const createNotification = async (req, res) => {
         body: newsbody,
         newsId,
         type: "news",
-        timestamp: new Date(),
+        timestamp: palestineTime,
         isRead: false,
         garageId: garage._id,
         senderName,
@@ -135,23 +134,20 @@ const createNotification = async (req, res) => {
         body: messageBody,
 
         type: "message",
-        timestamp: new Date(),
+        timestamp: palestineTime,
         isRead: false,
         garageId: garage._id,
         senderName,
       };
-    } 
-    else if (type === "request") {
-     
+    } else if (type === "request") {
       notification = {
         title: requestTitle,
         type: "request",
-        timestamp: new Date(),
+        timestamp: palestineTime,
         isRead: false,
         senderName,
       };
-    } 
-    else {
+    } else {
       return res.status(400).json({ message: "نوع الإشعار غير مدعوم" });
     }
 
@@ -175,11 +171,8 @@ const createNotification = async (req, res) => {
         .collection("owners")
         .findOne({ _id: garage.owner_id });
       if (owner) recipients = [owner];
-    }
-    else if (type === "request") {
-      const admin = await db
-        .collection("users")
-        .findOne({ role: "admin" });
+    } else if (type === "request") {
+      const admin = await db.collection("users").findOne({ role: "admin" });
       if (admin) recipients = [admin];
     }
 
