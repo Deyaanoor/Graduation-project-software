@@ -290,7 +290,7 @@ class _RequestDetailsPageState extends ConsumerState<RequestDetailsPage> {
         child: Column(
           children: [
             SizedBox(
-              height: isDesktop ? 350 : 300,
+              height: isDesktop ? 350 : 280,
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(isDesktop ? 24 : 16),
                 child: Column(
