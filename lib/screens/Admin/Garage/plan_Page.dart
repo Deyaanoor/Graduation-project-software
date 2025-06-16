@@ -103,17 +103,6 @@ class _PlansPageState extends ConsumerState<PlansPage> {
     final plansAsync = ref.watch(allPlansProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(lang['plans'] ?? 'Plans'),
-        actions: [
-          if (!isMobile)
-            IconButton(
-              icon: const Icon(Icons.add),
-              tooltip: lang['addPlan'] ?? 'Add Plan',
-              onPressed: () => _showAddPlanDialog(lang),
-            ),
-        ],
-      ),
       floatingActionButton: isMobile
           ? FloatingActionButton(
               onPressed: () => _showAddPlanDialog(lang),
@@ -132,15 +121,36 @@ class _PlansPageState extends ConsumerState<PlansPage> {
 
           return Padding(
             padding: EdgeInsets.all(isMobile ? 12 : 32),
-            child: isMobile
-                ? _buildMobileList(plans, lang)
-                : _buildDesktopTable(plans, lang),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (!isMobile) // زر إضافة الخطط (للديسكتوب فقط)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showAddPlanDialog(lang),
+                      icon: const Icon(Icons.add),
+                      label: Text(lang['addPlan'] ?? 'Add Plan'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: isMobile
+                      ? _buildMobileList(plans, lang)
+                      : _buildDesktopTable(plans, lang),
+                ),
+              ],
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
-            child:
-                Text('${lang['plansLoadError'] ?? 'Error loading plans'}: $e')),
+          child: Text('${lang['plansLoadError'] ?? 'Error loading plans'}: $e'),
+        ),
       ),
     );
   }

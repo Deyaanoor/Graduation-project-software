@@ -47,14 +47,6 @@ class _EmployeeListScreenState extends ConsumerState<EmployeeListScreen> {
     });
   }
 
-  // @override
-  // void didChangeDependencies() {
-  //   super.didChangeDependencies();
-
-  //   // final uid = ref.read(userIdProvider).value;
-
-  // }
-
   @override
   Widget build(BuildContext context) {
     final lang = ref.watch(languageProvider);
@@ -86,100 +78,232 @@ class _EmployeeListScreenState extends ConsumerState<EmployeeListScreen> {
                     return name.contains(_searchQuery);
                   }).toList();
 
+                  // final isMobile = ResponsiveHelper.isMobile(context);
+
+                  // return isMobile
+                  //     ? DataTable(
+                  //         sortAscending: _sortAscending,
+                  //         sortColumnIndex: _sortColumnIndex,
+                  //         columns: [
+                  //           DataColumn(
+                  //             label: Text(lang['name'] ?? 'الاسم'),
+                  //             onSort: (i, _) => _sortData(filtered, i, 'name'),
+                  //           ),
+                  //           DataColumn(
+                  //             label: Text(lang['phone'] ?? 'رقم الهاتف'),
+                  //             onSort: (i, _) => _sortData(filtered, i, 'phone'),
+                  //           ),
+                  //           DataColumn(
+                  //               label: Text(lang['actions'] ?? 'إجراءات')),
+                  //         ],
+                  //         rows: List.generate(filtered.length, (index) {
+                  //           final employee = filtered[index];
+                  //           return DataRow(cells: [
+                  //             DataCell(Text(employee['name'] ?? '')),
+                  //             DataCell(Text(employee['phoneNumber'] ?? '')),
+                  //             DataCell(Row(
+                  //               children: [
+                  //                 IconButton(
+                  //                   icon: const Icon(Icons.edit,
+                  //                       color: Colors.blue),
+                  //                   onPressed: () {
+                  //                     Navigator.push(
+                  //                       context,
+                  //                       MaterialPageRoute(
+                  //                         builder: (context) =>
+                  //                             EmployeeDetailScreen(
+                  //                                 employee: employee),
+                  //                       ),
+                  //                     );
+                  //                   },
+                  //                 ),
+                  //                 IconButton(
+                  //                   icon: const Icon(Icons.delete,
+                  //                       color: Colors.red),
+                  //                   onPressed: () async {
+                  //                     final confirmed = await showDialog<bool>(
+                  //                       context: context,
+                  //                       builder: (ctx) => AlertDialog(
+                  //                         title: Text(lang['confirmDelete'] ??
+                  //                             'تأكيد الحذف'),
+                  //                         content: Text(
+                  //                             '${lang['deleteEmployeeMsg'] ?? 'هل أنت متأكد من حذف هذا الموظف؟'}\n${employee['name']}؟'),
+                  //                         actions: [
+                  //                           TextButton(
+                  //                             child: Text(
+                  //                                 lang['cancel'] ?? 'إلغاء'),
+                  //                             onPressed: () =>
+                  //                                 Navigator.pop(ctx, false),
+                  //                           ),
+                  //                           ElevatedButton(
+                  //                             child:
+                  //                                 Text(lang['delete'] ?? 'حذف'),
+                  //                             onPressed: () =>
+                  //                                 Navigator.pop(ctx, true),
+                  //                           ),
+                  //                         ],
+                  //                       ),
+                  //                     );
+
+                  //                     if (confirmed == true) {
+                  //                       try {
+                  //                         final deleteEmployee =
+                  //                             ref.read(deleteEmployeeProvider);
+                  //                         await deleteEmployee(
+                  //                             employee['email'], userId);
+                  //                         ref.invalidate(
+                  //                             employeesProvider(userId));
+                  //                         ref.invalidate(
+                  //                             employeeCountProvider(userId));
+                  //                         ref.invalidate(
+                  //                             employeeSalaryProvider(userId));
+                  //                       } catch (e) {
+                  //                         ScaffoldMessenger.of(context)
+                  //                             .showSnackBar(
+                  //                           SnackBar(
+                  //                               content: Text(
+                  //                                   '${lang['deleteFailed'] ?? 'فشل في الحذف'}: $e')),
+                  //                         );
+                  //                       }
+                  //                     }
+                  //                   },
+                  //                 ),
+                  //               ],
+                  //             )),
+                  //           ]);
+                  //         }),
+                  //       )
+
                   final isMobile = ResponsiveHelper.isMobile(context);
 
                   return isMobile
-                      ? DataTable(
-                          sortAscending: _sortAscending,
-                          sortColumnIndex: _sortColumnIndex,
-                          columns: [
-                            DataColumn(
-                              label: Text(lang['name'] ?? 'الاسم'),
-                              onSort: (i, _) => _sortData(filtered, i, 'name'),
-                            ),
-                            DataColumn(
-                              label: Text(lang['phone'] ?? 'رقم الهاتف'),
-                              onSort: (i, _) => _sortData(filtered, i, 'phone'),
-                            ),
-                            DataColumn(
-                                label: Text(lang['actions'] ?? 'إجراءات')),
-                          ],
-                          rows: List.generate(filtered.length, (index) {
+                      ? ListView.builder(
+                          itemCount: filtered.length,
+                          itemBuilder: (context, index) {
                             final employee = filtered[index];
-                            return DataRow(cells: [
-                              DataCell(Text(employee['name'] ?? '')),
-                              DataCell(Text(employee['phoneNumber'] ?? '')),
-                              DataCell(Row(
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.edit,
-                                        color: Colors.blue),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              EmployeeDetailScreen(
-                                                  employee: employee),
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12.0, vertical: 6.0),
+                              child: Card(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 3,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      // الاسم الرئيسي
+                                      Text(
+                                        employee['name'] ?? '',
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
                                         ),
-                                      );
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete,
-                                        color: Colors.red),
-                                    onPressed: () async {
-                                      final confirmed = await showDialog<bool>(
-                                        context: context,
-                                        builder: (ctx) => AlertDialog(
-                                          title: Text(lang['confirmDelete'] ??
-                                              'تأكيد الحذف'),
-                                          content: Text(
-                                              '${lang['deleteEmployeeMsg'] ?? 'هل أنت متأكد من حذف هذا الموظف؟'}\n${employee['name']}؟'),
-                                          actions: [
-                                            TextButton(
-                                              child: Text(
-                                                  lang['cancel'] ?? 'إلغاء'),
-                                              onPressed: () =>
-                                                  Navigator.pop(ctx, false),
-                                            ),
-                                            ElevatedButton(
-                                              child:
-                                                  Text(lang['delete'] ?? 'حذف'),
-                                              onPressed: () =>
-                                                  Navigator.pop(ctx, true),
-                                            ),
-                                          ],
-                                        ),
-                                      );
+                                      ),
+                                      const SizedBox(height: 6),
+                                      // رقم الهاتف
+                                      Text(
+                                        '${lang['phoneNumber'] ?? 'Phone Number'}: ${employee['phoneNumber'] ?? ''}',
+                                        style: const TextStyle(fontSize: 14),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      // البريد الإلكتروني
+                                      Text(
+                                        '${lang['email'] ?? 'Email'}: ${employee['email'] ?? ''}',
+                                        style: const TextStyle(fontSize: 14),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      // أزرار التحكم
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.edit,
+                                                color: Colors.blue),
+                                            onPressed: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      EmployeeDetailScreen(
+                                                          employee: employee),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.delete,
+                                                color: Colors.red),
+                                            onPressed: () async {
+                                              final confirmed =
+                                                  await showDialog<bool>(
+                                                context: context,
+                                                builder: (ctx) => AlertDialog(
+                                                  title: Text(
+                                                      lang['confirmDelete'] ??
+                                                          'تأكيد الحذف'),
+                                                  content: Text(
+                                                      '${lang['deleteEmployeeMsg'] ?? 'هل أنت متأكد من حذف هذا الموظف؟'}\n${employee['name']}؟'),
+                                                  actions: [
+                                                    TextButton(
+                                                      child: Text(
+                                                          lang['cancel'] ??
+                                                              'إلغاء'),
+                                                      onPressed: () =>
+                                                          Navigator.pop(
+                                                              ctx, false),
+                                                    ),
+                                                    ElevatedButton(
+                                                      child: Text(
+                                                          lang['delete'] ??
+                                                              'حذف'),
+                                                      onPressed: () =>
+                                                          Navigator.pop(
+                                                              ctx, true),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
 
-                                      if (confirmed == true) {
-                                        try {
-                                          final deleteEmployee =
-                                              ref.read(deleteEmployeeProvider);
-                                          await deleteEmployee(
-                                              employee['email'], userId);
-                                          ref.invalidate(
-                                              employeesProvider(userId));
-                                          ref.invalidate(
-                                              employeeCountProvider(userId));
-                                          ref.invalidate(
-                                              employeeSalaryProvider(userId));
-                                        } catch (e) {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                                content: Text(
-                                                    '${lang['deleteFailed'] ?? 'فشل في الحذف'}: $e')),
-                                          );
-                                        }
-                                      }
-                                    },
+                                              if (confirmed == true) {
+                                                try {
+                                                  final deleteEmployee = ref.read(
+                                                      deleteEmployeeProvider);
+                                                  await deleteEmployee(
+                                                      employee['email'],
+                                                      userId);
+                                                  ref.invalidate(
+                                                      employeesProvider(
+                                                          userId));
+                                                  ref.invalidate(
+                                                      employeeCountProvider(
+                                                          userId));
+                                                  ref.invalidate(
+                                                      employeeSalaryProvider(
+                                                          userId));
+                                                } catch (e) {
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    SnackBar(
+                                                        content: Text(
+                                                            '${lang['deleteFailed'] ?? 'فشل في الحذف'}: $e')),
+                                                  );
+                                                }
+                                              }
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              )),
-                            ]);
-                          }),
+                                ),
+                              ),
+                            );
+                          },
                         )
                       : SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
