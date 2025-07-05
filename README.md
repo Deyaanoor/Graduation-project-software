@@ -1,36 +1,33 @@
-🛠️ Management Application for Mechanic Workshop
-This project is a full-stack application designed to streamline the management of car repair workshops. Built using Flutter, Node.js, Express.js, and MongoDB, the system enhances operational efficiency through real-time collaboration and AI-powered diagnostics.
+# 🛠️ Management Application for Mechanic Workshop
 
-🚗 Key Features:
-Multi-role System: Supports four main user roles: App Owner, Garage Owner, Technician, and Customer — each with a dedicated dashboard and permissions.
+This project is a full-stack application designed to streamline the management of car repair workshops. Built using **Flutter**, **Node.js**, **Express.js**, and **MongoDB**, the system enhances operational efficiency through real-time collaboration and AI-powered diagnostics.
 
-AI Integration: Uses TensorFlow for car issue prediction based on symptoms, model, and year, plus Roboflow for dashboard symbol recognition.
+## 🚗 Key Features
+- **Multi-role System**: Supports four main user roles — App Owner, Garage Owner, Technician, and Customer — each with tailored functionalities and dashboards.
+- **AI Integration**:
+  - TensorFlow model for smart fault analysis based on car make, model, year, and symptoms.
+  - Roboflow for recognizing dashboard warning symbols via image processing.
+- **Real-time Notifications**: Powered by Firebase Cloud Messaging (FCM) for instant alerts about repair reports, support tickets, registration requests, and announcements.
+- **Responsive UI**: Built using Flutter to ensure a smooth experience on mobile and web platforms.
+- **Secure & Scalable Architecture**: Backend built with Node.js/Express, MongoDB Atlas for cloud storage, and hosted on Render for reliable deployment.
 
-Real-time Notifications: Powered by Firebase Cloud Messaging (FCM) for instant updates about repair reports, support requests, and garage registration.
+## 💻 Technologies Used
+| Layer        | Technology             |
+|--------------|------------------------|
+| Frontend     | Flutter (Dart)         |
+| Backend      | Node.js, Express.js    |
+| Database     | MongoDB Atlas          |
+| Hosting      | Render                 |
+| Notifications| Firebase Cloud Messaging |
+| AI / ML      | TensorFlow, Roboflow   |
 
-Responsive UI: Built with Flutter to ensure smooth experience across mobile and web.
+## 👥 Developed By
+- **Omar Mahmoud Zaqout**
+- **Deyaa Bani Jaber**
 
-Secure & Scalable: Backend built with Node.js/Express and hosted on Render, with MongoDB Atlas for cloud-based data storage.
+**Supervisor:** Dr. Manar Qamhieh  
+**University:** An-Najah National University  
+**Faculty:** Engineering and Information Technology – Computer Engineering Department
 
-🔧 Technologies Used:
-Frontend: Flutter (Dart)
+---
 
-Backend: Node.js + Express.js
-
-Database: MongoDB Atlas
-
-Hosting: Render
-
-Notifications: Firebase Cloud Messaging (FCM)
-
-Image Processing: Roboflow
-
-Machine Learning: TensorFlow
-
-👥 Developed By:
-Omar Mahmoud Zaqout
-
-Deyaa Bani Jaber
-
-Supervised by Dr. Manar Qamhieh – An-Najah National University
-Faculty of Engineering and Information Technology – Computer Engineering Department
